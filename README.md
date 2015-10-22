@@ -11,12 +11,12 @@
 ```js
 var tolmach = require('tolmach');
 
-tolmach('for item in items:');
+tolmach.detect('for item in items:');
 // => "python"
 
-tolmach('#include <stdio.h>');
+tolmach.detect('#include <stdio.h>');
 // => "c"
 
-tolmach('prices = items.map{ |i| i.price }');
+tolmach.detect('prices = items.map{ |i| i.price }');
 // => "ruby"
 ```
