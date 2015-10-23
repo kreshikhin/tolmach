@@ -1,9 +1,9 @@
 {
   "name": "tolmach",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "private": false,
   "description": "Programming language classifier of a code for node.js",
-  "main": "app.js",
+  "main": "index.js",
   "author": "Denis Kreshikhin",
   "license": "MIT",
   "dependencies": {
