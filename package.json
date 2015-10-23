@@ -9,5 +9,8 @@
   "dependencies": {
     "natural": "*",
     "lodash": "*"
+  },
+  "scripts": {
+    "test": "mocha test"
   }
 }
