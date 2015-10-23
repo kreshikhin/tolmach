@@ -1,6 +1,6 @@
 {
   "name": "tolmach",
-  "version": "0.1.0",
+  "version": "1.0.0",
   "private": false,
   "description": "Programming language classifier of a code for node.js",
   "main": "app.js",
@@ -11,7 +11,7 @@
     "lodash": "3.10.1"
   },
   "devDependencies": {
-    "mocha": "2.3.3",
+    "mocha": "2.3.3"
   },
   "scripts": {
     "test": "mocha test"
