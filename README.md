@@ -1,7 +1,7 @@
 # tolmach
-[![NPM Version][npm-image]][npm-url]
-[![NPM Downloads][downloads-image]][downloads-url]
-[![Build Status][travis-image]][travis-url]
+  [![NPM Version][npm-image]][npm-url]
+  [![NPM Downloads][downloads-image]][downloads-url]
+  [![Build Status][travis-image]][travis-url]
 
   Programming language classifier based on [natural classifier](https://github.com/NaturalNode/natural) module.
 
