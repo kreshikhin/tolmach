@@ -56,5 +56,5 @@ vbnet
 [npm-url]: https://npmjs.org/package/tolmach
 [downloads-image]: https://img.shields.io/npm/dm/tolmach.svg
 [downloads-url]: https://npmjs.org/package/tolmach
-[travis-image]: https://img.shields.io/travis/kreshikhin/tolmach/master.svg?label=linux
+[travis-image]: https://img.shields.io/travis/kreshikhin/tolmach/master.svg
 [travis-url]: https://travis-ci.org/kreshikhin/tolmach
