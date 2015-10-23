@@ -1,0 +1,9 @@
+'Visual Basic 2010
+'How to open Url in a default browser.
+Public Class Form1
+Dim MyUrl As String = ("http://www.example.com")
+    Private Sub Form1_Click(ByVal sender As Object,_
+    ByVal e As System.EventArgs) Handles Me.Click
+Process.Start(MyUrl)
+    End Sub
+End Class

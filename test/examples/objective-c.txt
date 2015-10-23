@@ -1,0 +1,23 @@
+#import "UAInboxUI.h"
+#import "UAUtils.h"
+
+@interface UAInboxOverlayController(Private)
+
+- (id)initWithParentViewController:(UIViewController *)parent andMessageID:(NSString*)messageID;
+- (void)loadMessageAtIndex:(int)index;
+- (void)loadMessageForID:(NSString *)mid;
+- (void)displayWindow;
+- (void)closePopupWindow;
+
+@end
+
+@implementation UAInboxOverlayController
+
+@synthesize webView, message;
+
+
++ (void)showWindowInsideViewController:(UIViewController *)viewController withMessageID:(NSString *)messageID {
+    [[UAInboxOverlayController alloc] initWithParentViewController:viewController andMessageID:messageID];
+}
+
+@end

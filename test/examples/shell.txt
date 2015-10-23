@@ -1,0 +1,38 @@
+    # Android-specific targetfs mkdir workarounds
+    if [ ! -d ${DISCIMAGE}/data ]; then
+        mkdir ${DISCIMAGE}/data
+        chown 1000:1000 ${DISCIMAGE}/data
+        chmod 0771 ${DISCIMAGE}/data
+    fi
+    if [ ! -d ${DISCIMAGE}/data/app ]; then
+        mkdir ${DISCIMAGE}/data/app
+        chown 1000:1000 ${DISCIMAGE}/data/app
+        chmod 0771 ${DISCIMAGE}/data/app
+    fi
+
+    for arch in $ARCHITECTURES; do
+        if [ ! -d $arch ]; then
+            echo "Unknown architecture $arch.  Aborting"
+            exit 1
+        fi
+
+        case $arch in
+            target*64)
+                SHLIB_DESTDIR=/system/vendor/lib64
+                ;;
+            *)
+                SHLIB_DESTDIR=/system/vendor/lib
+        esac
+        EGL_DESTDIR=${SHLIB_DESTDIR}/egl
+
+        pushd $arch > /dev/null
+        # Install UM components
+        if [ -f install_um.sh ]; then
+            DDK_INSTALL_LOG=$UMLOG
+            echo "Installing User components for architecture $arch"
+            $DOIT echo "version $PVRVERSION" > $DDK_INSTALL_LOG
+            source install_um.sh
+            echo
+        fi
+        popd > /dev/null
+    done
