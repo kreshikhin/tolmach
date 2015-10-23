@@ -49,3 +49,14 @@ shell
 swift
 vbnet
 ```
+
+## License
+
+  [MIT](LICENSE)
+
+[npm-image]: https://img.shields.io/npm/v/tolmach.svg
+[npm-url]: https://npmjs.org/package/tolmach
+[downloads-image]: https://img.shields.io/npm/dm/tolmach.svg
+[downloads-url]: https://npmjs.org/package/tolmach
+[travis-image]: https://img.shields.io/travis/kreshikhin/tolmach/master.svg?label=linux
+[travis-url]: https://travis-ci.org/kreshikhin/tolmach
