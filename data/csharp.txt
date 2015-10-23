@@ -1,0 +1,1739 @@
+// Copyright (c) Microsoft. All rights reserved. Licensed under the MIT license. See full license at the bottom of this file.
+
+using Microsoft.Office365.SharePoint;
+using Microsoft.Office365.SharePoint.FileServices;
+using App8.Helpers;
+using System;
+using System.Collections;
+using System.Collections.Generic;
+using System.Collections.ObjectModel;
+using System.IO;
+using System.Threading.Tasks;
+using System.Windows.Input;
+using Windows.Storage;
+using Windows.Storage.Pickers;
+using ICNG_Phone.Common;
+
+namespace App8.ViewModels
+{
+    /// <summary>
+    /// View model for interacting with files.
+    /// </summary>
+    class FilesViewModel : ViewModelBase
+    {
+        #region Private fields, observable collection, cstor, property changed event
+        public ObservableCollection<FileSystemItemViewModel> DirectoryItems { get; set; }
+        private FileSystemItemViewModel _selectedFileObject = null;
+        private string _updatedTextObject = null;
+        private FileOperations _fileOperations;
+        private bool _loadingFilesAndFolders = false;
+
+
+        public FilesViewModel()
+        {
+            DirectoryItems = new ObservableCollection<FileSystemItemViewModel>();
+            _fileOperations = new FileOperations();
+
+
+
+            this.CreateNewFileCommand = new RelayCommand(ExecuteCreateCommandAsync);
+            this.ReadFileandFoldersCommand = new RelayCommand(ExecuteGetFileAndFolderListCommandAsync);
+            this.ReadTextFileCommand = new RelayCommand(ExecuteReadTextFileCommandAsync, CanReadTextFile);
+            this.UpdateFileCommand = new RelayCommand(ExecuteUpdateCommandAsync, CanUpdateFile);
+            this.DeleteFileOrFolderCommand = new RelayCommand(ExecuteDeleteCommandAsync, CanDeleteFileorFolder);
+            this.UploadFileCommand = new RelayCommand(ExecuteUploadFileCommandAsync);
+            this.DownloadFileCommand = new RelayCommand(ExecuteDownloadFileCommandAsync, CanDownloadFile);
+        }
+        #endregion
+
+        #region Properties
+        /// <summary>
+        /// Gets or sets the property for the file that is selected in the listbox.
+        /// </summary>
+        public FileSystemItemViewModel SelectedFile
+        {
+            get
+            {
+                return _selectedFileObject;
+            }
+            set
+            {
+                if (SetProperty(ref _selectedFileObject, value))
+                {
+                    FileText = string.Empty;
+                }
+            }
+        }
+
+        /// <summary>
+        /// Gets or sets the property for the updated text supplied in the textbox.
+        /// </summary>
+        public string FileText
+        {
+            get
+            {
+                return _updatedTextObject;
+            }
+
+            set
+            {
+                SetProperty(ref _updatedTextObject, value);
+            }
+        }
+
+        public bool LoadingFilesAndFolders
+        {
+            get
+            {
+                return _loadingFilesAndFolders;
+            }
+            set
+            {
+                SetProperty(ref _loadingFilesAndFolders, value);
+            }
+        }
+
+
+        #endregion
+        #region Command properties
+        public ICommand CreateNewFileCommand { protected set; get; }
+        public ICommand ReadFileandFoldersCommand { protected set; get; }
+        public ICommand ReadTextFileCommand { protected set; get; }
+        public ICommand UpdateFileCommand { protected set; get; }
+        public ICommand DeleteFileOrFolderCommand { protected set; get; }
+        public ICommand UploadFileCommand { protected set; get; }
+        public ICommand DownloadFileCommand { protected set; get; }
+
+
+
+
+        private bool CanReadTextFile()
+        {
+            return (_selectedFileObject != null
+              && (_selectedFileObject.FileSystemItem.Name.EndsWith(".txt") || _selectedFileObject.FileSystemItem.Name.EndsWith(".xml")));
+        }
+        private bool CanUpdateFile()
+        {
+            return (_selectedFileObject != null
+                && (_selectedFileObject.FileSystemItem.Name.EndsWith(".txt") || _selectedFileObject.FileSystemItem.Name.EndsWith(".xml")));
+        }
+
+        private bool CanDownloadFile()
+        {
+            return (_selectedFileObject != null);
+        }
+
+        private bool CanDeleteFileorFolder()
+        {
+            return (_selectedFileObject != null);
+        }
+
+
+        #endregion
+        #region Commands
+        /// <summary>
+        /// Command for getting the file and folder list.
+        /// </summary>
+        async void ExecuteGetFileAndFolderListCommandAsync()
+        {
+            await LoadFilesAndFoldersAsync();
+        }
+
+        private async Task LoadFilesAndFoldersAsync()
+        {
+            LoggingViewModel.Instance.Information = "Retrieving items ...";
+            this.LoadingFilesAndFolders = true;
+
+            DirectoryItems.Clear();
+
+            IEnumerable<IItem> files = await _fileOperations.GetMyFilesAsync();
+
+            if (files != null)
+            {
+                foreach (IItem file in files)
+                {
+                    FileSystemItemViewModel _directoryItem = new FileSystemItemViewModel(file);
+
+                    //Adding FileSystemItems to observable collection.
+                    DirectoryItems.Add(_directoryItem);
+                }
+                LoggingViewModel.Instance.Information = string.Empty;
+
+            }
+            else
+            {
+                LoggingViewModel.Instance.Information = "We couldn't get your file and folder list.";
+            }
+
+            this.LoadingFilesAndFolders = false;
+        }
+        /// <summary>
+        /// Command for creating a file.
+        /// </summary>
+        async void ExecuteCreateCommandAsync()
+        {
+            bool isSuccess = await _fileOperations.CreateNewTextFileAsync();
+
+            if (isSuccess)
+            {
+                await LoadFilesAndFoldersAsync();
+                LoggingViewModel.Instance.Information = "You successfully created the text file!";
+            }
+            else
+            {
+                LoggingViewModel.Instance.Information = "The text file wasn't created. A text file named demo.txt may already exist.";
+            }
+        }
+        /// <summary>
+        /// Command for deleting a file.
+        /// </summary>
+        async void ExecuteDeleteCommandAsync()
+        {
+            bool deleteFile = await MessageDialogHelper.ShowYesNoDialogAsync(
+            String.Format("Are you sure you want to delete '{0}'?",_selectedFileObject.Name), "Confirm deletion");
+
+            if (deleteFile == true)
+            {
+                bool? isSuccess = await _fileOperations.DeleteFileOrFolderAsync(_selectedFileObject);
+
+
+
+                if (isSuccess == true)
+                {
+                    await LoadFilesAndFoldersAsync();
+                    LoggingViewModel.Instance.Information = "You successfully deleted the file or folder!";
+                }
+                else if (isSuccess == false)
+                {
+                    LoggingViewModel.Instance.Information = "The file or folder wasn't deleted.";
+                }
+                else
+                {
+                    LoggingViewModel.Instance.Information = "Please get the file and folder list, select an item, and try again.";
+                }
+            }
+
+            else
+            {
+                LoggingViewModel.Instance.Information = "The file or folder wasn't deleted.";
+            }
+        }
+        /// <summary>
+        /// Command for reading a text file.
+        /// </summary>
+        async void ExecuteReadTextFileCommandAsync()
+        {
+            object[] results;
+
+            bool isSuccess = false;
+            results = await _fileOperations.ReadTextFileAsync(_selectedFileObject);
+            FileText = results[0].ToString();
+            isSuccess = (bool)results[1];
+
+            if (isSuccess)
+            {
+                LoggingViewModel.Instance.Information = "You successfully read the text file!";
+            }
+            else
+            {
+                LoggingViewModel.Instance.Information = "We couldn't return the text file. Please select a text file and try again.";
+            }
+        }
+        /// <summary>
+        /// Command for updating a file.
+        /// </summary>
+        async void ExecuteUpdateCommandAsync()
+        {
+
+            if (FileText == null || FileText == string.Empty)
+            {
+                LoggingViewModel.Instance.Information = "You need to choose a text file, add some text in the text box, and then click Update.";
+            }
+
+            else if (!SelectedFile.Name.EndsWith(".txt") && !SelectedFile.Name.EndsWith(".xml"))
+            {
+
+                LoggingViewModel.Instance.Information = "You need to choose a text (.txt) file, or an xml (.xml) file, to update.";
+            }
+
+            else
+            {
+
+                bool isSuccess = await _fileOperations.UpdateTextFileAsync(_selectedFileObject, FileText);
+
+                if (isSuccess)
+                {
+                    LoggingViewModel.Instance.Information = "You successfully updated the text file.";
+                }
+                else
+                {
+                    LoggingViewModel.Instance.Information = "You didn't select a text file or the text file wasn't updated.";
+                }
+
+            }
+        }
+        /// <summary>
+        /// Command for downloading and viewing a file.
+        /// </summary>
+        async void ExecuteDownloadFileCommandAsync()
+        {
+            StorageFile destinationFile = null;
+
+            if (_selectedFileObject.FileSystemItem is Folder)
+            {
+                LoggingViewModel.Instance.Information = String.Format("The item '{0}' is a folder and therefore can't be downloaded.", _selectedFileObject.Name);
+                return;
+            }
+
+            using (var downloadStream = await _fileOperations.DownloadFileAsync(_selectedFileObject))
+            {
+
+                // Create the picker object and set options
+                FileSavePicker picker = new FileSavePicker();
+                picker.SuggestedStartLocation = Windows.Storage.Pickers.PickerLocationId.DocumentsLibrary;
+
+                // Dropdown of file types the user can save the file as
+                picker.FileTypeChoices.Add("Text", new List<string>() { ".txt" });
+                picker.FileTypeChoices.Add("Word document", new List<string>() { ".docx" });
+                picker.FileTypeChoices.Add("Excel workbook", new List<string>() { ".xlsx" });
+                picker.FileTypeChoices.Add("Powerpoint", new List<string>() { ".pptx" });
+                picker.FileTypeChoices.Add("XML", new List<string>() { ".xml" });
+                picker.FileTypeChoices.Add("JPEG", new List<string>() { ".jpg" });
+                picker.FileTypeChoices.Add("PNG", new List<string>() { ".png" });
+                picker.FileTypeChoices.Add("PDF", new List<string>() { ".pdf" });
+
+                // Default file name if the user does not type one in or select a file to replace
+                picker.SuggestedFileName = _selectedFileObject.Name;
+
+                destinationFile = await picker.PickSaveFileAsync();
+
+                if (destinationFile != null && downloadStream != null)
+                {
+
+                    CachedFileManager.DeferUpdates(destinationFile);
+
+                    using (Stream destinationStream = await destinationFile.OpenStreamForWriteAsync())
+                    {
+                        int count = 0;
+                        do
+                        {
+                            var buffer = new byte[2048];
+                            count = downloadStream.Read(buffer, 0, 2048);
+                            await destinationStream.WriteAsync(buffer, 0, count);
+                        }
+                        while (downloadStream.CanRead && count > 0);
+
+                        await destinationStream.FlushAsync();
+                    }
+
+                }
+            }
+
+            if (destinationFile != null)
+            {
+                var viewFile =  await MessageDialogHelper.ShowYesNoDialogAsync(
+                               String.Format("Your file was downloaded to {0}\nWould you like to open the file?",destinationFile.Path), "Download Succeeded");
+
+                if (viewFile)
+                {
+                    // Launch the selected app so the user can see the file contents.
+
+                    // Let the user choose which app to use.
+                    var options = new Windows.System.LauncherOptions();
+                    options.DisplayApplicationPicker = true;
+
+                    var success = await Windows.System.Launcher.LaunchFileAsync(destinationFile, options);
+                    if (!success)
+                    {
+                        LoggingViewModel.Instance.Information = "We couldn't launch an app to view the file.";
+                    }
+                }
+            }
+            else
+            {
+                LoggingViewModel.Instance.Information = "The file wasn't downloaded.";
+
+            }
+        }
+        /// <summary>
+        /// Command to upload a file.
+        /// </summary>
+        async void ExecuteUploadFileCommandAsync()
+        {
+            bool isSuccess = await _fileOperations.UploadFileAsync();
+
+            if (isSuccess)
+            {
+                await LoadFilesAndFoldersAsync();
+                LoggingViewModel.Instance.Information = "You successfully uploaded the file.";
+            }
+            else
+            {
+                LoggingViewModel.Instance.Information = "The file wasn't uploaded or you pressed the cancel button.";
+            }
+        }
+        #endregion
+    }
+}
+//*********************************************************
+//
+// MIT License:
+// Permission is hereby granted, free of charge, to any person obtaining
+// a copy of this software and associated documentation files (the
+// ""Software""), to deal in the Software without restriction, including
+// without limitation the rights to use, copy, modify, merge, publish,
+// distribute, sublicense, and/or sell copies of the Software, and to
+// permit persons to whom the Software is furnished to do so, subject to
+// the following conditions:
+
+// The above copyright notice and this permission notice shall be
+// included in all copies or substantial portions of the Software.
+
+// THE SOFTWARE IS PROVIDED ""AS IS"", WITHOUT WARRANTY OF ANY KIND,
+// EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+// MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
+// NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE
+// LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION
+// OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
+// WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+//
+//*********************************************************
+
+
+//
+// reflection.cs: System.Reflection and System.Reflection.Emit specific implementations
+//
+// Author: Marek Safar (marek.safar@gmail.com)
+//
+// Dual licensed under the terms of the MIT X11 or GNU GPL
+//
+// Copyright 2009-2010 Novell, Inc.
+//
+//
+
+using System;
+using System.Collections.Generic;
+using System.Reflection;
+using System.IO;
+using System.Runtime.CompilerServices;
+using System.Reflection.Emit;
+using System.Security;
+
+namespace Mono.CSharp
+{
+#if STATIC
+    public class ReflectionImporter
+    {
+        public ReflectionImporter (ModuleContainer module, BuiltinTypes builtin)
+        {
+            throw new NotSupportedException ();
+        }
+
+        public void ImportAssembly (Assembly assembly, RootNamespace targetNamespace)
+        {
+            throw new NotSupportedException ();
+        }
+
+        public ImportedModuleDefinition ImportModule (Module module, RootNamespace targetNamespace)
+        {
+            throw new NotSupportedException ();
+        }
+
+        public TypeSpec ImportType (Type type)
+        {
+            throw new NotSupportedException ();
+        }
+    }
+#else
+    public sealed class ReflectionImporter : MetadataImporter
+    {
+        public ReflectionImporter (ModuleContainer module, BuiltinTypes builtin)
+            : base (module)
+        {
+            Initialize (builtin);
+        }
+
+        public override void AddCompiledType (TypeBuilder builder, TypeSpec spec)
+        {
+        }
+
+        protected override MemberKind DetermineKindFromBaseType (Type baseType)
+        {
+            if (baseType == typeof (ValueType))
+                return MemberKind.Struct;
+
+            if (baseType == typeof (System.Enum))
+                return MemberKind.Enum;
+
+            if (baseType == typeof (MulticastDelegate))
+                return MemberKind.Delegate;
+
+            return MemberKind.Class;
+        }
+
+        protected override bool HasVolatileModifier (Type[] modifiers)
+        {
+            foreach (var t in modifiers) {
+                if (t == typeof (IsVolatile))
+                    return true;
+            }
+
+            return false;
+        }
+
+        public void ImportAssembly (Assembly assembly, RootNamespace targetNamespace)
+        {
+            // It can be used more than once when importing same assembly
+            // into 2 or more global aliases
+        GetAssemblyDefinition (assembly);
+
+            //
+            // This part tries to simulate loading of top-level
+            // types only, any missing dependencies are ignores here.
+            // Full error report is reported later when the type is
+            // actually used
+            //
+            Type[] all_types;
+            try {
+                all_types = assembly.GetTypes ();
+            } catch (ReflectionTypeLoadException e) {
+                all_types = e.Types;
+            }
+
+            ImportTypes (all_types, targetNamespace, true);
+        }
+
+        public ImportedModuleDefinition ImportModule (Module module, RootNamespace targetNamespace)
+        {
+            var module_definition = new ImportedModuleDefinition (module);
+            module_definition.ReadAttributes ();
+
+            Type[] all_types;
+            try {
+                all_types = module.GetTypes ();
+            } catch (ReflectionTypeLoadException e) {
+                all_types = e.Types;
+            }
+
+            ImportTypes (all_types, targetNamespace, false);
+
+            return module_definition;
+        }
+
+        void Initialize (BuiltinTypes builtin)
+        {
+            //
+            // Setup mapping for build-in types to avoid duplication of their definition
+            //
+            compiled_types.Add (typeof (object), builtin.Object);
+            compiled_types.Add (typeof (System.ValueType), builtin.ValueType);
+            compiled_types.Add (typeof (System.Attribute), builtin.Attribute);
+
+            compiled_types.Add (typeof (int), builtin.Int);
+            compiled_types.Add (typeof (long), builtin.Long);
+            compiled_types.Add (typeof (uint), builtin.UInt);
+            compiled_types.Add (typeof (ulong), builtin.ULong);
+            compiled_types.Add (typeof (byte), builtin.Byte);
+            compiled_types.Add (typeof (sbyte), builtin.SByte);
+            compiled_types.Add (typeof (short), builtin.Short);
+            compiled_types.Add (typeof (ushort), builtin.UShort);
+
+            compiled_types.Add (typeof (System.Collections.IEnumerator), builtin.IEnumerator);
+            compiled_types.Add (typeof (System.Collections.IEnumerable), builtin.IEnumerable);
+            compiled_types.Add (typeof (System.IDisposable), builtin.IDisposable);
+
+            compiled_types.Add (typeof (char), builtin.Char);
+            compiled_types.Add (typeof (string), builtin.String);
+            compiled_types.Add (typeof (float), builtin.Float);
+            compiled_types.Add (typeof (double), builtin.Double);
+            compiled_types.Add (typeof (decimal), builtin.Decimal);
+            compiled_types.Add (typeof (bool), builtin.Bool);
+            compiled_types.Add (typeof (System.IntPtr), builtin.IntPtr);
+            compiled_types.Add (typeof (System.UIntPtr), builtin.UIntPtr);
+
+            compiled_types.Add (typeof (System.MulticastDelegate), builtin.MulticastDelegate);
+            compiled_types.Add (typeof (System.Delegate), builtin.Delegate);
+            compiled_types.Add (typeof (System.Enum), builtin.Enum);
+            compiled_types.Add (typeof (System.Array), builtin.Array);
+            compiled_types.Add (typeof (void), builtin.Void);
+            compiled_types.Add (typeof (System.Type), builtin.Type);
+            compiled_types.Add (typeof (System.Exception), builtin.Exception);
+            compiled_types.Add (typeof (System.RuntimeFieldHandle), builtin.RuntimeFieldHandle);
+            compiled_types.Add (typeof (System.RuntimeTypeHandle), builtin.RuntimeTypeHandle);
+        }
+    }
+
+    [System.Runtime.InteropServices.StructLayout (System.Runtime.InteropServices.LayoutKind.Explicit)]
+    struct SingleConverter
+    {
+        [System.Runtime.InteropServices.FieldOffset (0)]
+        int i;
+
+#pragma warning disable 414
+        [System.Runtime.InteropServices.FieldOffset (0)]
+        float f;
+#pragma warning restore 414
+
+        public static int SingleToInt32Bits (float v)
+        {
+            SingleConverter c = new SingleConverter ();
+            c.f = v;
+            return c.i;
+        }
+    }
+
+#endif
+
+    public class AssemblyDefinitionDynamic : AssemblyDefinition
+    {
+        //
+        // In-memory only assembly container
+        //
+        public AssemblyDefinitionDynamic (ModuleContainer module, string name)
+            : base (module, name)
+        {
+        }
+
+        //
+        // Assembly container with file output
+        //
+        public AssemblyDefinitionDynamic (ModuleContainer module, string name, string fileName)
+            : base (module, name, fileName)
+        {
+        }
+
+        public Module IncludeModule (string moduleFile)
+        {
+            return builder_extra.AddModule (moduleFile);
+        }
+
+#if !STATIC
+        public override ModuleBuilder CreateModuleBuilder ()
+        {
+            if (file_name == null)
+                return Builder.DefineDynamicModule (Name, false);
+
+            return base.CreateModuleBuilder ();
+        }
+#endif
+        //
+        // Initializes the code generator
+        //
+        public bool Create (AppDomain domain, AssemblyBuilderAccess access)
+        {
+#if STATIC
+            throw new NotSupportedException ();
+#else
+            ResolveAssemblySecurityAttributes ();
+            var an = CreateAssemblyName ();
+
+            Builder = file_name == null ?
+                domain.DefineDynamicAssembly (an, access) :
+                domain.DefineDynamicAssembly (an, access, Dirname (file_name));
+
+            module.Create (this, CreateModuleBuilder ());
+            builder_extra = new AssemblyBuilderMonoSpecific (Builder, Compiler);
+            return true;
+#endif
+        }
+
+        static string Dirname (string name)
+        {
+            int pos = name.LastIndexOf ('/');
+
+            if (pos != -1)
+                return name.Substring (0, pos);
+
+            pos = name.LastIndexOf ('\\');
+            if (pos != -1)
+                return name.Substring (0, pos);
+
+            return ".";
+        }
+
+#if !STATIC
+        protected override void SaveModule (PortableExecutableKinds pekind, ImageFileMachine machine)
+        {
+            try {
+                var module_only = typeof (AssemblyBuilder).GetProperty ("IsModuleOnly", BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
+                var set_module_only = module_only.GetSetMethod (true);
+
+                set_module_only.Invoke (Builder, new object[] { true });
+            } catch {
+                base.SaveModule (pekind, machine);
+            }
+
+            Builder.Save (file_name, pekind, machine);
+        }
+#endif
+    }
+
+    //
+    // Extension to System.Reflection.Emit.AssemblyBuilder to have fully compatible
+    // compiler
+    //
+    class AssemblyBuilderMonoSpecific : AssemblyBuilderExtension
+    {
+        static MethodInfo adder_method;
+        static MethodInfo add_permission;
+        static MethodInfo add_type_forwarder;
+        static MethodInfo win32_icon_define;
+        static FieldInfo assembly_version;
+        static FieldInfo assembly_algorithm;
+        static FieldInfo assembly_culture;
+        static FieldInfo assembly_flags;
+
+        AssemblyBuilder builder;
+
+        public AssemblyBuilderMonoSpecific (AssemblyBuilder ab, CompilerContext ctx)
+            : base (ctx)
+        {
+            this.builder = ab;
+        }
+
+        public override Module AddModule (string module)
+        {
+            try {
+                if (adder_method == null)
+                    adder_method = typeof (AssemblyBuilder).GetMethod ("AddModule", BindingFlags.Instance | BindingFlags.NonPublic);
+
+                return (Module) adder_method.Invoke (builder, new object[] { module });
+            } catch {
+                return base.AddModule (module);
+            }
+        }
+
+        public override void AddPermissionRequests (PermissionSet[] permissions)
+        {
+            try {
+                if (add_permission == null)
+                    add_permission = typeof (AssemblyBuilder).GetMethod ("AddPermissionRequests", BindingFlags.Instance | BindingFlags.NonPublic);
+
+                add_permission.Invoke (builder, permissions);
+            } catch {
+                base.AddPermissionRequests (permissions);
+            }
+        }
+
+        public override void AddTypeForwarder (TypeSpec type, Location loc)
+        {
+            try {
+                if (add_type_forwarder == null) {
+                    add_type_forwarder = typeof (AssemblyBuilder).GetMethod ("AddTypeForwarder", BindingFlags.NonPublic | BindingFlags.Instance);
+                }
+
+                add_type_forwarder.Invoke (builder, new object[] { type.GetMetaInfo () });
+            } catch {
+                base.AddTypeForwarder (type, loc);
+            }
+        }
+
+        public override void DefineWin32IconResource (string fileName)
+        {
+            try {
+                if (win32_icon_define == null)
+                    win32_icon_define = typeof (AssemblyBuilder).GetMethod ("DefineIconResource", BindingFlags.Instance | BindingFlags.NonPublic);
+
+                win32_icon_define.Invoke (builder, new object[] { fileName });
+            } catch {
+                base.DefineWin32IconResource (fileName);
+            }
+        }
+
+        public override void SetAlgorithmId (uint value, Location loc)
+        {
+            try {
+                if (assembly_algorithm == null)
+                    assembly_algorithm = typeof (AssemblyBuilder).GetField ("algid", BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.SetField);
+
+                assembly_algorithm.SetValue (builder, value);
+            } catch {
+                base.SetAlgorithmId (value, loc);
+            }
+        }
+
+        public override void SetCulture (string culture, Location loc)
+        {
+            try {
+                if (assembly_culture == null)
+                    assembly_culture = typeof (AssemblyBuilder).GetField ("culture", BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.SetField);
+
+                assembly_culture.SetValue (builder, culture);
+            } catch {
+                base.SetCulture (culture, loc);
+            }
+        }
+
+        public override void SetFlags (uint flags, Location loc)
+        {
+            try {
+                if (assembly_flags == null)
+                    assembly_flags = typeof (AssemblyBuilder).GetField ("flags", BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.SetField);
+
+                assembly_flags.SetValue (builder, flags);
+            } catch {
+                base.SetFlags (flags, loc);
+            }
+        }
+
+        public override void SetVersion (Version version, Location loc)
+        {
+            try {
+                if (assembly_version == null)
+                    assembly_version = typeof (AssemblyBuilder).GetField ("version", BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.SetField);
+
+                assembly_version.SetValue (builder, version.ToString (4));
+            } catch {
+                base.SetVersion (version, loc);
+            }
+        }
+    }
+
+    //
+    // Reflection based references loader
+    //
+    class DynamicLoader : AssemblyReferencesLoader<Assembly>
+    {
+        readonly ReflectionImporter importer;
+
+        public DynamicLoader (ReflectionImporter importer, CompilerContext compiler)
+            : base (compiler)
+        {
+            paths.Add (GetSystemDir ());
+
+            this.importer = importer;
+        }
+
+        public ReflectionImporter Importer {
+            get {
+                return importer;
+            }
+        }
+
+        protected override string[] GetDefaultReferences ()
+        {
+            //
+            // For now the "default config" is harcoded into the compiler
+            // we can move this outside later
+            //
+            var default_references = new List<string> (8);
+
+            default_references.Add ("System");
+            default_references.Add ("System.Xml");
+#if NET_2_1
+            default_references.Add ("System.Net");
+            default_references.Add ("System.Windows");
+            default_references.Add ("System.Windows.Browser");
+#endif
+
+            if (compiler.Settings.Version > LanguageVersion.ISO_2)
+                default_references.Add ("System.Core");
+            if (compiler.Settings.Version > LanguageVersion.V_3)
+                default_references.Add ("Microsoft.CSharp");
+
+            return default_references.ToArray ();
+        }
+
+        //
+        // Returns the directory where the system assemblies are installed
+        //
+        static string GetSystemDir ()
+        {
+            return Path.GetDirectoryName (typeof (object).Assembly.Location);
+        }
+
+        public override bool HasObjectType (Assembly assembly)
+        {
+            return assembly.GetType (compiler.BuiltinTypes.Object.FullName) != null;
+        }
+
+        public override Assembly LoadAssemblyFile (string assembly, bool isImplicitReference)
+        {
+            Assembly a = null;
+
+            try {
+                try {
+                    char[] path_chars = { '/', '\\' };
+
+                    if (assembly.IndexOfAny (path_chars) != -1) {
+                        a = Assembly.LoadFrom (assembly);
+                    } else {
+                        string ass = assembly;
+                        if (ass.EndsWith (".dll") || ass.EndsWith (".exe"))
+                            ass = assembly.Substring (0, assembly.Length - 4);
+                        a = Assembly.Load (ass);
+                    }
+                } catch (FileNotFoundException) {
+                    bool err = !isImplicitReference;
+                    foreach (string dir in paths) {
+                        string full_path = Path.Combine (dir, assembly);
+                        if (!assembly.EndsWith (".dll") && !assembly.EndsWith (".exe"))
+                            full_path += ".dll";
+
+                        try {
+                            a = Assembly.LoadFrom (full_path);
+                            err = false;
+                            break;
+                        } catch (FileNotFoundException) {
+                        }
+                    }
+
+                    if (err) {
+                        Error_FileNotFound (assembly);
+                        return a;
+                    }
+                }
+            } catch (BadImageFormatException) {
+                Error_FileCorrupted (assembly);
+            }
+
+            return a;
+        }
+
+        Module LoadModuleFile (AssemblyDefinitionDynamic assembly, string module)
+        {
+            string total_log = "";
+
+            try {
+                try {
+                    return assembly.IncludeModule (module);
+                } catch (FileNotFoundException) {
+                    bool err = true;
+                    foreach (string dir in paths) {
+                        string full_path = Path.Combine (dir, module);
+                        if (!module.EndsWith (".netmodule"))
+                            full_path += ".netmodule";
+
+                        try {
+                            return assembly.IncludeModule (full_path);
+                        } catch (FileNotFoundException ff) {
+                            total_log += ff.FusionLog;
+                        }
+                    }
+                    if (err) {
+                        Error_FileNotFound (module);
+                        return null;
+                    }
+                }
+            } catch (BadImageFormatException) {
+                Error_FileCorrupted (module);
+            }
+
+            return null;
+        }
+
+        public void LoadModules (AssemblyDefinitionDynamic assembly, RootNamespace targetNamespace)
+        {
+            foreach (var moduleName in compiler.Settings.Modules) {
+                var m = LoadModuleFile (assembly, moduleName);
+                if (m == null)
+                    continue;
+
+                var md = importer.ImportModule (m, targetNamespace);
+                assembly.AddModule (md);
+            }
+        }
+
+        public override void LoadReferences (ModuleContainer module)
+        {
+            Assembly corlib;
+            List<Tuple<RootNamespace, Assembly>> loaded;
+            base.LoadReferencesCore (module, out corlib, out loaded);
+
+            if (corlib == null)
+                return;
+
+            importer.ImportAssembly (corlib, module.GlobalRootNamespace);
+            foreach (var entry in loaded) {
+                importer.ImportAssembly (entry.Item2, entry.Item1);
+            }
+        }
+    }
+}
+
+//
+// reflection.cs: System.Reflection and System.Reflection.Emit specific implementations
+//
+// Author: Marek Safar (marek.safar@gmail.com)
+//
+// Dual licensed under the terms of the MIT X11 or GNU GPL
+//
+// Copyright 2009-2010 Novell, Inc.
+//
+//
+
+using System;
+using System.Collections.Generic;
+using System.Reflection;
+using System.IO;
+using System.Runtime.CompilerServices;
+using System.Reflection.Emit;
+using System.Security;
+
+namespace Mono.CSharp
+{
+#if STATIC
+    public class ReflectionImporter
+    {
+        public ReflectionImporter (ModuleContainer module, BuiltinTypes builtin)
+        {
+            throw new NotSupportedException ();
+        }
+
+        public void ImportAssembly (Assembly assembly, RootNamespace targetNamespace)
+        {
+            throw new NotSupportedException ();
+        }
+
+        public ImportedModuleDefinition ImportModule (Module module, RootNamespace targetNamespace)
+        {
+            throw new NotSupportedException ();
+        }
+
+        public TypeSpec ImportType (Type type)
+        {
+            throw new NotSupportedException ();
+        }
+    }
+#else
+    public sealed class ReflectionImporter : MetadataImporter
+    {
+        public ReflectionImporter (ModuleContainer module, BuiltinTypes builtin)
+            : base (module)
+        {
+            Initialize (builtin);
+        }
+
+        public override void AddCompiledType (TypeBuilder builder, TypeSpec spec)
+        {
+        }
+
+        protected override MemberKind DetermineKindFromBaseType (Type baseType)
+        {
+            if (baseType == typeof (ValueType))
+                return MemberKind.Struct;
+
+            if (baseType == typeof (System.Enum))
+                return MemberKind.Enum;
+
+            if (baseType == typeof (MulticastDelegate))
+                return MemberKind.Delegate;
+
+            return MemberKind.Class;
+        }
+
+        protected override bool HasVolatileModifier (Type[] modifiers)
+        {
+            foreach (var t in modifiers) {
+                if (t == typeof (IsVolatile))
+                    return true;
+            }
+
+            return false;
+        }
+
+        public void ImportAssembly (Assembly assembly, RootNamespace targetNamespace)
+        {
+            // It can be used more than once when importing same assembly
+            // into 2 or more global aliases
+        GetAssemblyDefinition (assembly);
+
+            //
+            // This part tries to simulate loading of top-level
+            // types only, any missing dependencies are ignores here.
+            // Full error report is reported later when the type is
+            // actually used
+            //
+            Type[] all_types;
+            try {
+                all_types = assembly.GetTypes ();
+            } catch (ReflectionTypeLoadException e) {
+                all_types = e.Types;
+            }
+
+            ImportTypes (all_types, targetNamespace, true);
+        }
+
+        public ImportedModuleDefinition ImportModule (Module module, RootNamespace targetNamespace)
+        {
+            var module_definition = new ImportedModuleDefinition (module);
+            module_definition.ReadAttributes ();
+
+            Type[] all_types;
+            try {
+                all_types = module.GetTypes ();
+            } catch (ReflectionTypeLoadException e) {
+                all_types = e.Types;
+            }
+
+            ImportTypes (all_types, targetNamespace, false);
+
+            return module_definition;
+        }
+
+        void Initialize (BuiltinTypes builtin)
+        {
+            //
+            // Setup mapping for build-in types to avoid duplication of their definition
+            //
+            compiled_types.Add (typeof (object), builtin.Object);
+            compiled_types.Add (typeof (System.ValueType), builtin.ValueType);
+            compiled_types.Add (typeof (System.Attribute), builtin.Attribute);
+
+            compiled_types.Add (typeof (int), builtin.Int);
+            compiled_types.Add (typeof (long), builtin.Long);
+            compiled_types.Add (typeof (uint), builtin.UInt);
+            compiled_types.Add (typeof (ulong), builtin.ULong);
+            compiled_types.Add (typeof (byte), builtin.Byte);
+            compiled_types.Add (typeof (sbyte), builtin.SByte);
+            compiled_types.Add (typeof (short), builtin.Short);
+            compiled_types.Add (typeof (ushort), builtin.UShort);
+
+            compiled_types.Add (typeof (System.Collections.IEnumerator), builtin.IEnumerator);
+            compiled_types.Add (typeof (System.Collections.IEnumerable), builtin.IEnumerable);
+            compiled_types.Add (typeof (System.IDisposable), builtin.IDisposable);
+
+            compiled_types.Add (typeof (char), builtin.Char);
+            compiled_types.Add (typeof (string), builtin.String);
+            compiled_types.Add (typeof (float), builtin.Float);
+            compiled_types.Add (typeof (double), builtin.Double);
+            compiled_types.Add (typeof (decimal), builtin.Decimal);
+            compiled_types.Add (typeof (bool), builtin.Bool);
+            compiled_types.Add (typeof (System.IntPtr), builtin.IntPtr);
+            compiled_types.Add (typeof (System.UIntPtr), builtin.UIntPtr);
+
+            compiled_types.Add (typeof (System.MulticastDelegate), builtin.MulticastDelegate);
+            compiled_types.Add (typeof (System.Delegate), builtin.Delegate);
+            compiled_types.Add (typeof (System.Enum), builtin.Enum);
+            compiled_types.Add (typeof (System.Array), builtin.Array);
+            compiled_types.Add (typeof (void), builtin.Void);
+            compiled_types.Add (typeof (System.Type), builtin.Type);
+            compiled_types.Add (typeof (System.Exception), builtin.Exception);
+            compiled_types.Add (typeof (System.RuntimeFieldHandle), builtin.RuntimeFieldHandle);
+            compiled_types.Add (typeof (System.RuntimeTypeHandle), builtin.RuntimeTypeHandle);
+        }
+    }
+
+    [System.Runtime.InteropServices.StructLayout (System.Runtime.InteropServices.LayoutKind.Explicit)]
+    struct SingleConverter
+    {
+        [System.Runtime.InteropServices.FieldOffset (0)]
+        int i;
+
+#pragma warning disable 414
+        [System.Runtime.InteropServices.FieldOffset (0)]
+        float f;
+#pragma warning restore 414
+
+        public static int SingleToInt32Bits (float v)
+        {
+            SingleConverter c = new SingleConverter ();
+            c.f = v;
+            return c.i;
+        }
+    }
+
+#endif
+
+    public class AssemblyDefinitionDynamic : AssemblyDefinition
+    {
+        //
+        // In-memory only assembly container
+        //
+        public AssemblyDefinitionDynamic (ModuleContainer module, string name)
+            : base (module, name)
+        {
+        }
+
+        //
+        // Assembly container with file output
+        //
+        public AssemblyDefinitionDynamic (ModuleContainer module, string name, string fileName)
+            : base (module, name, fileName)
+        {
+        }
+
+        public Module IncludeModule (string moduleFile)
+        {
+            return builder_extra.AddModule (moduleFile);
+        }
+
+#if !STATIC
+        public override ModuleBuilder CreateModuleBuilder ()
+        {
+            if (file_name == null)
+                return Builder.DefineDynamicModule (Name, false);
+
+            return base.CreateModuleBuilder ();
+        }
+#endif
+        //
+        // Initializes the code generator
+        //
+        public bool Create (AppDomain domain, AssemblyBuilderAccess access)
+        {
+#if STATIC
+            throw new NotSupportedException ();
+#else
+            ResolveAssemblySecurityAttributes ();
+            var an = CreateAssemblyName ();
+
+            Builder = file_name == null ?
+                domain.DefineDynamicAssembly (an, access) :
+                domain.DefineDynamicAssembly (an, access, Dirname (file_name));
+
+            module.Create (this, CreateModuleBuilder ());
+            builder_extra = new AssemblyBuilderMonoSpecific (Builder, Compiler);
+            return true;
+#endif
+        }
+
+        static string Dirname (string name)
+        {
+            int pos = name.LastIndexOf ('/');
+
+            if (pos != -1)
+                return name.Substring (0, pos);
+
+            pos = name.LastIndexOf ('\\');
+            if (pos != -1)
+                return name.Substring (0, pos);
+
+            return ".";
+        }
+
+#if !STATIC
+        protected override void SaveModule (PortableExecutableKinds pekind, ImageFileMachine machine)
+        {
+            try {
+                var module_only = typeof (AssemblyBuilder).GetProperty ("IsModuleOnly", BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
+                var set_module_only = module_only.GetSetMethod (true);
+
+                set_module_only.Invoke (Builder, new object[] { true });
+            } catch {
+                base.SaveModule (pekind, machine);
+            }
+
+            Builder.Save (file_name, pekind, machine);
+        }
+#endif
+    }
+
+    //
+    // Extension to System.Reflection.Emit.AssemblyBuilder to have fully compatible
+    // compiler
+    //
+    class AssemblyBuilderMonoSpecific : AssemblyBuilderExtension
+    {
+        static MethodInfo adder_method;
+        static MethodInfo add_permission;
+        static MethodInfo add_type_forwarder;
+        static MethodInfo win32_icon_define;
+        static FieldInfo assembly_version;
+        static FieldInfo assembly_algorithm;
+        static FieldInfo assembly_culture;
+        static FieldInfo assembly_flags;
+
+        AssemblyBuilder builder;
+
+        public AssemblyBuilderMonoSpecific (AssemblyBuilder ab, CompilerContext ctx)
+            : base (ctx)
+        {
+            this.builder = ab;
+        }
+
+        public override Module AddModule (string module)
+        {
+            try {
+                if (adder_method == null)
+                    adder_method = typeof (AssemblyBuilder).GetMethod ("AddModule", BindingFlags.Instance | BindingFlags.NonPublic);
+
+                return (Module) adder_method.Invoke (builder, new object[] { module });
+            } catch {
+                return base.AddModule (module);
+            }
+        }
+
+        public override void AddPermissionRequests (PermissionSet[] permissions)
+        {
+            try {
+                if (add_permission == null)
+                    add_permission = typeof (AssemblyBuilder).GetMethod ("AddPermissionRequests", BindingFlags.Instance | BindingFlags.NonPublic);
+
+                add_permission.Invoke (builder, permissions);
+            } catch {
+                base.AddPermissionRequests (permissions);
+            }
+        }
+
+        public override void AddTypeForwarder (TypeSpec type, Location loc)
+        {
+            try {
+                if (add_type_forwarder == null) {
+                    add_type_forwarder = typeof (AssemblyBuilder).GetMethod ("AddTypeForwarder", BindingFlags.NonPublic | BindingFlags.Instance);
+                }
+
+                add_type_forwarder.Invoke (builder, new object[] { type.GetMetaInfo () });
+            } catch {
+                base.AddTypeForwarder (type, loc);
+            }
+        }
+
+        public override void DefineWin32IconResource (string fileName)
+        {
+            try {
+                if (win32_icon_define == null)
+                    win32_icon_define = typeof (AssemblyBuilder).GetMethod ("DefineIconResource", BindingFlags.Instance | BindingFlags.NonPublic);
+
+                win32_icon_define.Invoke (builder, new object[] { fileName });
+            } catch {
+                base.DefineWin32IconResource (fileName);
+            }
+        }
+
+        public override void SetAlgorithmId (uint value, Location loc)
+        {
+            try {
+                if (assembly_algorithm == null)
+                    assembly_algorithm = typeof (AssemblyBuilder).GetField ("algid", BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.SetField);
+
+                assembly_algorithm.SetValue (builder, value);
+            } catch {
+                base.SetAlgorithmId (value, loc);
+            }
+        }
+
+        public override void SetCulture (string culture, Location loc)
+        {
+            try {
+                if (assembly_culture == null)
+                    assembly_culture = typeof (AssemblyBuilder).GetField ("culture", BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.SetField);
+
+                assembly_culture.SetValue (builder, culture);
+            } catch {
+                base.SetCulture (culture, loc);
+            }
+        }
+
+        public override void SetFlags (uint flags, Location loc)
+        {
+            try {
+                if (assembly_flags == null)
+                    assembly_flags = typeof (AssemblyBuilder).GetField ("flags", BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.SetField);
+
+                assembly_flags.SetValue (builder, flags);
+            } catch {
+                base.SetFlags (flags, loc);
+            }
+        }
+
+        public override void SetVersion (Version version, Location loc)
+        {
+            try {
+                if (assembly_version == null)
+                    assembly_version = typeof (AssemblyBuilder).GetField ("version", BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.SetField);
+
+                assembly_version.SetValue (builder, version.ToString (4));
+            } catch {
+                base.SetVersion (version, loc);
+            }
+        }
+    }
+
+    //
+    // Reflection based references loader
+    //
+    class DynamicLoader : AssemblyReferencesLoader<Assembly>
+    {
+        readonly ReflectionImporter importer;
+
+        public DynamicLoader (ReflectionImporter importer, CompilerContext compiler)
+            : base (compiler)
+        {
+            paths.Add (GetSystemDir ());
+
+            this.importer = importer;
+        }
+
+        public ReflectionImporter Importer {
+            get {
+                return importer;
+            }
+        }
+
+        protected override string[] GetDefaultReferences ()
+        {
+            //
+            // For now the "default config" is harcoded into the compiler
+            // we can move this outside later
+            //
+            var default_references = new List<string> (8);
+
+            default_references.Add ("System");
+            default_references.Add ("System.Xml");
+#if NET_2_1
+            default_references.Add ("System.Net");
+            default_references.Add ("System.Windows");
+            default_references.Add ("System.Windows.Browser");
+#endif
+
+            if (compiler.Settings.Version > LanguageVersion.ISO_2)
+                default_references.Add ("System.Core");
+            if (compiler.Settings.Version > LanguageVersion.V_3)
+                default_references.Add ("Microsoft.CSharp");
+
+            return default_references.ToArray ();
+        }
+
+        //
+        // Returns the directory where the system assemblies are installed
+        //
+        static string GetSystemDir ()
+        {
+            return Path.GetDirectoryName (typeof (object).Assembly.Location);
+        }
+
+        public override bool HasObjectType (Assembly assembly)
+        {
+            return assembly.GetType (compiler.BuiltinTypes.Object.FullName) != null;
+        }
+
+        public override Assembly LoadAssemblyFile (string assembly, bool isImplicitReference)
+        {
+            Assembly a = null;
+
+            try {
+                try {
+                    char[] path_chars = { '/', '\\' };
+
+                    if (assembly.IndexOfAny (path_chars) != -1) {
+                        a = Assembly.LoadFrom (assembly);
+                    } else {
+                        string ass = assembly;
+                        if (ass.EndsWith (".dll") || ass.EndsWith (".exe"))
+                            ass = assembly.Substring (0, assembly.Length - 4);
+                        a = Assembly.Load (ass);
+                    }
+                } catch (FileNotFoundException) {
+                    bool err = !isImplicitReference;
+                    foreach (string dir in paths) {
+                        string full_path = Path.Combine (dir, assembly);
+                        if (!assembly.EndsWith (".dll") && !assembly.EndsWith (".exe"))
+                            full_path += ".dll";
+
+                        try {
+                            a = Assembly.LoadFrom (full_path);
+                            err = false;
+                            break;
+                        } catch (FileNotFoundException) {
+                        }
+                    }
+
+                    if (err) {
+                        Error_FileNotFound (assembly);
+                        return a;
+                    }
+                }
+            } catch (BadImageFormatException) {
+                Error_FileCorrupted (assembly);
+            }
+
+            return a;
+        }
+
+        Module LoadModuleFile (AssemblyDefinitionDynamic assembly, string module)
+        {
+            string total_log = "";
+
+            try {
+                try {
+                    return assembly.IncludeModule (module);
+                } catch (FileNotFoundException) {
+                    bool err = true;
+                    foreach (string dir in paths) {
+                        string full_path = Path.Combine (dir, module);
+                        if (!module.EndsWith (".netmodule"))
+                            full_path += ".netmodule";
+
+                        try {
+                            return assembly.IncludeModule (full_path);
+                        } catch (FileNotFoundException ff) {
+                            total_log += ff.FusionLog;
+                        }
+                    }
+                    if (err) {
+                        Error_FileNotFound (module);
+                        return null;
+                    }
+                }
+            } catch (BadImageFormatException) {
+                Error_FileCorrupted (module);
+            }
+
+            return null;
+        }
+
+        public void LoadModules (AssemblyDefinitionDynamic assembly, RootNamespace targetNamespace)
+        {
+            foreach (var moduleName in compiler.Settings.Modules) {
+                var m = LoadModuleFile (assembly, moduleName);
+                if (m == null)
+                    continue;
+
+                var md = importer.ImportModule (m, targetNamespace);
+                assembly.AddModule (md);
+            }
+        }
+
+        public override void LoadReferences (ModuleContainer module)
+        {
+            Assembly corlib;
+            List<Tuple<RootNamespace, Assembly>> loaded;
+            base.LoadReferencesCore (module, out corlib, out loaded);
+
+            if (corlib == null)
+                return;
+
+            importer.ImportAssembly (corlib, module.GlobalRootNamespace);
+            foreach (var entry in loaded) {
+                importer.ImportAssembly (entry.Item2, entry.Item1);
+            }
+        }
+    }
+}
+
+/*
+ * Exchange Web Services Managed API
+ *
+ * Copyright (c) Microsoft Corporation
+ * All rights reserved.
+ *
+ * MIT License
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy of this
+ * software and associated documentation files (the "Software"), to deal in the Software
+ * without restriction, including without limitation the rights to use, copy, modify, merge,
+ * publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons
+ * to whom the Software is furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in all copies or
+ * substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED *AS IS*, WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED,
+ * INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR
+ * PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE
+ * FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
+ * OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+ * DEALINGS IN THE SOFTWARE.
+ */
+
+namespace Microsoft.Exchange.WebServices.Autodiscover
+{
+    using System;
+    using System.Collections.Generic;
+    using System.Linq;
+    using Microsoft.Exchange.WebServices.Data;
+
+    /// <summary>
+    /// Represents Outlook configuration settings.
+    /// </summary>
+    internal sealed class OutlookConfigurationSettings : ConfigurationSettingsBase
+    {
+        #region Static fields
+        /// <summary>
+        /// All user settings that are available from the Outlook provider.
+        /// </summary>
+        private static LazyMember<List<UserSettingName>> allOutlookProviderSettings = new LazyMember<List<UserSettingName>>(
+            () =>
+            {
+                List<UserSettingName> results = new List<UserSettingName>();
+                results.AddRange(OutlookUser.AvailableUserSettings);
+                results.AddRange(OutlookProtocol.AvailableUserSettings);
+                results.Add(UserSettingName.AlternateMailboxes);
+                return results;
+            });
+        #endregion
+
+        #region Private fields
+        private OutlookUser user;
+        private OutlookAccount account;
+        #endregion
+
+        /// <summary>
+        /// Initializes a new instance of the <see cref="OutlookConfigurationSettings"/> class.
+        /// </summary>
+        public OutlookConfigurationSettings()
+        {
+            this.user = new OutlookUser();
+            this.account = new OutlookAccount();
+        }
+
+        /// <summary>
+        /// Determines whether user setting is available in the OutlookConfiguration or not.
+        /// </summary>
+        /// <param name="setting">The setting.</param>
+        /// <returns>True if user setting is available, otherwise, false.
+        /// </returns>
+        internal static bool IsAvailableUserSetting(UserSettingName setting)
+        {
+            return allOutlookProviderSettings.Member.Contains(setting);
+        }
+
+        /// <summary>
+        /// Gets the namespace that defines the settings.
+        /// </summary>
+        /// <returns>The namespace that defines the settings.</returns>
+        internal override string GetNamespace()
+        {
+            return "http://schemas.microsoft.com/exchange/autodiscover/outlook/responseschema/2006a";
+        }
+
+        /// <summary>
+        /// Makes this instance a redirection response.
+        /// </summary>
+        /// <param name="redirectUrl">The redirect URL.</param>
+        internal override void MakeRedirectionResponse(Uri redirectUrl)
+        {
+            this.account = new OutlookAccount()
+            {
+                RedirectTarget = redirectUrl.ToString(),
+                ResponseType = AutodiscoverResponseType.RedirectUrl
+            };
+        }
+
+        /// <summary>
+        /// Tries to read the current XML element.
+        /// </summary>
+        /// <param name="reader">The reader.</param>
+        /// <returns>True is the current element was read, false otherwise.</returns>
+        internal override bool TryReadCurrentXmlElement(EwsXmlReader reader)
+        {
+            if (!base.TryReadCurrentXmlElement(reader))
+            {
+                switch (reader.LocalName)
+                {
+                    case XmlElementNames.User:
+                        this.user.LoadFromXml(reader);
+                        return true;
+                    case XmlElementNames.Account:
+                        this.account.LoadFromXml(reader);
+                        return true;
+                    default:
+                        reader.SkipCurrentElement();
+                        return false;
+                }
+            }
+            else
+            {
+                return true;
+            }
+        }
+
+        /// <summary>
+        /// Convert OutlookConfigurationSettings to GetUserSettings response.
+        /// </summary>
+        /// <param name="smtpAddress">SMTP address requested.</param>
+        /// <param name="requestedSettings">The requested settings.</param>
+        /// <returns>GetUserSettingsResponse</returns>
+        internal override GetUserSettingsResponse ConvertSettings(string smtpAddress, List<UserSettingName> requestedSettings)
+        {
+            GetUserSettingsResponse response = new GetUserSettingsResponse();
+            response.SmtpAddress = smtpAddress;
+
+            if (this.Error != null)
+            {
+                response.ErrorCode = AutodiscoverErrorCode.InternalServerError;
+                response.ErrorMessage = this.Error.Message;
+            }
+            else
+            {
+                switch (this.ResponseType)
+                {
+                    case AutodiscoverResponseType.Success:
+                        response.ErrorCode = AutodiscoverErrorCode.NoError;
+                        response.ErrorMessage = string.Empty;
+                        this.user.ConvertToUserSettings(requestedSettings, response);
+                        this.account.ConvertToUserSettings(requestedSettings, response);
+                        this.ReportUnsupportedSettings(requestedSettings, response);
+                        break;
+                    case AutodiscoverResponseType.Error:
+                        response.ErrorCode = AutodiscoverErrorCode.InternalServerError;
+                        response.ErrorMessage = Strings.InvalidAutodiscoverServiceResponse;
+                        break;
+                    case AutodiscoverResponseType.RedirectAddress:
+                        response.ErrorCode = AutodiscoverErrorCode.RedirectAddress;
+                        response.ErrorMessage = string.Empty;
+                        response.RedirectTarget = this.RedirectTarget;
+                        break;
+                    case AutodiscoverResponseType.RedirectUrl:
+                        response.ErrorCode = AutodiscoverErrorCode.RedirectUrl;
+                        response.ErrorMessage = string.Empty;
+                        response.RedirectTarget = this.RedirectTarget;
+                        break;
+                    default:
+                        EwsUtilities.Assert(
+                            false,
+                            "OutlookConfigurationSettings.ConvertSettings",
+                            "An unexpected error has occured. This code path should never be reached.");
+                        break;
+                }
+            }
+            return response;
+        }
+
+        /// <summary>
+        /// Reports any requested user settings that aren't supported by the Outlook provider.
+        /// </summary>
+        /// <param name="requestedSettings">The requested settings.</param>
+        /// <param name="response">The response.</param>
+        private void ReportUnsupportedSettings(List<UserSettingName> requestedSettings, GetUserSettingsResponse response)
+        {
+            // In English: find settings listed in requestedSettings that are not supported by the Legacy provider.
+            IEnumerable<UserSettingName> invalidSettingQuery = from setting in requestedSettings
+                                                               where !OutlookConfigurationSettings.IsAvailableUserSetting(setting)
+                                                               select setting;
+
+            // Add any unsupported settings to the UserSettingsError collection.
+            foreach (UserSettingName invalidSetting in invalidSettingQuery)
+            {
+                UserSettingError settingError = new UserSettingError()
+                {
+                    ErrorCode = AutodiscoverErrorCode.InvalidSetting,
+                    SettingName = invalidSetting.ToString(),
+                    ErrorMessage = string.Format(Strings.AutodiscoverInvalidSettingForOutlookProvider, invalidSetting.ToString())
+                };
+                response.UserSettingErrors.Add(settingError);
+            }
+        }
+
+        /// <summary>
+        /// Gets the type of the response.
+        /// </summary>
+        /// <value>The type of the response.</value>
+        internal override AutodiscoverResponseType ResponseType
+        {
+            get
+            {
+                if (this.account != null)
+                {
+                    return this.account.ResponseType;
+                }
+                else
+                {
+                    return AutodiscoverResponseType.Error;
+                }
+            }
+        }
+
+        /// <summary>
+        /// Gets the redirect target.
+        /// </summary>
+        internal override string RedirectTarget
+        {
+            get
+            {
+                return this.account.RedirectTarget;
+            }
+        }
+    }
+}

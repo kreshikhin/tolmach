@@ -1,0 +1,1890 @@
+// Copyright 2012-2014 The Rust Project Developers. See the COPYRIGHT
+// file at the top-level directory of this distribution and at
+// http://rust-lang.org/COPYRIGHT.
+//
+// Licensed under the Apache License, Version 2.0 <LICENSE-APACHE or
+// http://www.apache.org/licenses/LICENSE-2.0> or the MIT license
+// <LICENSE-MIT or http://opensource.org/licenses/MIT>, at your
+// option. This file may not be copied, modified, or distributed
+// except according to those terms.
+
+//! Operations and constants for 64-bits floats (`f64` type)
+
+#![doc(primitive = "f64")]
+// FIXME: MIN_VALUE and MAX_VALUE literals are parsed as -inf and inf #14353
+#![allow(type_overflow)]
+
+use intrinsics;
+use mem;
+use num::{FPNormal, FPCategory, FPZero, FPSubnormal, FPInfinite, FPNaN};
+use num::Float;
+use option::Option;
+
+// FIXME(#5527): These constants should be deprecated once associated
+// constants are implemented in favour of referencing the respective
+// members of `Bounded` and `Float`.
+
+pub static RADIX: uint = 2u;
+
+pub static MANTISSA_DIGITS: uint = 53u;
+pub static DIGITS: uint = 15u;
+
+pub static EPSILON: f64 = 2.2204460492503131e-16_f64;
+
+/// Smallest finite f64 value
+pub static MIN_VALUE: f64 = -1.7976931348623157e+308_f64;
+/// Smallest positive, normalized f64 value
+pub static MIN_POS_VALUE: f64 = 2.2250738585072014e-308_f64;
+/// Largest finite f64 value
+pub static MAX_VALUE: f64 = 1.7976931348623157e+308_f64;
+
+pub static MIN_EXP: int = -1021;
+pub static MAX_EXP: int = 1024;
+
+pub static MIN_10_EXP: int = -307;
+pub static MAX_10_EXP: int = 308;
+
+pub static NAN: f64 = 0.0_f64/0.0_f64;
+
+pub static INFINITY: f64 = 1.0_f64/0.0_f64;
+
+pub static NEG_INFINITY: f64 = -1.0_f64/0.0_f64;
+
+/// Various useful constants.
+pub mod consts {
+    // FIXME: replace with mathematical constants from cmath.
+
+    // FIXME(#5527): These constants should be deprecated once associated
+    // constants are implemented in favour of referencing the respective members
+    // of `Float`.
+
+    /// Archimedes' constant
+    pub static PI: f64 = 3.14159265358979323846264338327950288_f64;
+
+    /// pi * 2.0
+    pub static PI_2: f64 = 6.28318530717958647692528676655900576_f64;
+
+    /// pi/2.0
+    pub static FRAC_PI_2: f64 = 1.57079632679489661923132169163975144_f64;
+
+    /// pi/3.0
+    pub static FRAC_PI_3: f64 = 1.04719755119659774615421446109316763_f64;
+
+    /// pi/4.0
+    pub static FRAC_PI_4: f64 = 0.785398163397448309615660845819875721_f64;
+
+    /// pi/6.0
+    pub static FRAC_PI_6: f64 = 0.52359877559829887307710723054658381_f64;
+
+    /// pi/8.0
+    pub static FRAC_PI_8: f64 = 0.39269908169872415480783042290993786_f64;
+
+    /// 1.0/pi
+    pub static FRAC_1_PI: f64 = 0.318309886183790671537767526745028724_f64;
+
+    /// 2.0/pi
+    pub static FRAC_2_PI: f64 = 0.636619772367581343075535053490057448_f64;
+
+    /// 2.0/sqrt(pi)
+    pub static FRAC_2_SQRTPI: f64 = 1.12837916709551257389615890312154517_f64;
+
+    /// sqrt(2.0)
+    pub static SQRT2: f64 = 1.41421356237309504880168872420969808_f64;
+
+    /// 1.0/sqrt(2.0)
+    pub static FRAC_1_SQRT2: f64 = 0.707106781186547524400844362104849039_f64;
+
+    /// Euler's number
+    pub static E: f64 = 2.71828182845904523536028747135266250_f64;
+
+    /// log2(e)
+    pub static LOG2_E: f64 = 1.44269504088896340735992468100189214_f64;
+
+    /// log10(e)
+    pub static LOG10_E: f64 = 0.434294481903251827651128918916605082_f64;
+
+    /// ln(2.0)
+    pub static LN_2: f64 = 0.693147180559945309417232121458176568_f64;
+
+    /// ln(10.0)
+    pub static LN_10: f64 = 2.30258509299404568401799145468436421_f64;
+}
+
+impl Float for f64 {
+    #[inline]
+    fn nan() -> f64 { NAN }
+
+    #[inline]
+    fn infinity() -> f64 { INFINITY }
+
+    #[inline]
+    fn neg_infinity() -> f64 { NEG_INFINITY }
+
+    #[inline]
+    fn neg_zero() -> f64 { -0.0 }
+
+    /// Returns `true` if the number is NaN.
+    #[inline]
+    fn is_nan(self) -> bool { self != self }
+
+    /// Returns `true` if the number is infinite.
+    #[inline]
+    fn is_infinite(self) -> bool {
+        self == Float::infinity() || self == Float::neg_infinity()
+    }
+
+    /// Returns `true` if the number is neither infinite or NaN.
+    #[inline]
+    fn is_finite(self) -> bool {
+        !(self.is_nan() || self.is_infinite())
+    }
+
+    /// Returns `true` if the number is neither zero, infinite, subnormal or NaN.
+    #[inline]
+    fn is_normal(self) -> bool {
+        self.classify() == FPNormal
+    }
+
+    /// Returns the floating point category of the number. If only one property
+    /// is going to be tested, it is generally faster to use the specific
+    /// predicate instead.
+    fn classify(self) -> FPCategory {
+        static EXP_MASK: u64 = 0x7ff0000000000000;
+        static MAN_MASK: u64 = 0x000fffffffffffff;
+
+        let bits: u64 = unsafe { mem::transmute(self) };
+        match (bits & MAN_MASK, bits & EXP_MASK) {
+            (0, 0)        => FPZero,
+            (_, 0)        => FPSubnormal,
+            (0, EXP_MASK) => FPInfinite,
+            (_, EXP_MASK) => FPNaN,
+            _             => FPNormal,
+        }
+    }
+
+    #[inline]
+    fn mantissa_digits(_: Option<f64>) -> uint { MANTISSA_DIGITS }
+
+    #[inline]
+    fn digits(_: Option<f64>) -> uint { DIGITS }
+
+    #[inline]
+    fn epsilon() -> f64 { EPSILON }
+
+    #[inline]
+    fn min_exp(_: Option<f64>) -> int { MIN_EXP }
+
+    #[inline]
+    fn max_exp(_: Option<f64>) -> int { MAX_EXP }
+
+    #[inline]
+    fn min_10_exp(_: Option<f64>) -> int { MIN_10_EXP }
+
+    #[inline]
+    fn max_10_exp(_: Option<f64>) -> int { MAX_10_EXP }
+
+    #[inline]
+    fn min_pos_value(_: Option<f64>) -> f64 { MIN_POS_VALUE }
+
+    /// Returns the mantissa, exponent and sign as integers.
+    fn integer_decode(self) -> (u64, i16, i8) {
+        let bits: u64 = unsafe { mem::transmute(self) };
+        let sign: i8 = if bits >> 63 == 0 { 1 } else { -1 };
+        let mut exponent: i16 = ((bits >> 52) & 0x7ff) as i16;
+        let mantissa = if exponent == 0 {
+            (bits & 0xfffffffffffff) << 1
+        } else {
+            (bits & 0xfffffffffffff) | 0x10000000000000
+        };
+        // Exponent bias + mantissa shift
+        exponent -= 1023 + 52;
+        (mantissa, exponent, sign)
+    }
+
+    /// Rounds towards minus infinity.
+    #[inline]
+    fn floor(self) -> f64 {
+        unsafe { intrinsics::floorf64(self) }
+    }
+
+    /// Rounds towards plus infinity.
+    #[inline]
+    fn ceil(self) -> f64 {
+        unsafe { intrinsics::ceilf64(self) }
+    }
+
+    /// Rounds to nearest integer. Rounds half-way cases away from zero.
+    #[inline]
+    fn round(self) -> f64 {
+        unsafe { intrinsics::roundf64(self) }
+    }
+
+    /// Returns the integer part of the number (rounds towards zero).
+    #[inline]
+    fn trunc(self) -> f64 {
+        unsafe { intrinsics::truncf64(self) }
+    }
+
+    /// The fractional part of the number, satisfying:
+    ///
+    /// ```rust
+    /// let x = 1.65f64;
+    /// assert!(x == x.trunc() + x.fract())
+    /// ```
+    #[inline]
+    fn fract(self) -> f64 { self - self.trunc() }
+
+    /// Fused multiply-add. Computes `(self * a) + b` with only one rounding
+    /// error. This produces a more accurate result with better performance than
+    /// a separate multiplication operation followed by an add.
+    #[inline]
+    fn mul_add(self, a: f64, b: f64) -> f64 {
+        unsafe { intrinsics::fmaf64(self, a, b) }
+    }
+
+    /// Returns the reciprocal (multiplicative inverse) of the number.
+    #[inline]
+    fn recip(self) -> f64 { 1.0 / self }
+
+    #[inline]
+    fn powf(self, n: f64) -> f64 {
+        unsafe { intrinsics::powf64(self, n) }
+    }
+
+    #[inline]
+    fn powi(self, n: i32) -> f64 {
+        unsafe { intrinsics::powif64(self, n) }
+    }
+
+    /// sqrt(2.0)
+    #[inline]
+    fn sqrt2() -> f64 { consts::SQRT2 }
+
+    /// 1.0 / sqrt(2.0)
+    #[inline]
+    fn frac_1_sqrt2() -> f64 { consts::FRAC_1_SQRT2 }
+
+    #[inline]
+    fn sqrt(self) -> f64 {
+        unsafe { intrinsics::sqrtf64(self) }
+    }
+
+    #[inline]
+    fn rsqrt(self) -> f64 { self.sqrt().recip() }
+
+    /// Archimedes' constant
+    #[inline]
+    fn pi() -> f64 { consts::PI }
+
+    /// 2.0 * pi
+    #[inline]
+    fn two_pi() -> f64 { consts::PI_2 }
+
+    /// pi / 2.0
+    #[inline]
+    fn frac_pi_2() -> f64 { consts::FRAC_PI_2 }
+
+    /// pi / 3.0
+    #[inline]
+    fn frac_pi_3() -> f64 { consts::FRAC_PI_3 }
+
+    /// pi / 4.0
+    #[inline]
+    fn frac_pi_4() -> f64 { consts::FRAC_PI_4 }
+
+    /// pi / 6.0
+    #[inline]
+    fn frac_pi_6() -> f64 { consts::FRAC_PI_6 }
+
+    /// pi / 8.0
+    #[inline]
+    fn frac_pi_8() -> f64 { consts::FRAC_PI_8 }
+
+    /// 1.0 / pi
+    #[inline]
+    fn frac_1_pi() -> f64 { consts::FRAC_1_PI }
+
+    /// 2.0 / pi
+    #[inline]
+    fn frac_2_pi() -> f64 { consts::FRAC_2_PI }
+
+    /// 2.0 / sqrt(pi)
+    #[inline]
+    fn frac_2_sqrtpi() -> f64 { consts::FRAC_2_SQRTPI }
+
+    /// Euler's number
+    #[inline]
+    fn e() -> f64 { consts::E }
+
+    /// log2(e)
+    #[inline]
+    fn log2_e() -> f64 { consts::LOG2_E }
+
+    /// log10(e)
+    #[inline]
+    fn log10_e() -> f64 { consts::LOG10_E }
+
+    /// ln(2.0)
+    #[inline]
+    fn ln_2() -> f64 { consts::LN_2 }
+
+    /// ln(10.0)
+    #[inline]
+    fn ln_10() -> f64 { consts::LN_10 }
+
+    /// Returns the exponential of the number.
+    #[inline]
+    fn exp(self) -> f64 {
+        unsafe { intrinsics::expf64(self) }
+    }
+
+    /// Returns 2 raised to the power of the number.
+    #[inline]
+    fn exp2(self) -> f64 {
+        unsafe { intrinsics::exp2f64(self) }
+    }
+
+    /// Returns the natural logarithm of the number.
+    #[inline]
+    fn ln(self) -> f64 {
+        unsafe { intrinsics::logf64(self) }
+    }
+
+    /// Returns the logarithm of the number with respect to an arbitrary base.
+    #[inline]
+    fn log(self, base: f64) -> f64 { self.ln() / base.ln() }
+
+    /// Returns the base 2 logarithm of the number.
+    #[inline]
+    fn log2(self) -> f64 {
+        unsafe { intrinsics::log2f64(self) }
+    }
+
+    /// Returns the base 10 logarithm of the number.
+    #[inline]
+    fn log10(self) -> f64 {
+        unsafe { intrinsics::log10f64(self) }
+    }
+
+    /// Converts to degrees, assuming the number is in radians.
+    #[inline]
+    fn to_degrees(self) -> f64 { self * (180.0f64 / Float::pi()) }
+
+    /// Converts to radians, assuming the number is in degrees.
+    #[inline]
+    fn to_radians(self) -> f64 {
+        let value: f64 = Float::pi();
+        self * (value / 180.0)
+    }
+}
+
+
+// Copyright 2015 The Rust Project Developers. See the COPYRIGHT
+// file at the top-level directory of this distribution and at
+// http://rust-lang.org/COPYRIGHT.
+//
+// Licensed under the Apache License, Version 2.0 <LICENSE-APACHE or
+// http://www.apache.org/licenses/LICENSE-2.0> or the MIT license
+// <LICENSE-MIT or http://opensource.org/licenses/MIT>, at your
+// option. This file may not be copied, modified, or distributed
+// except according to those terms.
+
+use prelude::*;
+use fmt::{self, Write, FlagV1};
+
+struct PadAdapter<'a, 'b: 'a> {
+    fmt: &'a mut fmt::Formatter<'b>,
+    on_newline: bool,
+}
+
+impl<'a, 'b: 'a> PadAdapter<'a, 'b> {
+    fn new(fmt: &'a mut fmt::Formatter<'b>) -> PadAdapter<'a, 'b> {
+        PadAdapter {
+            fmt: fmt,
+            on_newline: false,
+        }
+    }
+}
+
+impl<'a, 'b: 'a> fmt::Write for PadAdapter<'a, 'b> {
+    fn write_str(&mut self, mut s: &str) -> fmt::Result {
+        while !s.is_empty() {
+            if self.on_newline {
+                try!(self.fmt.write_str("    "));
+            }
+
+            let split = match s.find('\n') {
+                Some(pos) => {
+                    self.on_newline = true;
+                    pos + 1
+                }
+                None => {
+                    self.on_newline = false;
+                    s.len()
+                }
+            };
+            try!(self.fmt.write_str(&s[..split]));
+            s = &s[split..];
+        }
+
+        Ok(())
+    }
+}
+
+/// A struct to help with `fmt::Debug` implementations.
+///
+/// Constructed by the `Formatter::debug_struct` method.
+#[must_use]
+#[stable(feature = "debug_builders", since = "1.2.0")]
+pub struct DebugStruct<'a, 'b: 'a> {
+    fmt: &'a mut fmt::Formatter<'b>,
+    result: fmt::Result,
+    has_fields: bool,
+}
+
+pub fn debug_struct_new<'a, 'b>(fmt: &'a mut fmt::Formatter<'b>, name: &str)
+                                -> DebugStruct<'a, 'b> {
+    let result = fmt.write_str(name);
+    DebugStruct {
+        fmt: fmt,
+        result: result,
+        has_fields: false,
+    }
+}
+
+impl<'a, 'b: 'a> DebugStruct<'a, 'b> {
+    /// Adds a new field to the generated struct output.
+    #[stable(feature = "debug_builders", since = "1.2.0")]
+    pub fn field(&mut self, name: &str, value: &fmt::Debug) -> &mut DebugStruct<'a, 'b> {
+        self.result = self.result.and_then(|_| {
+            let prefix = if self.has_fields {
+                ","
+            } else {
+                " {"
+            };
+
+            if self.is_pretty() {
+                let mut writer = PadAdapter::new(self.fmt);
+                fmt::write(&mut writer, format_args!("{}\n{}: {:#?}", prefix, name, value))
+            } else {
+                write!(self.fmt, "{} {}: {:?}", prefix, name, value)
+            }
+        });
+
+        self.has_fields = true;
+        self
+    }
+
+    /// Finishes output and returns any error encountered.
+    #[stable(feature = "debug_builders", since = "1.2.0")]
+    pub fn finish(&mut self) -> fmt::Result {
+        if self.has_fields {
+            self.result = self.result.and_then(|_| {
+                if self.is_pretty() {
+                    self.fmt.write_str("\n}")
+                } else {
+                    self.fmt.write_str(" }")
+                }
+            });
+        }
+        self.result
+    }
+
+    fn is_pretty(&self) -> bool {
+        self.fmt.flags() & (1 << (FlagV1::Alternate as usize)) != 0
+    }
+}
+
+/// A struct to help with `fmt::Debug` implementations.
+///
+/// Constructed by the `Formatter::debug_tuple` method.
+#[must_use]
+#[stable(feature = "debug_builders", since = "1.2.0")]
+pub struct DebugTuple<'a, 'b: 'a> {
+    fmt: &'a mut fmt::Formatter<'b>,
+    result: fmt::Result,
+    has_fields: bool,
+}
+
+pub fn debug_tuple_new<'a, 'b>(fmt: &'a mut fmt::Formatter<'b>, name: &str) -> DebugTuple<'a, 'b> {
+    let result = fmt.write_str(name);
+    DebugTuple {
+        fmt: fmt,
+        result: result,
+        has_fields: false,
+    }
+}
+
+impl<'a, 'b: 'a> DebugTuple<'a, 'b> {
+    /// Adds a new field to the generated tuple struct output.
+    #[stable(feature = "debug_builders", since = "1.2.0")]
+    pub fn field(&mut self, value: &fmt::Debug) -> &mut DebugTuple<'a, 'b> {
+        self.result = self.result.and_then(|_| {
+            let (prefix, space) = if self.has_fields {
+                (",", " ")
+            } else {
+                ("(", "")
+            };
+
+            if self.is_pretty() {
+                let mut writer = PadAdapter::new(self.fmt);
+                fmt::write(&mut writer, format_args!("{}\n{:#?}", prefix, value))
+            } else {
+                write!(self.fmt, "{}{}{:?}", prefix, space, value)
+            }
+        });
+
+        self.has_fields = true;
+        self
+    }
+
+    /// Finishes output and returns any error encountered.
+    #[stable(feature = "debug_builders", since = "1.2.0")]
+    pub fn finish(&mut self) -> fmt::Result {
+        if self.has_fields {
+            self.result = self.result.and_then(|_| {
+                if self.is_pretty() {
+                    self.fmt.write_str("\n)")
+                } else {
+                    self.fmt.write_str(")")
+                }
+            });
+        }
+        self.result
+    }
+
+    fn is_pretty(&self) -> bool {
+        self.fmt.flags() & (1 << (FlagV1::Alternate as usize)) != 0
+    }
+}
+
+struct DebugInner<'a, 'b: 'a> {
+    fmt: &'a mut fmt::Formatter<'b>,
+    result: fmt::Result,
+    has_fields: bool,
+}
+
+impl<'a, 'b: 'a> DebugInner<'a, 'b> {
+    fn entry(&mut self, entry: &fmt::Debug) {
+        self.result = self.result.and_then(|_| {
+            if self.is_pretty() {
+                let mut writer = PadAdapter::new(self.fmt);
+                let prefix = if self.has_fields { "," } else { "" };
+                fmt::write(&mut writer, format_args!("{}\n{:#?}", prefix, entry))
+            } else {
+                let prefix = if self.has_fields { ", " } else { "" };
+                write!(self.fmt, "{}{:?}", prefix, entry)
+            }
+        });
+
+        self.has_fields = true;
+    }
+
+    pub fn finish(&mut self) {
+        let prefix = if self.is_pretty() && self.has_fields { "\n" } else { "" };
+        self.result = self.result.and_then(|_| self.fmt.write_str(prefix));
+    }
+
+    fn is_pretty(&self) -> bool {
+        self.fmt.flags() & (1 << (FlagV1::Alternate as usize)) != 0
+    }
+}
+
+/// A struct to help with `fmt::Debug` implementations.
+///
+/// Constructed by the `Formatter::debug_set` method.
+#[must_use]
+#[stable(feature = "debug_builders", since = "1.2.0")]
+pub struct DebugSet<'a, 'b: 'a> {
+    inner: DebugInner<'a, 'b>,
+}
+
+pub fn debug_set_new<'a, 'b>(fmt: &'a mut fmt::Formatter<'b>) -> DebugSet<'a, 'b> {
+    let result = write!(fmt, "{{");
+    DebugSet {
+        inner: DebugInner {
+            fmt: fmt,
+            result: result,
+            has_fields: false,
+        }
+    }
+}
+
+impl<'a, 'b: 'a> DebugSet<'a, 'b> {
+    /// Adds a new entry to the set output.
+    #[stable(feature = "debug_builders", since = "1.2.0")]
+    pub fn entry(&mut self, entry: &fmt::Debug) -> &mut DebugSet<'a, 'b> {
+        self.inner.entry(entry);
+        self
+    }
+
+    /// Adds the contents of an iterator of entries to the set output.
+    #[stable(feature = "debug_builders", since = "1.2.0")]
+    pub fn entries<D, I>(&mut self, entries: I) -> &mut DebugSet<'a, 'b>
+            where D: fmt::Debug, I: IntoIterator<Item=D> {
+        for entry in entries {
+            self.entry(&entry);
+        }
+        self
+    }
+
+    /// Finishes output and returns any error encountered.
+    #[stable(feature = "debug_builders", since = "1.2.0")]
+    pub fn finish(&mut self) -> fmt::Result {
+        self.inner.finish();
+        self.inner.result.and_then(|_| self.inner.fmt.write_str("}"))
+    }
+}
+
+/// A struct to help with `fmt::Debug` implementations.
+///
+/// Constructed by the `Formatter::debug_list` method.
+#[must_use]
+#[stable(feature = "debug_builders", since = "1.2.0")]
+pub struct DebugList<'a, 'b: 'a> {
+    inner: DebugInner<'a, 'b>,
+}
+
+pub fn debug_list_new<'a, 'b>(fmt: &'a mut fmt::Formatter<'b>) -> DebugList<'a, 'b> {
+    let result = write!(fmt, "[");
+    DebugList {
+        inner: DebugInner {
+            fmt: fmt,
+            result: result,
+            has_fields: false,
+        }
+    }
+}
+
+impl<'a, 'b: 'a> DebugList<'a, 'b> {
+    /// Adds a new entry to the list output.
+    #[stable(feature = "debug_builders", since = "1.2.0")]
+    pub fn entry(&mut self, entry: &fmt::Debug) -> &mut DebugList<'a, 'b> {
+        self.inner.entry(entry);
+        self
+    }
+
+    /// Adds the contents of an iterator of entries to the list output.
+    #[stable(feature = "debug_builders", since = "1.2.0")]
+    pub fn entries<D, I>(&mut self, entries: I) -> &mut DebugList<'a, 'b>
+            where D: fmt::Debug, I: IntoIterator<Item=D> {
+        for entry in entries {
+            self.entry(&entry);
+        }
+        self
+    }
+
+    /// Finishes output and returns any error encountered.
+    #[stable(feature = "debug_builders", since = "1.2.0")]
+    pub fn finish(&mut self) -> fmt::Result {
+        self.inner.finish();
+        self.inner.result.and_then(|_| self.inner.fmt.write_str("]"))
+    }
+}
+
+/// A struct to help with `fmt::Debug` implementations.
+///
+/// Constructed by the `Formatter::debug_map` method.
+#[must_use]
+#[stable(feature = "debug_builders", since = "1.2.0")]
+pub struct DebugMap<'a, 'b: 'a> {
+    fmt: &'a mut fmt::Formatter<'b>,
+    result: fmt::Result,
+    has_fields: bool,
+}
+
+pub fn debug_map_new<'a, 'b>(fmt: &'a mut fmt::Formatter<'b>) -> DebugMap<'a, 'b> {
+    let result = write!(fmt, "{{");
+    DebugMap {
+        fmt: fmt,
+        result: result,
+        has_fields: false,
+    }
+}
+
+impl<'a, 'b: 'a> DebugMap<'a, 'b> {
+    /// Adds a new entry to the map output.
+    #[stable(feature = "debug_builders", since = "1.2.0")]
+    pub fn entry(&mut self, key: &fmt::Debug, value: &fmt::Debug) -> &mut DebugMap<'a, 'b> {
+        self.result = self.result.and_then(|_| {
+            if self.is_pretty() {
+                let mut writer = PadAdapter::new(self.fmt);
+                let prefix = if self.has_fields { "," } else { "" };
+                fmt::write(&mut writer, format_args!("{}\n{:#?}: {:#?}", prefix, key, value))
+            } else {
+                let prefix = if self.has_fields { ", " } else { "" };
+                write!(self.fmt, "{}{:?}: {:?}", prefix, key, value)
+            }
+        });
+
+        self.has_fields = true;
+        self
+    }
+
+    /// Adds the contents of an iterator of entries to the map output.
+    #[stable(feature = "debug_builders", since = "1.2.0")]
+    pub fn entries<K, V, I>(&mut self, entries: I) -> &mut DebugMap<'a, 'b>
+            where K: fmt::Debug, V: fmt::Debug, I: IntoIterator<Item=(K, V)> {
+        for (k, v) in entries {
+            self.entry(&k, &v);
+        }
+        self
+    }
+
+    /// Finishes output and returns any error encountered.
+    #[stable(feature = "debug_builders", since = "1.2.0")]
+    pub fn finish(&mut self) -> fmt::Result {
+        let prefix = if self.is_pretty() && self.has_fields { "\n" } else { "" };
+        self.result.and_then(|_| write!(self.fmt, "{}}}", prefix))
+    }
+
+    fn is_pretty(&self) -> bool {
+        self.fmt.flags() & (1 << (FlagV1::Alternate as usize)) != 0
+    }
+}
+
+// Copyright 2012 The Rust Project Developers. See the COPYRIGHT
+// file at the top-level directory of this distribution and at
+// http://rust-lang.org/COPYRIGHT.
+//
+// Licensed under the Apache License, Version 2.0 <LICENSE-APACHE or
+// http://www.apache.org/licenses/LICENSE-2.0> or the MIT license
+// <LICENSE-MIT or http://opensource.org/licenses/MIT>, at your
+// option. This file may not be copied, modified, or distributed
+// except according to those terms.
+
+/*!
+
+The `ToBytes` and `IterBytes` traits
+
+*/
+
+use cast;
+use container::Container;
+use iter::Iterator;
+use option::{None, Option, Some};
+use rc::Rc;
+use str::{Str, StrSlice};
+use vec::{Vector, ImmutableVector};
+
+pub type Cb<'self> = 'self |buf: &[u8]| -> bool;
+
+///
+/// A trait to implement in order to make a type hashable;
+/// This works in combination with the trait `std::hash::Hash`, and
+/// may in the future be merged with that trait or otherwise
+/// modified when default methods and trait inheritance are
+/// completed.
+///
+/// IterBytes should be implemented so that the extent of the
+/// produced byte stream can be discovered, given the original
+/// type.
+/// For example, the IterBytes implementation for vectors emits
+/// its length first, and enums should emit their discriminant.
+///
+pub trait IterBytes {
+    /// Call the provided callback `f` one or more times with
+    /// byte-slices that should be used when computing a hash
+    /// value or otherwise "flattening" the structure into
+    /// a sequence of bytes. The `lsb0` parameter conveys
+    /// whether the caller is asking for little-endian bytes
+    /// (`true`) or big-endian (`false`); this should only be
+    /// relevant in implementations that represent a single
+    /// multi-byte datum such as a 32 bit integer or 64 bit
+    /// floating-point value. It can be safely ignored for
+    /// larger structured types as they are usually processed
+    /// left-to-right in declaration order, regardless of
+    /// underlying memory endianness.
+    ///
+    fn iter_bytes(&self, lsb0: bool, f: Cb) -> bool;
+}
+
+impl IterBytes for bool {
+    #[inline]
+    fn iter_bytes(&self, _lsb0: bool, f: Cb) -> bool {
+        f([
+            *self as u8
+        ])
+    }
+}
+
+impl IterBytes for u8 {
+    #[inline]
+    fn iter_bytes(&self, _lsb0: bool, f: Cb) -> bool {
+        f([
+            *self
+        ])
+    }
+}
+
+impl IterBytes for u16 {
+    #[inline]
+    fn iter_bytes(&self, lsb0: bool, f: Cb) -> bool {
+        if lsb0 {
+            f([
+                *self as u8,
+                (*self >> 8) as u8
+            ])
+        } else {
+            f([
+                (*self >> 8) as u8,
+                *self as u8
+            ])
+        }
+    }
+}
+
+impl IterBytes for u32 {
+    #[inline]
+    fn iter_bytes(&self, lsb0: bool, f: Cb) -> bool {
+        if lsb0 {
+            f([
+                *self as u8,
+                (*self >> 8) as u8,
+                (*self >> 16) as u8,
+                (*self >> 24) as u8,
+            ])
+        } else {
+            f([
+                (*self >> 24) as u8,
+                (*self >> 16) as u8,
+                (*self >> 8) as u8,
+                *self as u8
+            ])
+        }
+    }
+}
+
+impl IterBytes for u64 {
+    #[inline]
+    fn iter_bytes(&self, lsb0: bool, f: Cb) -> bool {
+        if lsb0 {
+            f([
+                *self as u8,
+                (*self >> 8) as u8,
+                (*self >> 16) as u8,
+                (*self >> 24) as u8,
+                (*self >> 32) as u8,
+                (*self >> 40) as u8,
+                (*self >> 48) as u8,
+                (*self >> 56) as u8
+            ])
+        } else {
+            f([
+                (*self >> 56) as u8,
+                (*self >> 48) as u8,
+                (*self >> 40) as u8,
+                (*self >> 32) as u8,
+                (*self >> 24) as u8,
+                (*self >> 16) as u8,
+                (*self >> 8) as u8,
+                *self as u8
+            ])
+        }
+    }
+}
+
+impl IterBytes for i8 {
+    #[inline]
+    fn iter_bytes(&self, lsb0: bool, f: Cb) -> bool {
+        (*self as u8).iter_bytes(lsb0, f)
+    }
+}
+
+impl IterBytes for i16 {
+    #[inline]
+    fn iter_bytes(&self, lsb0: bool, f: Cb) -> bool {
+        (*self as u16).iter_bytes(lsb0, f)
+    }
+}
+
+impl IterBytes for i32 {
+    #[inline]
+    fn iter_bytes(&self, lsb0: bool, f: Cb) -> bool {
+        (*self as u32).iter_bytes(lsb0, f)
+    }
+}
+
+impl IterBytes for i64 {
+    #[inline]
+    fn iter_bytes(&self, lsb0: bool, f: Cb) -> bool {
+        (*self as u64).iter_bytes(lsb0, f)
+    }
+}
+
+impl IterBytes for char {
+    #[inline]
+    fn iter_bytes(&self, lsb0: bool, f: Cb) -> bool {
+        (*self as u32).iter_bytes(lsb0, f)
+    }
+}
+
+#[cfg(target_word_size = "32")]
+impl IterBytes for uint {
+    #[inline]
+    fn iter_bytes(&self, lsb0: bool, f: Cb) -> bool {
+        (*self as u32).iter_bytes(lsb0, f)
+    }
+}
+
+#[cfg(target_word_size = "64")]
+impl IterBytes for uint {
+    #[inline]
+    fn iter_bytes(&self, lsb0: bool, f: Cb) -> bool {
+        (*self as u64).iter_bytes(lsb0, f)
+    }
+}
+
+impl IterBytes for int {
+    #[inline]
+    fn iter_bytes(&self, lsb0: bool, f: Cb) -> bool {
+        (*self as uint).iter_bytes(lsb0, f)
+    }
+}
+
+impl IterBytes for f32 {
+    #[inline]
+    fn iter_bytes(&self, lsb0: bool, f: Cb) -> bool {
+        let i: u32 = unsafe {
+            // 0.0 == -0.0 so they should also have the same hashcode
+            cast::transmute(if *self == -0.0 { 0.0 } else { *self })
+        };
+        i.iter_bytes(lsb0, f)
+    }
+}
+
+impl IterBytes for f64 {
+    #[inline]
+    fn iter_bytes(&self, lsb0: bool, f: Cb) -> bool {
+        let i: u64 = unsafe {
+            // 0.0 == -0.0 so they should also have the same hashcode
+            cast::transmute(if *self == -0.0 { 0.0 } else { *self })
+        };
+        i.iter_bytes(lsb0, f)
+    }
+}
+
+impl<'self,A:IterBytes> IterBytes for &'self [A] {
+    #[inline]
+    fn iter_bytes(&self, lsb0: bool, f: Cb) -> bool {
+        self.len().iter_bytes(lsb0, |b| f(b)) &&
+        self.iter().advance(|elt| elt.iter_bytes(lsb0, |b| f(b)))
+    }
+}
+
+impl<A: IterBytes> IterBytes for (A, ) {
+    fn iter_bytes(&self, lsb0: bool, f: Cb) -> bool {
+        match *self {
+            (ref a, ) => a.iter_bytes(lsb0, |b| f(b))
+        }
+    }
+}
+
+macro_rules! iter_bytes_tuple(
+    ($($A:ident),+) => (
+        impl<$($A: IterBytes),+> IterBytes for ($($A),+) {
+            fn iter_bytes(&self, lsb0: bool, f: Cb) -> bool {
+                match *self {
+                    ($(ref $A),+) => {
+                        $(
+                            $A .iter_bytes(lsb0, |b| f(b))
+                        )&&+
+                    }
+                }
+            }
+        }
+    )
+)
+
+iter_bytes_tuple!(A, B)
+iter_bytes_tuple!(A, B, C)
+iter_bytes_tuple!(A, B, C, D)
+iter_bytes_tuple!(A, B, C, D, E)
+iter_bytes_tuple!(A, B, C, D, E, F)
+iter_bytes_tuple!(A, B, C, D, E, F, G)
+iter_bytes_tuple!(A, B, C, D, E, F, G, H)
+
+impl<A:IterBytes> IterBytes for ~[A] {
+    #[inline]
+    fn iter_bytes(&self, lsb0: bool, f: Cb) -> bool {
+        self.as_slice().iter_bytes(lsb0, f)
+    }
+}
+
+impl<A:IterBytes> IterBytes for @[A] {
+    #[inline]
+    fn iter_bytes(&self, lsb0: bool, f: Cb) -> bool {
+        self.as_slice().iter_bytes(lsb0, f)
+    }
+}
+
+impl<'self> IterBytes for &'self str {
+    #[inline]
+    fn iter_bytes(&self, _lsb0: bool, f: Cb) -> bool {
+        // Terminate the string with a byte that does not appear in UTF-8
+        f(self.as_bytes()) && f([0xFF])
+    }
+}
+
+impl IterBytes for ~str {
+    #[inline]
+    fn iter_bytes(&self, lsb0: bool, f: Cb) -> bool {
+        self.as_slice().iter_bytes(lsb0, f)
+    }
+}
+
+impl IterBytes for @str {
+    #[inline]
+    fn iter_bytes(&self, lsb0: bool, f: Cb) -> bool {
+        self.as_slice().iter_bytes(lsb0, f)
+    }
+}
+
+impl<A:IterBytes> IterBytes for Option<A> {
+    #[inline]
+    fn iter_bytes(&self, lsb0: bool, f: Cb) -> bool {
+        match *self {
+          Some(ref a) => 0u8.iter_bytes(lsb0, |b| f(b)) && a.iter_bytes(lsb0, |b| f(b)),
+          None => 1u8.iter_bytes(lsb0, f)
+        }
+    }
+}
+
+impl<'self,A:IterBytes> IterBytes for &'self A {
+    #[inline]
+    fn iter_bytes(&self, lsb0: bool, f: Cb) -> bool {
+        (**self).iter_bytes(lsb0, f)
+    }
+}
+
+impl<A:IterBytes> IterBytes for @A {
+    #[inline]
+    fn iter_bytes(&self, lsb0: bool, f: Cb) -> bool {
+        (**self).iter_bytes(lsb0, f)
+    }
+}
+
+impl<A:IterBytes> IterBytes for @mut A {
+    #[inline]
+    fn iter_bytes(&self, lsb0: bool, f: Cb) -> bool {
+        (**self).iter_bytes(lsb0, f)
+    }
+}
+
+impl<A:IterBytes> IterBytes for Rc<A> {
+    #[inline]
+    fn iter_bytes(&self, lsb0: bool, f: Cb) -> bool {
+        self.borrow().iter_bytes(lsb0, f)
+    }
+}
+
+impl<A:IterBytes> IterBytes for ~A {
+    #[inline]
+    fn iter_bytes(&self, lsb0: bool, f: Cb) -> bool {
+        (**self).iter_bytes(lsb0, f)
+    }
+}
+
+// NB: raw-pointer IterBytes does _not_ dereference
+// to the target; it just gives you the pointer-bytes.
+impl<A> IterBytes for *A {
+    #[inline]
+    fn iter_bytes(&self, lsb0: bool, f: Cb) -> bool {
+        (*self as uint).iter_bytes(lsb0, f)
+    }
+}
+
+impl<A> IterBytes for *mut A {
+    #[inline]
+    fn iter_bytes(&self, lsb0: bool, f: Cb) -> bool {
+        (*self as uint).iter_bytes(lsb0, f)
+    }
+}
+
+/// A trait for converting a value to a list of bytes.
+pub trait ToBytes {
+    /// Converts the current value to a list of bytes. This is equivalent to
+    /// invoking iter_bytes on a type and collecting all yielded values in an
+    /// array
+    fn to_bytes(&self, lsb0: bool) -> ~[u8];
+}
+
+impl<A:IterBytes> ToBytes for A {
+    fn to_bytes(&self, lsb0: bool) -> ~[u8] {
+        use io::mem;
+        use io::Writer;
+
+        mem::with_mem_writer(|wr| {
+            self.iter_bytes(lsb0, |bytes| {
+                wr.write(bytes);
+                true
+            });
+        })
+    }
+}
+
+#[cfg(test)]
+mod test {
+    use super::*;
+    // just test to see if it compiles:
+    #[test] fn iterbytes_compiles () {
+        takes_iterbytes((3,4,5,false));
+    }
+    fn takes_iterbytes<T : IterBytes>(_x : T) {}
+}
+
+// Copyright 2012-2013 The Rust Project Developers. See the COPYRIGHT
+// file at the top-level directory of this distribution and at
+// http://rust-lang.org/COPYRIGHT.
+//
+// Licensed under the Apache License, Version 2.0 <LICENSE-APACHE or
+// http://www.apache.org/licenses/LICENSE-2.0> or the MIT license
+// <LICENSE-MIT or http://opensource.org/licenses/MIT>, at your
+// option. This file may not be copied, modified, or distributed
+// except according to those terms.
+
+//! The compiler code necessary to implement the `#[derive(Encodable)]`
+//! (and `Decodable`, in decodable.rs) extension.  The idea here is that
+//! type-defining items may be tagged with `#[derive(Encodable, Decodable)]`.
+//!
+//! For example, a type like:
+//!
+//! ```ignore
+//! #[derive(Encodable, Decodable)]
+//! struct Node { id: usize }
+//! ```
+//!
+//! would generate two implementations like:
+//!
+//! ```ignore
+//! impl<S: Encoder<E>, E> Encodable<S, E> for Node {
+//!     fn encode(&self, s: &mut S) -> Result<(), E> {
+//!         s.emit_struct("Node", 1, |this| {
+//!             this.emit_struct_field("id", 0, |this| {
+//!                 Encodable::encode(&self.id, this)
+//!                 /* this.emit_usize(self.id) can also be used */
+//!             })
+//!         })
+//!     }
+//! }
+//!
+//! impl<D: Decoder<E>, E> Decodable<D, E> for Node {
+//!     fn decode(d: &mut D) -> Result<Node, E> {
+//!         d.read_struct("Node", 1, |this| {
+//!             match this.read_struct_field("id", 0, |this| Decodable::decode(this)) {
+//!                 Ok(id) => Ok(Node { id: id }),
+//!                 Err(e) => Err(e),
+//!             }
+//!         })
+//!     }
+//! }
+//! ```
+//!
+//! Other interesting scenarios are when the item has type parameters or
+//! references other non-built-in types.  A type definition like:
+//!
+//! ```ignore
+//! #[derive(Encodable, Decodable)]
+//! struct Spanned<T> { node: T, span: Span }
+//! ```
+//!
+//! would yield functions like:
+//!
+//! ```ignore
+//! impl<
+//!     S: Encoder<E>,
+//!     E,
+//!     T: Encodable<S, E>
+//! > Encodable<S, E> for Spanned<T> {
+//!     fn encode(&self, s: &mut S) -> Result<(), E> {
+//!         s.emit_struct("Spanned", 2, |this| {
+//!             this.emit_struct_field("node", 0, |this| self.node.encode(this))
+//!                 .unwrap();
+//!             this.emit_struct_field("span", 1, |this| self.span.encode(this))
+//!         })
+//!     }
+//! }
+//!
+//! impl<
+//!     D: Decoder<E>,
+//!     E,
+//!     T: Decodable<D, E>
+//! > Decodable<D, E> for Spanned<T> {
+//!     fn decode(d: &mut D) -> Result<Spanned<T>, E> {
+//!         d.read_struct("Spanned", 2, |this| {
+//!             Ok(Spanned {
+//!                 node: this.read_struct_field("node", 0, |this| Decodable::decode(this))
+//!                     .unwrap(),
+//!                 span: this.read_struct_field("span", 1, |this| Decodable::decode(this))
+//!                     .unwrap(),
+//!             })
+//!         })
+//!     }
+//! }
+//! ```
+
+use ast::{MetaItem, Expr, ExprRet, MutMutable};
+use codemap::Span;
+use ext::base::{ExtCtxt,Annotatable};
+use ext::build::AstBuilder;
+use ext::deriving::generic::*;
+use ext::deriving::generic::ty::*;
+use parse::token;
+use ptr::P;
+
+pub fn expand_deriving_rustc_encodable(cx: &mut ExtCtxt,
+                                       span: Span,
+                                       mitem: &MetaItem,
+                                       item: &Annotatable,
+                                       push: &mut FnMut(Annotatable))
+{
+    expand_deriving_encodable_imp(cx, span, mitem, item, push, "rustc_serialize")
+}
+
+pub fn expand_deriving_encodable(cx: &mut ExtCtxt,
+                                 span: Span,
+                                 mitem: &MetaItem,
+                                 item: &Annotatable,
+                                 push: &mut FnMut(Annotatable))
+{
+    expand_deriving_encodable_imp(cx, span, mitem, item, push, "serialize")
+}
+
+fn expand_deriving_encodable_imp(cx: &mut ExtCtxt,
+                                 span: Span,
+                                 mitem: &MetaItem,
+                                 item: &Annotatable,
+                                 push: &mut FnMut(Annotatable),
+                                 krate: &'static str)
+{
+    if cx.crate_root != Some("std") {
+        // FIXME(#21880): lift this requirement.
+        cx.span_err(span, "this trait cannot be derived with #![no_std] \
+                           or #![no_core]");
+        return;
+    }
+
+    let trait_def = TraitDef {
+        span: span,
+        attributes: Vec::new(),
+        path: Path::new_(vec!(krate, "Encodable"), None, vec!(), true),
+        additional_bounds: Vec::new(),
+        generics: LifetimeBounds::empty(),
+        is_unsafe: false,
+        methods: vec!(
+            MethodDef {
+                name: "encode",
+                generics: LifetimeBounds {
+                    lifetimes: Vec::new(),
+                    bounds: vec!(("__S", vec!(Path::new_(
+                                    vec!(krate, "Encoder"), None,
+                                    vec!(), true))))
+                },
+                explicit_self: borrowed_explicit_self(),
+                args: vec!(Ptr(Box::new(Literal(Path::new_local("__S"))),
+                            Borrowed(None, MutMutable))),
+                ret_ty: Literal(Path::new_(
+                    pathvec_std!(cx, core::result::Result),
+                    None,
+                    vec!(Box::new(Tuple(Vec::new())), Box::new(Literal(Path::new_(
+                        vec!["__S", "Error"], None, vec![], false
+                    )))),
+                    true
+                )),
+                attributes: Vec::new(),
+                is_unsafe: false,
+                combine_substructure: combine_substructure(Box::new(|a, b, c| {
+                    encodable_substructure(a, b, c)
+                })),
+            }
+        ),
+        associated_types: Vec::new(),
+    };
+
+    trait_def.expand(cx, mitem, item, push)
+}
+
+fn encodable_substructure(cx: &mut ExtCtxt, trait_span: Span,
+                          substr: &Substructure) -> P<Expr> {
+    let encoder = substr.nonself_args[0].clone();
+    // throw an underscore in front to suppress unused variable warnings
+    let blkarg = cx.ident_of("_e");
+    let blkencoder = cx.expr_ident(trait_span, blkarg);
+    let encode = cx.ident_of("encode");
+
+    return match *substr.fields {
+        Struct(ref fields) => {
+            let emit_struct_field = cx.ident_of("emit_struct_field");
+            let mut stmts = Vec::new();
+            for (i, &FieldInfo {
+                    name,
+                    ref self_,
+                    span,
+                    ..
+                }) in fields.iter().enumerate() {
+                let name = match name {
+                    Some(id) => id.name.as_str(),
+                    None => {
+                        token::intern_and_get_ident(&format!("_field{}", i))
+                    }
+                };
+                let enc = cx.expr_method_call(span, self_.clone(),
+                                              encode, vec!(blkencoder.clone()));
+                let lambda = cx.lambda_expr_1(span, enc, blkarg);
+                let call = cx.expr_method_call(span, blkencoder.clone(),
+                                               emit_struct_field,
+                                               vec!(cx.expr_str(span, name),
+                                                 cx.expr_usize(span, i),
+                                                 lambda));
+
+                // last call doesn't need a try!
+                let last = fields.len() - 1;
+                let call = if i != last {
+                    cx.expr_try(span, call)
+                } else {
+                    cx.expr(span, ExprRet(Some(call)))
+                };
+                stmts.push(cx.stmt_expr(call));
+            }
+
+            // unit structs have no fields and need to return Ok()
+            if stmts.is_empty() {
+                let ret_ok = cx.expr(trait_span,
+                                     ExprRet(Some(cx.expr_ok(trait_span,
+                                                             cx.expr_tuple(trait_span, vec![])))));
+                stmts.push(cx.stmt_expr(ret_ok));
+            }
+
+            let blk = cx.lambda_stmts_1(trait_span, stmts, blkarg);
+            cx.expr_method_call(trait_span,
+                                encoder,
+                                cx.ident_of("emit_struct"),
+                                vec!(
+                cx.expr_str(trait_span, substr.type_ident.name.as_str()),
+                cx.expr_usize(trait_span, fields.len()),
+                blk
+            ))
+        }
+
+        EnumMatching(idx, variant, ref fields) => {
+            // We're not generating an AST that the borrow checker is expecting,
+            // so we need to generate a unique local variable to take the
+            // mutable loan out on, otherwise we get conflicts which don't
+            // actually exist.
+            let me = cx.stmt_let(trait_span, false, blkarg, encoder);
+            let encoder = cx.expr_ident(trait_span, blkarg);
+            let emit_variant_arg = cx.ident_of("emit_enum_variant_arg");
+            let mut stmts = Vec::new();
+            if !fields.is_empty() {
+                let last = fields.len() - 1;
+                for (i, &FieldInfo { ref self_, span, .. }) in fields.iter().enumerate() {
+                    let enc = cx.expr_method_call(span, self_.clone(),
+                                                  encode, vec!(blkencoder.clone()));
+                    let lambda = cx.lambda_expr_1(span, enc, blkarg);
+                    let call = cx.expr_method_call(span, blkencoder.clone(),
+                                                   emit_variant_arg,
+                                                   vec!(cx.expr_usize(span, i),
+                                                        lambda));
+                    let call = if i != last {
+                        cx.expr_try(span, call)
+                    } else {
+                        cx.expr(span, ExprRet(Some(call)))
+                    };
+                    stmts.push(cx.stmt_expr(call));
+                }
+            } else {
+                let ret_ok = cx.expr(trait_span,
+                                     ExprRet(Some(cx.expr_ok(trait_span,
+                                                             cx.expr_tuple(trait_span, vec![])))));
+                stmts.push(cx.stmt_expr(ret_ok));
+            }
+
+            let blk = cx.lambda_stmts_1(trait_span, stmts, blkarg);
+            let name = cx.expr_str(trait_span, variant.node.name.name.as_str());
+            let call = cx.expr_method_call(trait_span, blkencoder,
+                                           cx.ident_of("emit_enum_variant"),
+                                           vec!(name,
+                                             cx.expr_usize(trait_span, idx),
+                                             cx.expr_usize(trait_span, fields.len()),
+                                             blk));
+            let blk = cx.lambda_expr_1(trait_span, call, blkarg);
+            let ret = cx.expr_method_call(trait_span,
+                                          encoder,
+                                          cx.ident_of("emit_enum"),
+                                          vec!(
+                cx.expr_str(trait_span, substr.type_ident.name.as_str()),
+                blk
+            ));
+            cx.expr_block(cx.block(trait_span, vec!(me), Some(ret)))
+        }
+
+        _ => cx.bug("expected Struct or EnumMatching in derive(Encodable)")
+    };
+}
+
+// Copyright 2013 The Rust Project Developers. See the COPYRIGHT
+// file at the top-level directory of this distribution and at
+// http://rust-lang.org/COPYRIGHT.
+//
+// Licensed under the Apache License, Version 2.0 <LICENSE-APACHE or
+// http://www.apache.org/licenses/LICENSE-2.0> or the MIT license
+// <LICENSE-MIT or http://opensource.org/licenses/MIT>, at your
+// option. This file may not be copied, modified, or distributed
+// except according to those terms.
+
+/*! rustc compiler intrinsics.
+
+The corresponding definitions are in librustc/middle/trans/foreign.rs.
+
+# Volatiles
+
+The volatile intrinsics provide operations intended to act on I/O
+memory, which are guaranteed to not be reordered by the compiler
+across other volatile intrinsics. See the LLVM documentation on
+[[volatile]].
+
+[volatile]: http://llvm.org/docs/LangRef.html#volatile-memory-accesses
+
+# Atomics
+
+The atomic intrinsics provide common atomic operations on machine
+words, with multiple possible memory orderings. They obey the same
+semantics as C++11. See the LLVM documentation on [[atomics]].
+
+[atomics]: http://llvm.org/docs/Atomics.html
+
+A quick refresher on memory ordering:
+
+* Acquire - a barrier for acquiring a lock. Subsequent reads and writes
+  take place after the barrier.
+* Release - a barrier for releasing a lock. Preceding reads and writes
+  take place before the barrier.
+* Sequentially consistent - sequentially consistent operations are
+  guaranteed to happen in order. This is the standard mode for working
+  with atomic types and is equivalent to Java's `volatile`.
+
+*/
+
+#![allow(missing_doc)]
+
+// This is needed to prevent duplicate lang item definitions.
+#[cfg(test)]
+pub use realstd::intrinsics::{TyDesc, Opaque, TyVisitor, TypeId};
+
+pub type GlueFn = extern "Rust" fn(*i8);
+
+#[lang="ty_desc"]
+#[cfg(not(test))]
+pub struct TyDesc {
+    // sizeof(T)
+    size: uint,
+
+    // alignof(T)
+    align: uint,
+
+    // Called when a value of type `T` is no longer needed
+    drop_glue: GlueFn,
+
+    // Called by reflection visitor to visit a value of type `T`
+    visit_glue: GlueFn,
+
+    // Name corresponding to the type
+    name: &'static str
+}
+
+#[lang="opaque"]
+#[cfg(not(test))]
+pub enum Opaque { }
+
+pub type Disr = u64;
+
+#[lang="ty_visitor"]
+#[cfg(not(test))]
+pub trait TyVisitor {
+    fn visit_bot(&mut self) -> bool;
+    fn visit_nil(&mut self) -> bool;
+    fn visit_bool(&mut self) -> bool;
+
+    fn visit_int(&mut self) -> bool;
+    fn visit_i8(&mut self) -> bool;
+    fn visit_i16(&mut self) -> bool;
+    fn visit_i32(&mut self) -> bool;
+    fn visit_i64(&mut self) -> bool;
+
+    fn visit_uint(&mut self) -> bool;
+    fn visit_u8(&mut self) -> bool;
+    fn visit_u16(&mut self) -> bool;
+    fn visit_u32(&mut self) -> bool;
+    fn visit_u64(&mut self) -> bool;
+
+    fn visit_f32(&mut self) -> bool;
+    fn visit_f64(&mut self) -> bool;
+
+    fn visit_char(&mut self) -> bool;
+
+    fn visit_estr_box(&mut self) -> bool;
+    fn visit_estr_uniq(&mut self) -> bool;
+    fn visit_estr_slice(&mut self) -> bool;
+    fn visit_estr_fixed(&mut self, n: uint, sz: uint, align: uint) -> bool;
+
+    fn visit_box(&mut self, mtbl: uint, inner: *TyDesc) -> bool;
+    fn visit_uniq(&mut self, mtbl: uint, inner: *TyDesc) -> bool;
+    fn visit_ptr(&mut self, mtbl: uint, inner: *TyDesc) -> bool;
+    fn visit_rptr(&mut self, mtbl: uint, inner: *TyDesc) -> bool;
+
+    fn visit_vec(&mut self, mtbl: uint, inner: *TyDesc) -> bool;
+    fn visit_unboxed_vec(&mut self, mtbl: uint, inner: *TyDesc) -> bool;
+    fn visit_evec_box(&mut self, mtbl: uint, inner: *TyDesc) -> bool;
+    fn visit_evec_uniq(&mut self, mtbl: uint, inner: *TyDesc) -> bool;
+    fn visit_evec_slice(&mut self, mtbl: uint, inner: *TyDesc) -> bool;
+    fn visit_evec_fixed(&mut self, n: uint, sz: uint, align: uint,
+                        mtbl: uint, inner: *TyDesc) -> bool;
+
+    fn visit_enter_rec(&mut self, n_fields: uint,
+                       sz: uint, align: uint) -> bool;
+    fn visit_rec_field(&mut self, i: uint, name: &str,
+                       mtbl: uint, inner: *TyDesc) -> bool;
+    fn visit_leave_rec(&mut self, n_fields: uint,
+                       sz: uint, align: uint) -> bool;
+
+    fn visit_enter_class(&mut self, name: &str, named_fields: bool, n_fields: uint,
+                         sz: uint, align: uint) -> bool;
+    fn visit_class_field(&mut self, i: uint, name: &str, named: bool,
+                         mtbl: uint, inner: *TyDesc) -> bool;
+    fn visit_leave_class(&mut self, name: &str, named_fields: bool, n_fields: uint,
+                         sz: uint, align: uint) -> bool;
+
+    fn visit_enter_tup(&mut self, n_fields: uint,
+                       sz: uint, align: uint) -> bool;
+    fn visit_tup_field(&mut self, i: uint, inner: *TyDesc) -> bool;
+    fn visit_leave_tup(&mut self, n_fields: uint,
+                       sz: uint, align: uint) -> bool;
+
+    fn visit_enter_enum(&mut self, n_variants: uint,
+                        get_disr: extern unsafe fn(ptr: *Opaque) -> Disr,
+                        sz: uint, align: uint) -> bool;
+    fn visit_enter_enum_variant(&mut self, variant: uint,
+                                disr_val: Disr,
+                                n_fields: uint,
+                                name: &str) -> bool;
+    fn visit_enum_variant_field(&mut self, i: uint, offset: uint, inner: *TyDesc) -> bool;
+    fn visit_leave_enum_variant(&mut self, variant: uint,
+                                disr_val: Disr,
+                                n_fields: uint,
+                                name: &str) -> bool;
+    fn visit_leave_enum(&mut self, n_variants: uint,
+                        get_disr: extern unsafe fn(ptr: *Opaque) -> Disr,
+                        sz: uint, align: uint) -> bool;
+
+    fn visit_enter_fn(&mut self, purity: uint, proto: uint,
+                      n_inputs: uint, retstyle: uint) -> bool;
+    fn visit_fn_input(&mut self, i: uint, mode: uint, inner: *TyDesc) -> bool;
+    fn visit_fn_output(&mut self, retstyle: uint, variadic: bool, inner: *TyDesc) -> bool;
+    fn visit_leave_fn(&mut self, purity: uint, proto: uint,
+                      n_inputs: uint, retstyle: uint) -> bool;
+
+    fn visit_trait(&mut self, name: &str) -> bool;
+    fn visit_param(&mut self, i: uint) -> bool;
+    fn visit_self(&mut self) -> bool;
+}
+
+extern "rust-intrinsic" {
+
+    // NB: These intrinsics take unsafe pointers because they mutate aliased
+    // memory, which is not valid for either `&` or `&mut`.
+
+    pub fn atomic_cxchg<T>(dst: *mut T, old: T, src: T) -> T;
+    pub fn atomic_cxchg_acq<T>(dst: *mut T, old: T, src: T) -> T;
+    pub fn atomic_cxchg_rel<T>(dst: *mut T, old: T, src: T) -> T;
+    pub fn atomic_cxchg_acqrel<T>(dst: *mut T, old: T, src: T) -> T;
+    pub fn atomic_cxchg_relaxed<T>(dst: *mut T, old: T, src: T) -> T;
+
+    pub fn atomic_load<T>(src: *T) -> T;
+    pub fn atomic_load_acq<T>(src: *T) -> T;
+    pub fn atomic_load_relaxed<T>(src: *T) -> T;
+
+    pub fn atomic_store<T>(dst: *mut T, val: T);
+    pub fn atomic_store_rel<T>(dst: *mut T, val: T);
+    pub fn atomic_store_relaxed<T>(dst: *mut T, val: T);
+
+    pub fn atomic_xchg<T>(dst: *mut T, src: T) -> T;
+    pub fn atomic_xchg_acq<T>(dst: *mut T, src: T) -> T;
+    pub fn atomic_xchg_rel<T>(dst: *mut T, src: T) -> T;
+    pub fn atomic_xchg_acqrel<T>(dst: *mut T, src: T) -> T;
+    pub fn atomic_xchg_relaxed<T>(dst: *mut T, src: T) -> T;
+
+    pub fn atomic_xadd<T>(dst: *mut T, src: T) -> T;
+    pub fn atomic_xadd_acq<T>(dst: *mut T, src: T) -> T;
+    pub fn atomic_xadd_rel<T>(dst: *mut T, src: T) -> T;
+    pub fn atomic_xadd_acqrel<T>(dst: *mut T, src: T) -> T;
+    pub fn atomic_xadd_relaxed<T>(dst: *mut T, src: T) -> T;
+
+    pub fn atomic_xsub<T>(dst: *mut T, src: T) -> T;
+    pub fn atomic_xsub_acq<T>(dst: *mut T, src: T) -> T;
+    pub fn atomic_xsub_rel<T>(dst: *mut T, src: T) -> T;
+    pub fn atomic_xsub_acqrel<T>(dst: *mut T, src: T) -> T;
+    pub fn atomic_xsub_relaxed<T>(dst: *mut T, src: T) -> T;
+
+    pub fn atomic_and<T>(dst: *mut T, src: T) -> T;
+    pub fn atomic_and_acq<T>(dst: *mut T, src: T) -> T;
+    pub fn atomic_and_rel<T>(dst: *mut T, src: T) -> T;
+    pub fn atomic_and_acqrel<T>(dst: *mut T, src: T) -> T;
+    pub fn atomic_and_relaxed<T>(dst: *mut T, src: T) -> T;
+
+    pub fn atomic_nand<T>(dst: *mut T, src: T) -> T;
+    pub fn atomic_nand_acq<T>(dst: *mut T, src: T) -> T;
+    pub fn atomic_nand_rel<T>(dst: *mut T, src: T) -> T;
+    pub fn atomic_nand_acqrel<T>(dst: *mut T, src: T) -> T;
+    pub fn atomic_nand_relaxed<T>(dst: *mut T, src: T) -> T;
+
+    pub fn atomic_or<T>(dst: *mut T, src: T) -> T;
+    pub fn atomic_or_acq<T>(dst: *mut T, src: T) -> T;
+    pub fn atomic_or_rel<T>(dst: *mut T, src: T) -> T;
+    pub fn atomic_or_acqrel<T>(dst: *mut T, src: T) -> T;
+    pub fn atomic_or_relaxed<T>(dst: *mut T, src: T) -> T;
+
+    pub fn atomic_xor<T>(dst: *mut T, src: T) -> T;
+    pub fn atomic_xor_acq<T>(dst: *mut T, src: T) -> T;
+    pub fn atomic_xor_rel<T>(dst: *mut T, src: T) -> T;
+    pub fn atomic_xor_acqrel<T>(dst: *mut T, src: T) -> T;
+    pub fn atomic_xor_relaxed<T>(dst: *mut T, src: T) -> T;
+
+    pub fn atomic_max<T>(dst: *mut T, src: T) -> T;
+    pub fn atomic_max_acq<T>(dst: *mut T, src: T) -> T;
+    pub fn atomic_max_rel<T>(dst: *mut T, src: T) -> T;
+    pub fn atomic_max_acqrel<T>(dst: *mut T, src: T) -> T;
+    pub fn atomic_max_relaxed<T>(dst: *mut T, src: T) -> T;
+
+    pub fn atomic_min<T>(dst: *mut T, src: T) -> T;
+    pub fn atomic_min_acq<T>(dst: *mut T, src: T) -> T;
+    pub fn atomic_min_rel<T>(dst: *mut T, src: T) -> T;
+    pub fn atomic_min_acqrel<T>(dst: *mut T, src: T) -> T;
+    pub fn atomic_min_relaxed<T>(dst: *mut T, src: T) -> T;
+
+    pub fn atomic_umin<T>(dst: *mut T, src: T) -> T;
+    pub fn atomic_umin_acq<T>(dst: *mut T, src: T) -> T;
+    pub fn atomic_umin_rel<T>(dst: *mut T, src: T) -> T;
+    pub fn atomic_umin_acqrel<T>(dst: *mut T, src: T) -> T;
+    pub fn atomic_umin_relaxed<T>(dst: *mut T, src: T) -> T;
+
+    pub fn atomic_umax<T>(dst: *mut T, src: T) -> T;
+    pub fn atomic_umax_acq<T>(dst: *mut T, src: T) -> T;
+    pub fn atomic_umax_rel<T>(dst: *mut T, src: T) -> T;
+    pub fn atomic_umax_acqrel<T>(dst: *mut T, src: T) -> T;
+    pub fn atomic_umax_relaxed<T>(dst: *mut T, src: T) -> T;
+}
+
+extern "rust-intrinsic" {
+
+    pub fn atomic_fence();
+    pub fn atomic_fence_acq();
+    pub fn atomic_fence_rel();
+    pub fn atomic_fence_acqrel();
+
+    /// Abort the execution of the process.
+    pub fn abort() -> !;
+
+    /// Execute a breakpoint trap, for inspection by a debugger.
+    pub fn breakpoint();
+
+    pub fn volatile_load<T>(src: *T) -> T;
+    pub fn volatile_store<T>(dst: *mut T, val: T);
+
+
+    /// The size of a type in bytes.
+    ///
+    /// This is the exact number of bytes in memory taken up by a
+    /// value of the given type. In other words, a memset of this size
+    /// would *exactly* overwrite a value. When laid out in vectors
+    /// and structures there may be additional padding between
+    /// elements.
+    pub fn size_of<T>() -> uint;
+
+    /// Move a value to an uninitialized memory location.
+    ///
+    /// Drop glue is not run on the destination.
+    pub fn move_val_init<T>(dst: &mut T, src: T);
+
+    pub fn min_align_of<T>() -> uint;
+    pub fn pref_align_of<T>() -> uint;
+
+    /// Get a static pointer to a type descriptor.
+    pub fn get_tydesc<T>() -> *TyDesc;
+
+    /// Gets an identifier which is globally unique to the specified type. This
+    /// function will return the same value for a type regardless of whichever
+    /// crate it is invoked in.
+    pub fn type_id<T: 'static>() -> TypeId;
+
+
+    /// Create a value initialized to zero.
+    ///
+    /// `init` is unsafe because it returns a zeroed-out datum,
+    /// which is unsafe unless T is Copy.
+    pub fn init<T>() -> T;
+
+    /// Create an uninitialized value.
+    pub fn uninit<T>() -> T;
+
+    /// Move a value out of scope without running drop glue.
+    ///
+    /// `forget` is unsafe because the caller is responsible for
+    /// ensuring the argument is deallocated already.
+    pub fn forget<T>(_: T) -> ();
+    pub fn transmute<T,U>(e: T) -> U;
+
+    /// Returns `true` if a type requires drop glue.
+    pub fn needs_drop<T>() -> bool;
+
+    /// Returns `true` if a type is managed (will be allocated on the local heap)
+    pub fn owns_managed<T>() -> bool;
+
+    pub fn visit_tydesc(td: *TyDesc, tv: &mut TyVisitor);
+
+    /// Calculates the offset from a pointer. The offset *must* be in-bounds of
+    /// the object, or one-byte-past-the-end. An arithmetic overflow is also
+    /// undefined behaviour.
+    ///
+    /// This is implemented as an intrinsic to avoid converting to and from an
+    /// integer, since the conversion would throw away aliasing information.
+    pub fn offset<T>(dst: *T, offset: int) -> *T;
+
+    /// Equivalent to the appropriate `llvm.memcpy.p0i8.0i8.*` intrinsic, with
+    /// a size of `count` * `size_of::<T>()` and an alignment of
+    /// `min_align_of::<T>()`
+    pub fn copy_nonoverlapping_memory<T>(dst: *mut T, src: *T, count: uint);
+
+    /// Equivalent to the appropriate `llvm.memmove.p0i8.0i8.*` intrinsic, with
+    /// a size of `count` * `size_of::<T>()` and an alignment of
+    /// `min_align_of::<T>()`
+    pub fn copy_memory<T>(dst: *mut T, src: *T, count: uint);
+
+    /// Equivalent to the appropriate `llvm.memset.p0i8.*` intrinsic, with a
+    /// size of `count` * `size_of::<T>()` and an alignment of
+    /// `min_align_of::<T>()`
+    pub fn set_memory<T>(dst: *mut T, val: u8, count: uint);
+
+    pub fn sqrtf32(x: f32) -> f32;
+    pub fn sqrtf64(x: f64) -> f64;
+
+    pub fn powif32(a: f32, x: i32) -> f32;
+    pub fn powif64(a: f64, x: i32) -> f64;
+
+    pub fn sinf32(x: f32) -> f32;
+    pub fn sinf64(x: f64) -> f64;
+
+    pub fn cosf32(x: f32) -> f32;
+    pub fn cosf64(x: f64) -> f64;
+
+    pub fn powf32(a: f32, x: f32) -> f32;
+    pub fn powf64(a: f64, x: f64) -> f64;
+
+    pub fn expf32(x: f32) -> f32;
+    pub fn expf64(x: f64) -> f64;
+
+    pub fn exp2f32(x: f32) -> f32;
+    pub fn exp2f64(x: f64) -> f64;
+
+    pub fn logf32(x: f32) -> f32;
+    pub fn logf64(x: f64) -> f64;
+
+    pub fn log10f32(x: f32) -> f32;
+    pub fn log10f64(x: f64) -> f64;
+
+    pub fn log2f32(x: f32) -> f32;
+    pub fn log2f64(x: f64) -> f64;
+
+    pub fn fmaf32(a: f32, b: f32, c: f32) -> f32;
+    pub fn fmaf64(a: f64, b: f64, c: f64) -> f64;
+
+    pub fn fabsf32(x: f32) -> f32;
+    pub fn fabsf64(x: f64) -> f64;
+
+    pub fn copysignf32(x: f32, y: f32) -> f32;
+    pub fn copysignf64(x: f64, y: f64) -> f64;
+
+    pub fn floorf32(x: f32) -> f32;
+    pub fn floorf64(x: f64) -> f64;
+
+    pub fn ceilf32(x: f32) -> f32;
+    pub fn ceilf64(x: f64) -> f64;
+
+    pub fn truncf32(x: f32) -> f32;
+    pub fn truncf64(x: f64) -> f64;
+
+    pub fn rintf32(x: f32) -> f32;
+    pub fn rintf64(x: f64) -> f64;
+
+    pub fn nearbyintf32(x: f32) -> f32;
+    pub fn nearbyintf64(x: f64) -> f64;
+
+    pub fn roundf32(x: f32) -> f32;
+    pub fn roundf64(x: f64) -> f64;
+
+    pub fn ctpop8(x: i8) -> i8;
+    pub fn ctpop16(x: i16) -> i16;
+    pub fn ctpop32(x: i32) -> i32;
+    pub fn ctpop64(x: i64) -> i64;
+
+    pub fn ctlz8(x: i8) -> i8;
+    pub fn ctlz16(x: i16) -> i16;
+    pub fn ctlz32(x: i32) -> i32;
+    pub fn ctlz64(x: i64) -> i64;
+
+    pub fn cttz8(x: i8) -> i8;
+    pub fn cttz16(x: i16) -> i16;
+    pub fn cttz32(x: i32) -> i32;
+    pub fn cttz64(x: i64) -> i64;
+
+    pub fn bswap16(x: i16) -> i16;
+    pub fn bswap32(x: i32) -> i32;
+    pub fn bswap64(x: i64) -> i64;
+
+    pub fn i8_add_with_overflow(x: i8, y: i8) -> (i8, bool);
+    pub fn i16_add_with_overflow(x: i16, y: i16) -> (i16, bool);
+    pub fn i32_add_with_overflow(x: i32, y: i32) -> (i32, bool);
+    pub fn i64_add_with_overflow(x: i64, y: i64) -> (i64, bool);
+
+    pub fn u8_add_with_overflow(x: u8, y: u8) -> (u8, bool);
+    pub fn u16_add_with_overflow(x: u16, y: u16) -> (u16, bool);
+    pub fn u32_add_with_overflow(x: u32, y: u32) -> (u32, bool);
+    pub fn u64_add_with_overflow(x: u64, y: u64) -> (u64, bool);
+
+    pub fn i8_sub_with_overflow(x: i8, y: i8) -> (i8, bool);
+    pub fn i16_sub_with_overflow(x: i16, y: i16) -> (i16, bool);
+    pub fn i32_sub_with_overflow(x: i32, y: i32) -> (i32, bool);
+    pub fn i64_sub_with_overflow(x: i64, y: i64) -> (i64, bool);
+
+    pub fn u8_sub_with_overflow(x: u8, y: u8) -> (u8, bool);
+    pub fn u16_sub_with_overflow(x: u16, y: u16) -> (u16, bool);
+    pub fn u32_sub_with_overflow(x: u32, y: u32) -> (u32, bool);
+    pub fn u64_sub_with_overflow(x: u64, y: u64) -> (u64, bool);
+
+    pub fn i8_mul_with_overflow(x: i8, y: i8) -> (i8, bool);
+    pub fn i16_mul_with_overflow(x: i16, y: i16) -> (i16, bool);
+    pub fn i32_mul_with_overflow(x: i32, y: i32) -> (i32, bool);
+    pub fn i64_mul_with_overflow(x: i64, y: i64) -> (i64, bool);
+
+    pub fn u8_mul_with_overflow(x: u8, y: u8) -> (u8, bool);
+    pub fn u16_mul_with_overflow(x: u16, y: u16) -> (u16, bool);
+    pub fn u32_mul_with_overflow(x: u32, y: u32) -> (u32, bool);
+    pub fn u64_mul_with_overflow(x: u64, y: u64) -> (u64, bool);
+}
+
+
+/// `TypeId` represents a globally unique identifier for a type
+#[lang="type_id"] // This needs to be kept in lockstep with the code in trans/intrinsic.rs and
+                  // middle/lang_items.rs
+#[deriving(Eq, Hash, Show, TotalEq)]
+#[cfg(not(test))]
+pub struct TypeId {
+    priv t: u64,
+}
+
+#[cfg(not(test))]
+impl TypeId {
+    /// Returns the `TypeId` of the type this generic function has been instantiated with
+    pub fn of<T: 'static>() -> TypeId {
+        unsafe { type_id::<T>() }
+    }
+}

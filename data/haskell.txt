@@ -1,0 +1,1557 @@
+{-
+******************************************************************************
+*                                      JSHOP                                 *
+*                                                                            *
+*   Module:   Main                                                           *
+*   Purpose:  Main JSHOP module                                              *
+*   Author:   Nick Brunt                                                     *
+*                                                                            *
+*                   Based (loosely) on the HMTC equivalent                   *
+*                 Copyright (c) Henrik Nilsson, 2006 - 2011                  *
+*                      http://www.cs.nott.ac.uk/~nhn/                        *
+*                                                                            *
+*                    Copyright (c) Nick Brunt, 2011 - 2012                   *
+*              Subject to MIT License as stated in root directory            *
+*                                                                            *
+******************************************************************************
+-}
+
+module Main where
+
+-- Standard library imports
+import System.Environment
+import System.CPUTime
+import System.IO
+import Data.Maybe
+
+-- JSHOP module imports
+import Token
+import Lexer
+import LexerMonad
+import ParseTree
+import ParseMonad
+import Parser
+import Diagnostics
+import CodeCompMonad
+import CodeCompressor
+import Utilities
+
+import TestSuite
+
+data Options =
+    Options {
+        optHelp   :: Bool,
+        optVer    :: Bool,
+        optOut    :: Bool,
+        optInput  :: Bool,
+        optTokens :: Bool,
+        optTree   :: Bool,
+        optLState :: Bool,
+        optAll    :: Bool,
+        optBloat  :: Bool,
+        optPP     :: Bool,
+        optTest   :: Bool,
+        optST     :: Bool,
+        optSAT    :: Bool,
+        optSA     :: Bool
+    }
+    deriving Show
+
+
+defaultOptions :: Options
+defaultOptions =
+    Options {
+        optHelp   = False,
+        optVer    = False,
+        optOut    = False,
+        optInput  = False,
+        optTokens = False,
+        optTree   = False,
+        optLState = False,
+        optAll    = False,
+        optBloat  = False,
+        optPP     = False,
+        optTest   = False,
+        optST     = False,
+        optSAT    = False,
+        optSA     = False
+    }
+
+
+version :: String
+version = "1.0"
+
+prompt :: String
+prompt = "Please enter some JavaScript here (Terminate with Ctrl+D in UNIX, or Ctrl+Z in Windows, followed by Return. Must be on a new line.):"
+
+
+------------------------------------------------------------------------
+-- Main
+------------------------------------------------------------------------
+
+
+main :: IO()
+main = do
+    hSetEncoding stdout utf8
+    hSetEncoding stdin utf8
+    hSetEncoding stderr utf8
+    startTime <- getCPUTime
+    (opts, mbArgs) <- parseCmdLine
+    if optHelp opts then
+        printHelp
+     else if optVer opts then
+        printVersion
+     else if optTest opts then
+        runTests mbArgs
+     else if optST opts then
+        showResult $ read $ head $ fromJust mbArgs
+     else if optSAT opts then
+        showPastResults
+     else if optSA opts then
+        showAverages
+     else do
+        -- Get input (from file if given)
+        input <-
+            case mbArgs of
+                Nothing     -> putStrLn prompt >> getContents
+                Just [file] -> readFile file
+                Just (f:fs) -> readFile f -- Potential support for multiple files
+        output <- execute opts input
+        execTime startTime
+
+        -- Output to file
+        if optOut opts then do
+            let outFile = case mbArgs of
+                    Nothing     -> "output.min.js"
+                    Just (f:fs) -> genOutName f
+            saveFile outFile output
+            putStrLn $ "\n\nSaved to " ++ outFile
+         else
+            putChar '\n'
+
+
+------------------------------------------------------------------------
+-- Compressor
+------------------------------------------------------------------------
+
+execute :: Options -> String -> IO String
+execute opts input = do
+    -- Parse
+    let parseOutput = parseJS input
+    case parseOutput of
+        Left error -> do
+            putStrLn $ show error
+            return ""
+        Right (tree, state) -> do
+            -- Display input
+            if optInput opts || optAll opts then do
+                putStrLn "\n\nINPUT:"
+                putStrLn input
+             else
+                putStr "" -- Do nothing
+
+            -- Display tokens
+            if optTokens opts || optAll opts then do
+                putStrLn "\n\nTOKENS:"
+                nonMLexer input
+             else
+                putStr "" -- Do nothing
+
+            -- Display Parse Tree
+            if optTree opts || optAll opts then do
+                putStrLn "\n\nPARSE TREE:"
+                putStrLn $ ppTree tree (optBloat opts)
+                return()
+             else
+                putStr "" -- Do nothing
+
+            -- Display Lexer State
+            if optLState opts || optAll opts then do
+                putStrLn "\n\nSTATE:"
+                putStrLn $ show state
+             else
+                putStr "" -- Do nothing
+
+            -- Display output
+            putStrLn "\n\nOUTPUT:"
+            let output = genJS tree
+            if optPP opts
+                then putStrLn $ ppOutput output ""
+                else putStrLn output
+
+            -- Display stats
+            putStrLn "\n\nSTATS:"
+            putStrLn $ showRatio input output
+
+            return output
+
+------------------------------------------------------------------------
+-- Parse command line arguments
+------------------------------------------------------------------------
+
+parseCmdLine :: IO (Options, Maybe [String])
+parseCmdLine = do
+    args <- getArgs
+    (opts, mbFiles) <- processOptions defaultOptions args
+    return (opts, mbFiles)
+
+
+processOptions :: Options -> [String] -> IO (Options, Maybe [String])
+processOptions opts args = do
+    (opts', mbArgs) <- posAux opts args
+    return (opts', mbArgs)
+    where
+        posAux :: Options -> [String] -> IO (Options, Maybe [String])
+        -- No arguments left
+        posAux opts [] = return (opts, Nothing)
+        posAux opts arguments@(arg:args)
+            -- No options, just other args
+            | take 2 arg /= "--" = return (opts, Just arguments)
+            -- Options
+            | otherwise = do
+                -- Process option (dropping the --)
+                opts' <- poAux opts (drop 2 arg)
+                -- Move on to next option
+                posAux opts' args
+
+        poAux :: Options -> String -> IO Options
+        poAux opts o
+            | o == "help" || o == "h" =
+                return (opts {optHelp = True})
+            | o == "version" || o == "ver" || o == "v" =
+                    return (opts {optVer = True})
+            | o == "output" || o == "out" || o == "o" =
+                return (opts {optOut = True})
+            | o == "input" || o == "i" =
+                return (opts {optInput = True})
+            | o == "tokens" || o == "tok" =
+                return (opts {optTokens = True})
+            | o == "tree" =
+                return (opts {optTree = True})
+            | o == "lstate" =
+                return (opts {optLState = True})
+            | o == "all" =
+                return (opts {optAll = True})
+            | o == "rembloat" =
+                return (opts {optBloat = True})
+            | o == "prettyprint" || o == "pp" =
+                return (opts {optPP = True})
+            | o == "test" || o == "t" =
+                return (opts {optTest = True})
+            | o == "showTest" =
+                return (opts {optST = True})
+            | o == "showAllTests" =
+                return (opts {optSAT = True})
+            | o == "showAverages" =
+                return (opts {optSA = True})
+            | otherwise = do
+                putStrLn ("Unknown option \"--" ++ o ++ "\"")
+                return opts
+
+
+------------------------------------------------------------------------
+-- Miscellaneous output
+------------------------------------------------------------------------
+
+printHelp :: IO()
+printHelp = putStr
+    "USAGE:\n\
+    \    jshop [options] file.js     Compress \"file.js\"\n\
+    \    jshop [options]             Read input from standard input.\n\
+    \                                (Terminate with Ctrl+D, Enter in UNIX, or Ctrl+Z,\n\
+    \                                 Enter in Windows. Must be on a new line.)\n\
+    \\n\
+    \DEFAULT OUTPUT:\n\
+    \   Compressed JS and ratio of input to output.\n\
+    \\n\
+    \OPTIONS:\n\
+    \   Output\n\
+    \       --help, --h\n\
+    \           Print help message and stop.\n\n\
+    \       --version, --ver, --v\n\
+    \           Print JSHOP version and stop.\n\n\
+    \       --output, --out, --o\n\
+    \           Write output to [file].min.js. Default it output.min.js if no file given.\n\n\
+    \       --input, --i\n\
+    \           Print input.\n\n\
+    \       --tokens, --tok\n\
+    \           Print list of tokens.\n\n\
+    \       --tree\n\
+    \           Print the Parse tree.\n\n\
+    \       --lstate\n\
+    \           Print the Lexer state.\n\n\
+    \       --all\n\
+    \           Print input, tokens, Parse tree, Lexer state, output and ratio.\n\n\
+    \       --rembloat\n\
+    \           Experimental. Removes bloat from the Parse tree. Can make it unreadable.\n\
+    \           Only works with --tree or --all.\n\n\
+    \       --prettyprint, --pp\n\
+    \           Experimental. Pretty prints the output for ease of reading.\n\n\
+    \   Testing\n\
+    \       --test --t [\"message\"]\n\
+    \           Run full test suite and stop. Message is optional. If added, test\n\
+    \           results will be saved to file.\n\n\
+    \       --showAverages\n\
+    \           Displays the average compression ratios for all past tests.\n\n\
+    \       --showTest NUM\n\
+    \           Displays a past test of index NUM.\n\n\
+    \       --showAllTests\n\
+    \           Displays all past tests.\n\n\
+    \"
+
+
+printVersion :: IO()
+printVersion = do
+    putStrLn "\nJavaScript Haskell Optimiser (JSHOP)"
+    putStrLn $ "Version " ++ version
+
+--- Copyright © 2009 Bart Massey
+--- ALL RIGHTS RESERVED
+--- [This program is licensed under the "MIT License"]
+--- Please see the file COPYING in the source
+--- distribution of this software for license terms.
+
+module State (
+  Side(..), State(..), Problem(..), Undo(..),
+  opponent,
+  readSide, readProblem, showProblem, showSide,
+  startProblem, moves, problemMoves,
+  move, unmove, gameOver,
+  snapshotState, animateProblem,
+  eval
+) where
+
+import Data.Char
+import Control.Monad
+import Control.Monad.ST
+
+import Board
+
+data Side = White | Black | None deriving Eq
+
+opponent :: Side -> Side
+opponent White = Black
+opponent Black = White
+opponent _ = error "internal error: opponent of None"
+
+data State s = State { toMove :: Side,
+                       turn :: Int,
+                       board :: Board s }
+
+data Problem = Problem { problemToMove :: Side,
+                         problemTurn :: Int,
+                         position :: Position }
+
+showSide :: Side -> Char
+showSide White = 'W'
+showSide Black = 'B'
+showSide _ = '?'
+
+readProblem :: String -> Problem
+readProblem desc =
+    let (info : bord) = lines desc
+        [n, [side]] = words info in
+    Problem { problemToMove = readSide side,
+              problemTurn = read n,
+              position = readPosition (unlines bord) }
+
+readSide :: Char -> Side
+readSide 'W' = White
+readSide 'B' = Black
+readSide _ = error "internal error: bad side"
+
+showProblem :: Problem -> String
+showProblem (Problem { problemToMove = side,
+                       problemTurn = n,
+                       position = posn }) =
+   let bdesc = showPosition posn in
+       show n ++ " " ++ [showSide side] ++ "\n" ++ bdesc
+
+startProblem :: Problem
+startProblem =  Problem { problemToMove = White,
+                          problemTurn = 1,
+                          position = startPosition }
+
+piece_side :: Char -> Side
+piece_side p | p >= 'A' && p <= 'Z' = White
+piece_side p | p >= 'a' && p <= 'z' = Black
+piece_side _ = None
+
+find_pieces :: Board s -> Side -> ST s [(Coord, Char)]
+find_pieces brd side = do
+  candidates <- mapM candidate squares
+  return (filter (\(_, p) -> piece_side p == side) candidates)
+  where
+    candidate s = do
+      p <- getBoardSquare brd s
+      return (s, p)
+
+landable :: Board s -> Side -> Coord -> ST s Bool
+landable brd side square = do
+  p <- getBoardSquare brd square
+  return (piece_side p /= side)
+
+
+raytrace :: (Coord -> Coord)
+      -> (Coord -> Bool)
+      -> Board s
+      -> Side
+      -> Coord
+      -> ST s [Coord]
+raytrace rayfn clipfn brd side square =
+    block (takeWhile clipfn (tail (iterate rayfn square)))
+    where
+      block [] = return []
+      block (s : ss) = do
+        p <- getBoardSquare brd s
+        case piece_side p of
+          None -> do
+            rest <- block ss
+            return (s : rest)
+          side' -> if side' == side
+                      then return []
+                      else return [s]
+
+type Tracer s = Board s -> Side -> Coord -> ST s [Coord]
+
+trace_up :: Tracer s
+trace_up = raytrace dirnUp (\(_, r) -> r <= 6)
+
+trace_right :: Tracer s
+trace_right = raytrace dirnRight (\(c, _) -> c <= 'e')
+
+trace_down :: Tracer s
+trace_down = raytrace dirnDown (\(_, r) -> r >= 1)
+
+trace_left :: Tracer s
+trace_left = raytrace dirnLeft (\(c, _) -> c >= 'a')
+
+trace_ul :: Tracer s
+trace_ul = raytrace dirnUL (\(c, r) -> c >= 'a' && r <= 6)
+
+trace_ur :: Tracer s
+trace_ur = raytrace dirnUR (\(c, r) -> c <= 'e' && r <= 6)
+
+trace_dr :: Tracer s
+trace_dr = raytrace dirnDR (\(c, r) -> c <= 'e' && r >= 1)
+
+trace_dl :: Tracer s
+trace_dl = raytrace dirnDL (\(c, r) -> c >= 'a' && r >= 1)
+
+jump :: (Coord -> Coord)
+     -> (Coord -> Bool)
+     -> Board s
+     -> Side
+     -> Coord
+     -> ST s [Coord]
+jump jumpfn clipfn brd side square = do
+  let square' = jumpfn square
+  if (clipfn square')
+     then do
+           ok <- landable brd side square'
+           if ok
+              then return [square']
+              else return []
+     else return []
+
+
+type Jumper s = Board s -> Side -> Coord -> ST s [Coord]
+
+jump_up :: Jumper s
+jump_up = jump dirnUp (\(_, r) -> r <= 6)
+
+jump_right :: Jumper s
+jump_right = jump dirnRight (\(c, _) -> c <= 'e')
+
+jump_down :: Jumper s
+jump_down = jump dirnDown (\(_, r) -> r >= 1)
+
+jump_left :: Jumper s
+jump_left = jump dirnLeft (\(c, _) -> c >= 'a')
+
+jump_ul :: Jumper s
+jump_ul = jump dirnUL (\(c, r) -> c >= 'a' && r <= 6)
+
+jump_ur :: Jumper s
+jump_ur = jump dirnUR (\(c, r) -> c <= 'e' && r <= 6)
+
+jump_dr :: Jumper s
+jump_dr = jump dirnDR (\(c, r) -> c <= 'e' && r >= 1)
+
+jump_dl :: Jumper s
+jump_dl = jump dirnDL (\(c, r) -> c >= 'a' && r >= 1)
+
+
+jump_uul :: Jumper s
+jump_uul = jump (dirnUp . dirnUL) (\(c, r) -> c >= 'a' && r <= 6)
+
+jump_lul :: Jumper s
+jump_lul = jump (dirnLeft . dirnUL) (\(c, r) -> c >= 'a' && r <= 6)
+
+jump_uur :: Jumper s
+jump_uur = jump (dirnUp . dirnUR) (\(c, r) -> c <= 'e' && r <= 6)
+
+jump_rur :: Jumper s
+jump_rur = jump (dirnRight . dirnUR) (\(c, r) -> c <= 'e' && r <= 6)
+
+jump_ddr :: Jumper s
+jump_ddr = jump (dirnDown . dirnDR) (\(c, r) -> c <= 'e' && r >= 1)
+
+jump_rdr :: Jumper s
+jump_rdr = jump (dirnRight . dirnDR) (\(c, r) -> c <= 'e' && r >= 1)
+
+jump_ddl :: Jumper s
+jump_ddl = jump (dirnDown . dirnDL) (\(c, r) -> c >= 'a' && r >= 1)
+
+jump_ldl :: Jumper s
+jump_ldl = jump (dirnLeft . dirnDL) (\(c, r) -> c >= 'a' && r >= 1)
+
+
+find_moves :: Board s -> Side -> Coord -> Char -> ST s [Move]
+find_moves brd side square 'k' = do
+  ups <- jump_up brd side square
+  lefts <- jump_left brd side square
+  downs <- jump_down brd side square
+  rights <- jump_right brd side square
+  uls <- jump_ul brd side square
+  urs <- jump_ur brd side square
+  drs <- jump_dr brd side square
+  dls <- jump_dl brd side square
+  return (zip (repeat square) (concat [ups, lefts, downs, rights,
+                                       uls, urs, drs, dls]))
+find_moves brd side square@(c, r) 'p' = do
+  when unpromoted (error "internal error: unpromoted pawn")
+  left <- capturable ('a' <=) (pred c, next_rank)
+  right <- capturable ('e' >=) (succ c, next_rank)
+  center <- empty (c, next_rank)
+  return (zip (repeat square) (concat [left, center, right]))
+  where
+    unpromoted = case side of
+                   White -> r >= 6
+                   Black -> r <= 1
+                   _ -> error "internal error: unpromoted non-side"
+    next_rank = case side of
+                   White -> r + 1
+                   Black -> r - 1
+                   _ -> error "internal error: next_rank non-side"
+    capturable pr s@(c', _) = do
+      if pr c'
+         then do
+               p <- getBoardSquare brd s
+               let side' = piece_side p
+               if side' == None || side' == side
+                  then return []
+                  else return [s]
+         else return []
+    empty s = do
+      p <- getBoardSquare brd s
+      if p == '.'
+         then return [s]
+         else return []
+find_moves brd side square 'r' = do
+  ups <- trace_up brd side square
+  lefts <- trace_left brd side square
+  downs <- trace_down brd side square
+  rights <- trace_right brd side square
+  return (zip (repeat square) (concat [ups, lefts, downs, rights]))
+find_moves brd side square 'b' = do
+  uls <- trace_ul brd side square
+  urs <- trace_ur brd side square
+  drs <- trace_dr brd side square
+  dls <- trace_dl brd side square
+  let diags = concat [uls, urs, drs, dls]
+  ups <- jump_up brd side square
+  lefts <- jump_left brd side square
+  downs <- jump_down brd side square
+  rights <- jump_right brd side square
+  let orthogs = concat [ups, lefts, downs, rights]
+  bads <- filterM (filter_empty brd) orthogs
+  return (zip (repeat square) (diags ++ bads))
+  where
+    filter_empty bord squar = do
+      sq <- getBoardSquare bord squar
+      return (sq == '.')
+find_moves brd side square 'q' = do
+  ups <- trace_up brd side square
+  lefts <- trace_left brd side square
+  downs <- trace_down brd side square
+  rights <- trace_right brd side square
+  uls <- trace_ul brd side square
+  urs <- trace_ur brd side square
+  drs <- trace_dr brd side square
+  dls <- trace_dl brd side square
+  return (zip (repeat square) (concat [ups, lefts, downs, rights,
+                                       uls, urs, drs, dls]))
+find_moves brd side square 'n' = do
+  uul <- jump_uul brd side square
+  lul <- jump_lul brd side square
+  uur <- jump_uur brd side square
+  rur <- jump_rur brd side square
+  ddr <- jump_ddr brd side square
+  rdr <- jump_rdr brd side square
+  ddl <- jump_ddl brd side square
+  ldl <- jump_ldl brd side square
+  return (zip (repeat square) (concat [uul, lul, uur, rur,
+                                       ddr, rdr, ddl, ldl]))
+find_moves _ _ _ _ = error "internal error: find_moves non-piece"
+
+moves :: State s -> ST s [Move]
+moves (State { toMove = side,
+               board = brd }) = do
+  sources <- find_pieces brd side
+  move_lists <- mapM compute_moves sources
+  return (concat move_lists)
+  where
+    compute_moves (s, p) = find_moves brd side s (toLower p)
+
+problemMoves :: Problem -> [Move]
+problemMoves problem =
+    runST (do
+             state <- animateProblem problem
+             movs <- moves state
+             return movs)
+
+data Undo = Undo { capture :: Char,
+                   promoted :: Bool }
+
+move :: State s -> Move -> ST s (State s, Undo)
+move (State { toMove = who,
+              turn = n,
+              board = brd }) mov = do
+  (ch, promote) <- movePiece brd mov
+  return (State { toMove = opponent who,
+                  turn = n + bump_turn who,
+                  board = brd },
+          Undo { capture = ch,
+                 promoted = promote })
+  where
+    bump_turn White = 0
+    bump_turn Black = 1
+    bump_turn _ = error "internal error: bumping empty turn"
+
+unmove :: State s -> Move -> Undo -> ST s ()
+unmove (State { board = brd }) (src, dst) undo = do
+  ('.', False) <- movePiece brd (dst, src)
+  when (promoted undo) unqueen
+  setBoardSquare brd dst (capture undo)
+  where
+    unqueen = do
+      ss <- getBoardSquare brd src
+      case ss of
+        'Q' -> setBoardSquare brd src 'P'
+        'q' -> setBoardSquare brd src 'p'
+        _ -> error "internal error: unpromotion of non-queen"
+
+gameOver :: State s -> Undo -> ST s Bool
+gameOver s undo =
+    return (toLower (capture undo) == 'k' || turn s > 40)
+
+snapshotState :: State s -> ST s Problem
+snapshotState (State { toMove = m, turn = n, board = b }) =
+    do
+      p <- snapshotBoard b
+      return (Problem { problemToMove = m,
+                        problemTurn = n,
+                        position = p })
+
+animateProblem :: Problem -> ST s (State s)
+animateProblem (Problem { problemToMove = m,
+                          problemTurn = n,
+                          position = p }) =
+    do
+      b <- animatePosition p
+      return (State {toMove = m, turn = n, board = b})
+
+eval :: State s -> ST s Int
+eval (State { turn = n }) | n > 40 = return 0
+eval (State { toMove = White, board = b }) = evalBoardForWhite b
+eval (State { toMove = Black, board = b }) = do
+  v <- evalBoardForWhite b
+  return (-v)
+eval _ = error "internal error: eval with no one on move"
+
+
+-- |Netrium is Copyright Anthony Waite, Dave Hetwett, Shaun Laurens 2009-2015, and files herein are licensed
+-- |under the MIT license,  the text of which can be found in license.txt
+--
+module Main where
+
+import Contract (Contract, Time)
+import Interpreter
+import DecisionTree
+import Observations
+import Paths_netrium_demo
+
+import Data.Maybe
+import Data.Monoid
+import Control.Monad
+import qualified Data.Map as Map
+import Data.Version
+import System.Environment
+import System.Exit
+import System.Console.GetOpt
+import System.FilePath
+
+import Text.XML.HaXml.Types
+import Text.XML.HaXml.Pretty (document)
+import Text.XML.HaXml.XmlContent
+import Text.PrettyPrint.HughesPJ (render)
+
+
+data OutputMode = XmlOutput | TextOutput
+
+data Options =
+  Options
+    { optMode    :: OutputMode
+    , optTrace   :: Bool
+    , optTest    :: Bool
+    , optVersion :: Bool
+    }
+
+defaultOptions =
+  Options
+    { optMode    = XmlOutput
+    , optTrace   = False
+    , optTest    = False
+    , optVersion = False
+    }
+
+options :: [OptDescr (Options -> Options)]
+options = [Option [] ["xml"]
+                  (NoArg (\ opts -> opts { optMode = XmlOutput }))
+                  "Output in xml format (this is the default)"
+          ,Option [] ["text"]
+                  (NoArg (\ opts -> opts { optMode = TextOutput }))
+                  "Output as readable text"
+          ,Option [] ["trace"]
+                  (NoArg (\ opts -> opts { optTrace = True }))
+                  "Output a trace of contract steps (--text mode only)"
+          ,Option [] ["tests"]
+                  (NoArg (\ opts -> opts { optTest = True }))
+                  "Run internal tests as well"
+          ,Option [] ["version"]
+                  (NoArg (\ opts -> opts { optVersion = True }))
+                  "Print version information"
+          ]
+
+main :: IO ()
+main =
+  do
+    plainArgs <- getArgs
+    let (optMods, args, errs) = getOpt Permute options plainArgs
+    let opts = foldl (flip ($)) defaultOptions optMods
+    case args of
+      _ | optVersion opts -> printVersion
+      [contract, observations]         | null errs
+          -> simulate opts contract observations output
+               where output = addExtension contract "xml"
+      [contract, observations, output] | null errs
+          -> simulate opts contract observations output
+      _   -> exit
+
+
+exit :: IO ()
+exit =
+  do
+    p <- getProgName
+    let txt = "Usage: " ++ p ++ " <contract.xml> <observations.xml> [<output.xml>]\n\n"
+           ++ "Flags:"
+    putStrLn (usageInfo txt options)
+    exitFailure
+
+
+printVersion :: IO ()
+printVersion = do
+  p <- getProgName
+  putStrLn $ "netrium-demo " ++ p ++ " version " ++ showVersion version
+
+
+simulate :: Options -> FilePath -> FilePath -> FilePath -> IO ()
+simulate opts contractFile observationsFile outputFile = do
+
+    contract <- fReadXml contractFile
+
+    (SimulationInputs startTime mStopTime mStopWait
+                      valObsvns condObsvns
+                      optionsTaken choicesMade
+                      simState) <- fReadXml observationsFile
+
+    let initialState = case simState of
+                         Nothing -> Left contract
+                         Just st -> Right st
+        simenv = SimEnv valObsvns condObsvns optionsTaken choicesMade
+        simout = runContract simenv startTime mStopTime mStopWait initialState
+
+    when (optTest opts) $
+      case testRunContract simenv startTime contract of
+        Nothing  -> return ()
+        Just err -> fail ("internal tests failed: " ++ err)
+
+    case optMode opts of
+      XmlOutput  -> writeFile outputFile (renderContractRunXml simout)
+      TextOutput -> putStr               (renderContractRun simout')
+        where
+          simout' | optTrace opts = simout
+                  | otherwise     = simout { simTrace = TEs [] }
+
+
+renderContractRun :: SimOutputs -> String
+renderContractRun (SimOutputs (TEs trace) (TEs outs)
+                              stopReason stopTime residualContract _ mWaitInfo) =
+  unlines $
+       [ "============ Contract trace: ============" | not (null trace) ]
+    ++ [ show time' ++ ": " ++ msg | (time', msg) <- trace ]
+    ++ [ "\n============ Contract output: ============" ]
+    ++ [ show out | out <- outs ]
+    ++ [ "\n============ Contract result: ============"
+       , show stopReason
+       , show stopTime ]
+    ++ case mWaitInfo of
+         Nothing -> []
+         Just (WaitInfo obss mHorizon opts) ->
+              [ "\n============ Horizon: ============" | isJust mHorizon ]
+           ++ [ show horizon | horizon <- maybeToList mHorizon ]
+           ++ [ "\n============ Wait conditions: ============" | not (null obss) ]
+           ++ [ show obs | obs <- obss ]
+           ++ [ "\n============ Available options: ============" | not (null opts) ]
+           ++ [ show opt | opt <- opts ]
+
+renderContractRunXml :: SimOutputs -> String
+renderContractRunXml (SimOutputs _ outs stopReason stopTime residualContract simState mWaitInfo) =
+    render (document (Document prolog emptyST body []))
+
+  where
+    prolog = Prolog (Just (XMLDecl "1.0" Nothing Nothing)) [] Nothing []
+    body   = Elem "SimulationResult" [] $
+                     toContents (fromTimedEvents outs)
+                  ++ toContents stopReason
+                  ++ toContents stopTime
+                  ++ toContents residualContract
+                  ++ toContents simState
+                  ++ toContents mWaitInfo
+
+data SimulationInputs = SimulationInputs
+                          Time (Maybe Time) StopWait
+                          (Observations Double) (Observations Bool)
+                          (Choices ()) (Choices Bool)
+                          (Maybe ProcessState)
+
+instance HTypeable SimulationInputs where
+  toHType _ = Defined "ChoiceSeries" [] []
+
+instance XmlContent SimulationInputs where
+  parseContents = do
+    e@(Elem t _ _) <- element ["SimulationInputs"]
+    commit $ interior e $ case t of
+      "SimulationInputs" -> do
+        startTime    <- parseContents
+        mStopTime    <- parseContents
+        mStopWait    <- parseContents
+        obsSeriess   <- parseContents
+        choiceSeries <- parseContents
+        simState     <- parseContents
+        let (valObsvns, condObsvns)     = convertObservationSeries obsSeriess
+            (optionsTaken, choicesMade) = convertChoiceSeries      choiceSeries
+
+        return (SimulationInputs startTime mStopTime mStopWait
+                                 valObsvns condObsvns
+                                 optionsTaken choicesMade
+                                 simState)
+
+    where
+      convertObservationSeries :: [ObservationSeries]
+                               -> (Observations Double, Observations Bool)
+      convertObservationSeries obsSeriess = (valObsvns, condObsvns)
+        where
+          valObsvns  = Map.fromList
+                         [ (var, toTimeSeries ts)
+                         | ObservationsSeriesDouble var ts <- obsSeriess ]
+          condObsvns = Map.fromList
+                         [ (var, toTimeSeries ts)
+                         | ObservationsSeriesBool var ts <- obsSeriess ]
+
+      convertChoiceSeries :: ChoiceSeries -> (Choices (), Choices Bool)
+      convertChoiceSeries (ChoiceSeries choiceSeriesXml) = (optionsTaken, choicesMade)
+        where
+          optionsTaken = Map.fromListWith mergeEventsBiased
+                           [ (cid, TEs [(t,())])
+                           | (t, AnytimeChoice cid) <- choiceSeries ]
+          choicesMade  = Map.fromListWith mergeEventsBiased
+                           [ (cid, TEs [(t,v)])
+                           | (t, OrChoice cid v) <- choiceSeries ]
+          TEs choiceSeries = toTimedEvents choiceSeriesXml
+
+  toContents (SimulationInputs startTime mStopTime mStopWait
+                               valObsvns condObsvns
+                               optionsTaken choicesMade simState) =
+      [mkElemC "SimulationInputs" $
+                   toContents startTime  ++ toContents mStopTime
+                ++ toContents mStopWait
+                ++ toContents obsSeriess ++ toContents choiceSeries
+                ++ toContents simState]
+    where
+      obsSeriess   = [ ObservationsSeriesDouble var (fromTimeSeries ts)
+                     | (var, ts) <- Map.toList valObsvns ]
+                  ++ [ ObservationsSeriesBool   var (fromTimeSeries ts)
+                     | (var, ts) <- Map.toList condObsvns ]
+      choiceSeries = ChoiceSeries $ fromTimedEvents $ TEs $
+                     [ (t, AnytimeChoice cid)
+                     | (cid, TEs tes) <- Map.toList optionsTaken
+                     , (t, ()) <- tes ]
+                  ++ [ (t, OrChoice cid v)
+                     | (cid, TEs tes) <- Map.toList choicesMade
+                     , (t, v) <- tes ]
+
+-------------------------------------------------------------------------------
+-- testing
+--
+
+-- Check:
+--  * contract and process state can round trip via xml ok
+--  * trace from single stepping is the same as running from scratch
+
+testRunContract :: SimEnv -> Time -> Contract -> Maybe String
+testRunContract simenv startTime contract
+  | simStopReason overallOut /= simStopReason finalStep
+  = Just $ show (simStopReason overallOut, simStopReason finalStep)
+
+  | simStopTime overallOut /= simStopTime finalStep
+  = Just $ show (simStopTime overallOut, simStopTime finalStep)
+
+  | simOutputs overallOut /= foldr1 mergeEventsBiased (map simOutputs steps)
+  = Just $ "outputs do not match:\n"
+        ++ show (simOutputs overallOut)
+        ++ "\nvs:\n"
+        ++ show (foldr1 mergeEventsBiased (map simOutputs steps))
+
+  | simTrace overallOut /= foldr1 mergeEventsBiased (map simTrace steps)
+  = Just $ "trace does not match:\n"
+        ++ show (simTrace overallOut)
+        ++ "\nvs:\n"
+        ++ show (foldr1 mergeEventsBiased (map simTrace steps))
+
+  | not (all checkXmlRoundTrip steps)
+  = Just "xml round trip failure"
+
+  | otherwise = Nothing
+  where
+    steps = contractWaitSteps simenv startTime contract
+    finalStep = last steps
+
+    overallOut = runContract simenv startTime Nothing NoStop (Left contract)
+
+    checkXmlRoundTrip simOut = roundTripProperty (simStopContract simOut)
+                            && roundTripProperty (simStopState simOut)
+
+    roundTripProperty :: (XmlContent a, Eq a) => a -> Bool
+    roundTripProperty x = readXml (showXml False x) == Right x
+
+contractWaitSteps :: SimEnv -> Time -> Contract -> [SimOutputs]
+contractWaitSteps simenv startTime contract =
+    remainingSteps step0
+  where
+    step0 = runContract simenv startTime Nothing StopFirstWait (Left contract)
+
+    remainingSteps out
+      | simStopReason out == StoppedWait = out : remainingSteps out'
+      | otherwise                        = out : []
+      where
+        resumeState@(PSt resumeTime _ _) = simStopState out
+        out' = runContract simenv resumeTime
+                           Nothing StopNextWait
+                           (Right resumeState)
+
+-- This file is covered by an MIT license. See 'LICENSE' for details.
+-- Author: Bertram Felgenhauer
+
+{-# LANGUAGE OverloadedStrings #-}
+module Confluence.Direct.Ground (
+    confluent
+) where
+
+import Confluence.Types
+import Framework.Types
+import Framework.Explain
+import Util.Pretty
+import qualified Util.Relation as R
+
+import qualified Data.Rewriting.Rules as Rules
+import qualified Data.Rewriting.Rule as Rule
+import qualified Data.Rewriting.Term as Term
+
+import Text.PrettyPrint.ANSI.Leijen
+import Control.Monad.RWS hiding ((<>))
+import Control.Monad
+import qualified Data.Set as S
+import qualified Data.Map as M
+import Data.List
+
+import Debug.Trace
+
+confluent :: Problem String String -> Explain Answer
+confluent trs = section "Confluence for Ground TRSs" $
+    if Rules.isGround trs then confluent' trs else do
+        tell "Not a ground TRS."
+        return Maybe
+
+confluent' :: (Ord f, PPretty f) => Problem f v -> Explain Answer
+confluent' trs = do
+    let trs' = map (mapRule Term.withArity) trs
+        trs2 = tseitin trs'
+        trs3 = ffc trs2
+        -- trs3 is the forward closure of the curried TRS, restricted to
+        -- the sides of that curried TRS
+        joins = joinc trs3
+        sides = S.fromList [x | (l, r) <- R.toList trs3, x <- [l, r]]
+        stabilizables = stabilizable trs3
+{-
+    section "Tseitin transformation" $
+        tell $ vList trs2
+    section "Forward closure" $
+        tell $ vList $ R.toList trs3
+    section "Joinability closure" $
+        tell $ vList $ R.toList joins
+-}
+    case filter (not . cconds trs3 joins stabilizables) (S.toList sides) of
+        s:_ -> do
+            tell $ "C-Conditions not satisfied for" <+> ppretty s <> "."
+            return No
+        [] -> do
+            tell "C-Conditions satisfied."
+            let ndjs = ndj trs3 joins stabilizables
+            case filter (\(s, _) -> (s, s) `R.member` ndjs) (R.toList trs3) of
+                (s, _):_ -> do
+                    tell $ "Side not deeply joinable with itself:" <+> ppretty s
+                    return No
+                [] -> do
+                    tell $ "All sides deeply joinable with themselves."
+                    return Yes
+
+mapRule :: (Term.Term f v -> Term.Term f' v') ->
+    Rule.Rule f v -> Rule.Rule f' v'
+mapRule f (Rule.Rule l r) = Rule.Rule (f l) (f r)
+
+data Con f  = F f Int | C Int deriving (Eq, Ord, Show)
+data Side f = Con (Con f) | App (Con f) (Con f) deriving (Eq, Ord, Show)
+data Tops f = Con' (Con f) | App' (Side f) (Side f) deriving (Eq, Ord, Show)
+
+isCon :: Side f -> Bool
+isCon Con{} = True
+isCon App{} = False
+
+isApp :: Side f -> Bool
+isApp Con{} = False
+isApp App{} = True
+
+type M f = RWS () [(Side f, Side f)] Int
+
+-- Currying and Tseitin transform.
+tseitin :: Problem (f, Int) v -> [(Side f, Side f)]
+tseitin trs = snd (evalRWS (mapM go trs) () 0) where
+    term :: Term.Term (f, Int) v -> M f (Con f)
+    term = Term.fold var fun
+    var _ = error "Not a ground TRS"
+    fun (f, a) ts = do
+        ts' <- sequence ts
+        foldM app (F f a) ts'
+    app a b = do
+        n <- get
+        put $! n+1
+        tell [(Con (C n), App a b), (App a b, Con (C n))]
+        return $ C n
+    go :: Rule.Rule (f, Int) v -> M f ()
+    go rule = do
+        l <- term (Rule.lhs rule)
+        r <- term (Rule.rhs rule)
+        tell [(Con l, Con r)]
+
+-- -->* closure.
+ffc :: Ord f => [(Side f, Side f)] -> R.Rel (Side f)
+ffc trs =
+    let sides = S.fromList $ trs >>= \(l, r) -> subterms l ++ subterms r
+        subterms (Con c) = [Con c]
+        subterms (App l r) = [App l r, Con l, Con r]
+        add rel (l, r) | (l, r) `R.member` rel = rel
+        add rel (l, r) =
+            let rel' = R.insert (l, r) rel
+                todo = S.map (\x -> (l, x)) (R.succ rel r) `S.union`
+                       S.map (\x -> (x, r)) (R.pred rel l) `S.union`
+                       S.fromList congr
+                Con fl = l
+                Con fr = r
+                congr = [(l', r') |
+                     isCon l && isCon r,
+                     (l', r') <- left ++ right,
+                     l' `S.member` sides && r' `S.member` sides]
+                left = [(App fl gl, App fr gr) |
+                    (Con gl, Con gr) <- R.toList $ R.restrict isCon rel']
+                right = [(App gl fl, App gr fr) |
+                    (Con gl, Con gr) <- R.toList $ R.restrict isCon rel']
+            in  foldl add rel' (S.toList todo)
+    in  foldl add (R.fromList [(a, a) | a <- S.toList sides]) trs
+
+-- joinability closure
+joinc :: (Ord f, PPretty f) => R.Rel (Side f) -> R.Rel (Side f)
+joinc trs =
+    let sides = S.fromList [x | (l, r) <- R.toList trs, x <- [l, r]]
+        add rel (l, r) | (l, r) `R.member` rel = rel
+        add rel (l, r) =
+            let rel' = R.insert (l, r) rel
+                todo = S.map (\x -> (l, x)) (R.pred trs r) `S.union`
+                       S.map (\x -> (x, r)) (R.pred trs l) `S.union`
+                       S.fromList congr
+                Con fl = l
+                Con fr = r
+                congr = [(l', r') |
+                     isCon l && isCon r,
+                     (l', r') <- left ++ right,
+                     l' `S.member` sides && r' `S.member` sides]
+                left = [(App fl gl, App fr gr) |
+                    (Con gl, Con gr) <- R.toList $ R.restrict isCon rel']
+                right = [(App gl fl, App gr fr) |
+                    (Con gl, Con gr) <- R.toList $ R.restrict isCon rel']
+            in  -- (\res -> traceShow (ppretty (l, r) <$> vList (S.toList todo)) res) $
+                foldl add rel' (S.toList todo)
+    in  -- (\res -> traceShow ("joinc" <$> vList (S.toList sides)) res) $
+        foldl add R.empty [(a, a) | a <- S.toList sides]
+
+-- (top-)stabilizable terms
+stabilizable :: Ord f => R.Rel (Side f) -> S.Set (Side f)
+stabilizable trs =
+    let sides = S.fromList [x | (l, r) <- R.toList trs, x <- [l, r]]
+        rcons = R.restrict isCon trs
+        stable = S.fromList
+            [x | x <- S.toList sides, all isApp (S.toList $ R.succ trs x)]
+        stabilizable0 = S.fromList
+            [App l' r' |
+            App l r <- S.toList stable,
+            Con l' <- S.toList $ R.pred trs (Con l),
+            Con r' <- S.toList $ R.pred trs (Con r),
+            App l' r' `S.member` sides]
+        add new old | S.null new = old
+        add new old =
+            let next = old `S.union` S.fromList
+                    [App l r |
+                    App l r <- S.toList sides,
+                    not $ S.null $ S.intersection old $
+                        R.succ trs (Con l) `S.union` R.succ trs (Con r)]
+            in  add (next `S.difference` old) next
+    in  add stabilizable0 S.empty
+
+-- top rewrite steps
+topsteps :: Ord f =>
+    R.Rel (Side f) -> S.Set (Side f) -> Side f -> ([Tops f], [Tops f], [Tops f])
+topsteps trs stabilizables s =
+    let step2 (Con f) = [Con' f]
+        step2 (App l r) = liftM2 App'
+            (S.toList $ R.succ trs (Con l))
+            (S.toList $ R.succ trs (Con r))
+        tops = S.toList $ S.fromList $ S.toList (R.succ trs s) >>= step2
+        left = [App' l r | App' l r <- tops, l `S.member` stabilizables]
+        right = [App' l r | App' l r <- tops, r `S.member` stabilizables]
+    in  (tops, left, right)
+
+joinable :: (Ord f, PPretty f) =>
+    R.Rel (Side f) -> R.Rel (Side f) -> Tops f -> Tops f -> Bool
+joinable trs joins s t =
+    -- (\res -> traceShow ("joinable" <+> ppretty s <+> ppretty t <+> text (show res) <$> ppretty s' <$> ppretty t' <$> ppretty s'' <$> ppretty t'') res) $
+    any (`R.member` joins) (liftM2 (,) s' t') ||
+    any (\((sl, sr), (tl, tr)) -> (sl, tl) `R.member` joins &&
+         (sr, tr) `R.member` joins) (liftM2 (,) s'' t'')
+  where
+    succ' = S.toList . R.succ trs
+    s' = case s of
+        Con' c -> [Con c]
+        App' l r -> [App l' r' | Con l' <- succ' l, Con r' <- succ' r]
+    t' = case t of
+        Con' c -> [Con c]
+        App' l r -> [App l' r' | Con l' <- succ' l, Con r' <- succ' r]
+    s'' = case s of
+        Con' c -> [(Con l', Con r') | App l' r' <- succ' (Con c)]
+        App' l r -> [(l, r)] ++ [(Con l', Con r') | App l' r' <- s' >>= succ']
+    t'' = case t of
+        Con' c -> [(Con l', Con r') | App l' r' <- succ' (Con c)]
+        App' l r -> [(l, r)] ++ [(Con l', Con r') | App l' r' <- t' >>= succ']
+
+reachable :: Ord f => R.Rel (Side f) -> Tops f -> Tops f -> Bool
+reachable trs s t =
+    any (`R.member` trs) (liftM2 (,) s' t') ||
+    any (\((sl, sr), (tl, tr)) -> (sl, tl) `R.member` trs &&
+         (sr, tr) `R.member` trs) (liftM2 (,) s'' t'')
+  where
+    succ' = S.toList . R.succ trs
+    pred' = S.toList . R.pred trs
+    s' = case s of
+        Con' c -> [Con c]
+        App' l r -> [App l' r' | Con l' <- succ' l, Con r' <- succ' r]
+    t' = case t of
+        Con' c -> [Con c]
+        App' l r -> [App l' r' | Con l' <- pred' l, Con r' <- pred' r]
+    s'' = case s of
+        Con' c -> [(Con l', Con r') | App l' r' <- succ' (Con c)]
+        App' l r -> [(l, r)]
+    t'' = case t of
+        Con' c -> [(Con l', Con r') | App l' r' <- pred' (Con c)]
+        App' l r -> [(l, r)]
+
+-- Definition 18
+cconds :: (Ord f, PPretty f) =>
+    R.Rel (Side f) -> R.Rel (Side f) -> S.Set (Side f) -> Side f -> Bool
+cconds trs joins stabilizables s =
+    let (tops, left, right) = topsteps trs stabilizables s
+        leftp = (`S.member` S.fromList left)
+        rightp = (`S.member` S.fromList right)
+        succ' = S.toList . R.succ trs
+    in  -- 1. term in Topsteps(s) are pairwise joinable
+        all (uncurry $ joinable trs joins)
+            [(a, b) | a : bs <- tails tops, b <- bs] &&
+        -- 2. l1 @ r1, l2 @ r2 in Left(s) (Right(s)) -> l1, l2 (r1, r2) joinable
+        all (`R.member` joins)
+            [(a, b) | (App' _ a):bs <- tails left, (App' _ b) <- bs] &&
+        all (`R.member` joins)
+            [(a, b) | (App' a _):bs <- tails left, (App' b _) <- bs] &&
+        -- 3. Left(Right) /= {} ==> for all Tops, exists reachable Lef(Right)
+        (null left ||
+            and [or [reachable trs t t' | t' <- left] | t <- tops]) &&
+        (null right ||
+            and [or [reachable trs t t' | t' <- right] | t <- tops]) &&
+        -- 4.
+        (null left ||
+            and [or [leftp (App' l' r) | l' <- succ' l] | App' l r <- right]) &&
+        (null right ||
+            and [or [rightp (App' l r') | r' <- succ' r] | App' l r <- left])
+
+-- Definition 24
+djconds :: (Ord f, PPretty f) => R.Rel (Side f) -> R.Rel (Side f) ->
+    S.Set (Side f) -> Side f -> Side f -> Bool
+djconds trs joins stabilizables s t =
+    let (topss, lefts, rights) = topsteps trs stabilizables s
+        (topst, leftt, rightt) = topsteps trs stabilizables t
+    in  -- 1. Topsteps(s) and Topsteps(t) are joinable
+        all (uncurry $ joinable trs joins) [(a, b) | a <- topss, b <- topst] &&
+        -- 2.
+        (null lefts == null leftt) && (null rights == null rightt) &&
+        -- 3.
+        all (`R.member` joins)
+            [(a, b) | (App' _ a) <- lefts, (App' _ b) <- leftt] &&
+        -- 4.
+        all (`R.member` joins)
+            [(a, b) | (App' a _) <- rights, (App' b _) <- rightt]
+
+-- "not deeply joinable"
+ndj :: (Ord f, PPretty f) =>
+    R.Rel (Side f) -> R.Rel (Side f) -> S.Set (Side f) -> R.Rel (Side f)
+ndj trs joins stabilizables =
+    let sides = S.toList $ S.fromList [x | (l, r) <- R.toList trs, x <- [l, r]]
+        ndj0 = R.fromList [(s, s') | l@(s:_) <- tails sides, s' <- l,
+            not $ djconds trs joins stabilizables s s']
+        add new old | R.null new = old
+        add new old =
+            let next = old `R.union` new
+                next' = R.fromList [
+                    (s, t) | s <- sides, t <- sides,
+                    let (_, lefts, rights) = topsteps trs stabilizables s,
+                    let (_, leftt, rightt) = topsteps trs stabilizables t,
+                    any (`R.member` next)
+                        [(l, l') | App' l _ <- lefts, App' l' _ <- leftt] ||
+                    any (`R.member` next)
+                        [(r, r') | App' _ r <- rights, App' _ r' <- rightt]]
+            in  add (next' `R.difference` next) next'
+    in  add ndj0 R.empty
+
+instance PPretty f => PPretty (Con f) where
+    ppretty (F f a) = ppretty f <> "/" <> text (show a)
+    ppretty (C i) = "c_" <> text (show i)
+
+instance PPretty f => PPretty (Side f) where
+    ppretty (Con f) = ppretty f
+    ppretty (App f g) = "(" <> ppretty f <+> "@" <+> ppretty g <> ")"
+
+instance PPretty f => PPretty (Tops f) where
+    ppretty (Con' f) = ppretty f
+    ppretty (App' f g) = "(" <> ppretty f <+> "@" <+> ppretty g <> ")"
+
+{-
+    TRANSFORMERZ - Monad Transformer in vanilla Haskell
+  Nothing imported - just code
+    Author: Marco Faustinelli (contacts@faustinelli.net)
+    Web: http://faustinelli.net/
+         http://faustinelli.wordpress.com/
+    Version: 1.0
+
+    The MIT License - Copyright (c) 2015 Transformerz Project
+-}
+
+{-# LANGUAGE MultiParamTypeClasses, FlexibleInstances, FunctionalDependencies, StandaloneDeriving, FlexibleContexts, UndecidableInstances, DeriveFunctor #-}
+module Nilsson_01 where
+
+  import Data.Maybe
+  import qualified Data.Map as Map
+  import Control.Applicative
+  import Text.Show.Functions
+
+
+  class (Monad m, Monad (t m)) => MonadTransformer t m where
+    lift :: m a -> t m a
+
+  type Name = String
+  data Exp = Lit Integer
+            | Var Name
+            | Plus Exp Exp
+            | Lambda Name Exp
+            | App Exp Exp
+            deriving (Show, Read, Eq)
+  data Value = IntVal Integer
+             | FunVal Name Exp Env
+             deriving (Show, Read, Eq)
+  type Env = Map.Map Name Value
+
+  ----------------------------------------------------------------------
+  eval0 :: Env -> Exp -> Value
+  eval0 env (Lit i) = IntVal i
+  eval0 env (Var name) = fromJust $ Map.lookup name env
+  eval0 env (Plus e1 e2) = let IntVal i1 = eval0 env e1
+                               IntVal i2 = eval0 env e2
+                           in IntVal (i1 + i2)
+  eval0 env (Lambda argname body) = FunVal argname body env
+  eval0 env (App lambda expr) = let FunVal argname body env' = eval0 env lambda
+                                    val = eval0 env expr
+                                in eval0 (Map.insert argname val env') body
+  {- WRONG, WRONG, WRONG!
+  eval0 env (App lambda expr) = case lambda of
+                                  Lambda argname body -> let val = eval0 env expr
+                                                             env' = Map.insert argname val env
+                                                         in eval0 env' body
+  -}
+  -----------------------------------------------------------------------
+
+  newtype I a = I a
+    deriving (Show, Read, Eq)
+
+  -- unwrap the monad
+  unI :: I a -> a
+  unI (I a) = a
+
+  -- run the monad
+  runI :: I a -> a
+  runI = unI
+
+  instance Monad I where
+    return = I
+    ia >>= faib = faib (unI ia)
+  instance Applicative I where
+    pure = I
+    -- af(a->b) <*> afa :: afb
+    ifab <*> ia = I (unI ifab (unI ia))
+  instance Functor I where
+    fmap fab ia = I (fab (unI ia))
+
+  -----------------------------------------------------------------------
+  runEval1 :: I Value -> Value
+  runEval1 = unI
+
+  eval1 :: Env -> Exp -> I Value
+  eval1 env (Lit i) = return $ IntVal i
+  eval1 env (Var name) = return $ fromJust $ Map.lookup name env
+  eval1 env (Plus e1 e2) = do (IntVal i1) <- eval1 env e1
+                              (IntVal i2) <- eval1 env e2
+                              return $ IntVal $ i1 + i2
+  eval1 env (Lambda argname body) = return $ FunVal argname body env
+  {-
+  eval1 env (App lambda expr) = do (FunVal argname body env') <- eval1 env lambda
+                                   val <- eval1 env expr
+                                   eval1 (Map.insert argname val env') body
+  -}
+  eval1 env (App lambda expr) = let (FunVal argname body env') = unI $ eval1 env lambda
+                                    val = unI $ eval1 env expr
+                                in eval1 (Map.insert argname val env') body
+  ----------------------------------------------------------------------
+  -- MaybeT, actually...
+  newtype ET m a = ET (m (Maybe a))
+  deriving instance Show (m (Maybe a)) => Show (ET m a)
+  deriving instance Eq (m (Maybe a)) => Eq (ET m a)
+
+  -- unwrap the OUTER monad, i.e. resolve its type (this is actually a RUNNER!!!)
+  unET :: (Monad m) => ET m a -> m (Maybe a)
+  unET (ET m) = m -- runErrorT in mtl!
+
+  -- run the OUTER monad (this is actually NOT a runner)
+  runET :: Monad m => ET m a -> m a
+  runET etma = do ma <- unET etma
+                  case ma of
+                    Just a -> return a
+  --                Nothing -> crash!
+
+  instance (Monad m) => Monad (ET m) where
+    return a = ET (return (Just a))
+    etma >>= faetmb = ET $ do maybea <- unET etma
+                              case maybea of
+                                Just a -> unET (faetmb a)
+                                Nothing -> return Nothing
+
+  instance (Functor m, Monad m) => Applicative (ET m) where
+    pure a = return a
+    -- af (a -> b) <*> af a :: af b
+    etmfab <*> etma = ET $ do maybefab <- (unET etmfab) -- etmb = ET(m(Maybe b))
+                              maybea <- (unET etma)
+                              return (maybefab <*> maybea)
+
+  instance (Functor m, Monad m) => Functor (ET m) where
+    fmap fab etma = ET $ do maybea <- (unET etma) -- etmb = ET(m(Maybe b))
+                            return ((Just fab) <*> maybea)
+
+  -- kind of MonadError
+  class (Monad m) => E m where
+    eFail :: m a
+    eHandle :: m a -> m a -> m a
+
+  instance (Monad m) => E (ET m) where
+    eFail = ET (return Nothing)
+    eHandle tryetma catchetma = ET $ do maybetry <- unET tryetma
+                                        case maybetry of
+                                          Just _ -> return maybetry
+                                          Nothing -> unET catchetma
+
+  instance (Monad m) => MonadTransformer ET m where
+    -- (a -> m b) -> (a -> t m b), opp. m a -> t m a
+    -- lift famb = \a -> ET $ do mb <- famb a
+                              -- return mb
+    -- m a -> t m a
+    -- lift :: m a -> ET m a = ET m (Maybe a)
+    lift ma = ET $ do a <- ma -- ET $ ma >>= \a -> return (Just a)
+                      return (Just a)
+
+  ------------------------------------------------------------------------
+  runEval2 :: ET I Value -> Maybe Value -- ErrorT => Either String Value
+  runEval2 etia = unI (unET etia)
+
+  eval2 :: Env -> Exp -> ET I Value -- ET I (Maybe Value)
+  eval2 env (Lit i)      = return $ IntVal i
+  eval2 env (Var name)   = case (Map.lookup name env) of
+                             Just v -> return v
+                             Nothing -> eFail
+  eval2 env (Plus e1 e2) = do v1 <- eval2 env e1
+                              v2 <- eval2 env e2
+                              case (v1, v2) of
+                                (IntVal i1, IntVal i2) -> return $ IntVal $ i1 + i2
+                                _ -> eFail
+  eval2 env (Lambda argname body) = return $ FunVal argname body env
+  eval2 env (App lambda expr)     = do v1 <- eval2 env lambda
+                                       v2 <- eval2 env expr
+                                       case v1 of
+                                         FunVal argname body env' -> eval2 (Map.insert argname v2 env') body
+                                         _ -> eFail
+
+  -------------------------------------------------------------------------
+  newtype ST s m a = ST (s -> m (a, s))
+  deriving instance Show (s -> m (a, s)) => Show (ST s m a)
+  deriving instance Eq (s -> m (a, s)) => Eq (ST s m a)
+
+  -- unwrap the OUTER monad, i.e. resolve its type (this is actually a RUNNER!!!)
+  unST :: (Monad m) => ST s m a -> s -> m (a, s)
+  unST (ST m) = m -- runStateT in mtl!
+
+  -- extract the OUTER monad (this is actually NOT a runner!!!)
+  runST :: Monad m => ST s m a -> s -> m a
+  runST stsma = \s -> do (aaa, _) <- unST stsma s
+                         return aaa
+
+  instance (Monad m) => Monad (ST s m) where
+    return x = ST (\s -> return (x, s))
+    stsma >>= fastsmb = ST $ \s -> do (aaa, sss) <- unST stsma s
+                                      unST (fastsmb aaa) sss
+
+  instance (Functor m, Monad m) => Applicative (ST s m) where
+    pure = return
+    -- af (a -> b) <*> af a -> af b
+    stsmfab <*> stsma = ST $ \s -> do (fab, sfab) <- unST stsmfab s
+                                      (a, sa) <- unST stsma s
+                                      return (fab a, sa)
+
+  instance (Functor m, Monad m) => Functor (ST s m) where
+    fmap fab stsma = ST $ \s -> do (a, sa) <- unST stsma s
+                                   return (fab a, sa)
+
+  -- kind of MonadState
+  class (Monad m) => S m s | m -> s where
+    sGet :: m s       -- I'd say s -> m (s, s))
+    sSet :: s -> m () -- I'd say s -> _ -> m ((), s)
+
+  instance (Monad m) => S (ST s m) s where
+    sGet   = ST $ \s -> return (s, s)
+    sSet s = ST $ \_ -> return ((), s)
+
+  instance (Monad m) => MonadTransformer (ST s) m where
+    -- lift :: m a -> t m a
+    -- lift :: m a -> ST s m a = ST (s -> m (a,s))
+    lift ma = ST $ \s -> do a <- ma -- ST $ \s -> ma >>= \a -> return (a, s)
+                            return (a, s)
+
+  -- MUTUAL TRANSFORMATIONS
+  -- an S monad transformed by ET is an S monad
+  instance (S m s) => S (ET m) s where
+    -- sGet :: ET m s   -- I'd say s -> ET m (s, s)
+    sGet = lift sGet  -- lift_di_ET sGet_di_m
+    -- lift_di_ET ma = ET $ ma >>= \a -> return (Just a)
+    -- lift_di_ET ma = ET $ do a <- ma; return (Just a)
+    -- lift_di_ET m () = ET $ do () <- m (); return (Just ())
+    -- sSet :: s -> ET m () = s -> ET m (Maybe ()) -- I'd say s -> _ -> ET m ((), s)
+  --  sSet = \s -> ET $ return (Just ())
+  --  sSet = \s -> lift $ return () -- lift_di_ET, sSet_di_m
+    sSet s = lift (sSet s) -- secondo Nilsson
+
+  -- en E monad transformed by ST is an E monad
+  instance (E m) => E (ST s m) where -- E (ST s m a) = E (ST (s -> m (a,s)))
+    -- eFail :: (ST s m) a
+    -- eFail = ST $ \s -> eFail
+    eFail = lift eFail  -- lift_di_ST, eFail_di_m
+
+    -- eHandle :: (ST s m) a -> (ST s m) a -> (ST s m) a ||| REM unST :: (Monad m) => ST s m a -> s -> m (a, s)
+  {-
+    eHandle trystsma catchstsma = ST $ \s -> do tryas <- unST trystsma s -- running in m => tryas :: (a, s)
+                                                catchas <- unST catchstsma s
+                                                eHandle (return tryas) (return catchas) -- eHandle di m
+  -}
+    eHandle trystsma catchstsma = ST $ \s -> eHandle (unST trystsma s) (unST catchstsma s) -- eHandle di m
+  -- eHandle_di_m :: m a -> m a -> m a
+  -- oppure: eHandle_di_m :: m (a,s) -> m (a,s) -> m (a,s) -- è come se dove c'è ST, il valore non è più :: a, ma :: (a,s)
+
+  ----------------------------------------------------------------------------
+  type Eval3 s a = ET (ST s I) a -- = ET (ST s I) (Maybe a) = ET (ST (s -> I (Maybe a, s)))
+
+  runEval3 :: Int -> Eval3 Int Value -> (Maybe Value, Int)
+  runEval3 s etstsintiv = unI $ unST (unET etstsintiv) s
+
+  -- tick :: (Num s, S ms s, Monad m) => ms s m s
+  tick :: ST Int I Int
+  tick = ST $ \n -> I (n, n+1)
+
+  eval3 :: Env -> Exp -> Eval3 Int Value
+  eval3 env (Lit i)      = do (lift tick)
+                              return $ IntVal i
+  eval3 env (Var name)   = do (lift tick)
+                              ET $ return $ Map.lookup name env
+  eval3 env (Plus e1 e2) = do (lift tick)
+                              v1 <- eval3 env e1
+                              v2 <- eval3 env e2
+                              case (v1, v2) of
+                                (IntVal i1, IntVal i2) -> return $ IntVal $ i1 + i2
+                                _ -> eFail
+  eval3 env (Lambda argname body) = do (lift tick)
+                                       return $ FunVal argname body env
+  eval3 env (App lambda expr) = do (lift tick)
+                                   FunVal argname body env' <- eval3 env lambda
+                                   val <- eval3 env expr
+                                   eval3 (Map.insert argname val env') body
+  {-
+            | Var Name
+            | Plus Exp Exp
+            | Lambda Name Exp
+            | App Exp Exp
+  -}
+
+  -- a few acrobatics...
+  etstsintiv = eval3 Map.empty (Lit 123)
+  stsintimaybev = unET etstsintiv
+  icouplemaybevi = unST stsintimaybev 0
+  (maybev,i) = unI icouplemaybevi

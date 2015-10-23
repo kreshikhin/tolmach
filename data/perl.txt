@@ -1,0 +1,1514 @@
+#!/usr/bin/perl -w
+# This script was originally based on the script of the same name from
+# the KDE SDK (by dfaure@kde.org)
+#
+# This version is
+#   Copyright (C) 2007, 2008 Adam D. Barratt
+#
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 2 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License along
+# with this program. If not, see <http://www.gnu.org/licenses/>.
+
+=head1 NAME
+
+licensecheck - simple license checker for source files
+
+=head1 SYNOPSIS
+
+B<licensecheck> B<--help>|B<--version>
+
+B<licensecheck> [B<--no-conf>] [B<--verbose>] [B<--copyright>]
+[B<-l>|B<--lines=>I<N>] [B<-i>|B<--ignore=>I<regex>] [B<-c>|B<--check=>I<regex>]
+[B<-r>|B<--recursive>] I<list of files and directories to check>
+
+=head1 DESCRIPTION
+
+B<licensecheck> attempts to determine the license that applies to each file
+passed to it, by searching the start of the file for text belonging to
+various licenses.
+
+If any of the arguments passed are directories, B<licensecheck> will add
+the files contained within to the list of files to process.
+
+=head1 OPTIONS
+
+=over 4
+
+=item B<--verbose>, B<--no-verbose>
+
+Specify whether to output the text being processed from each file before
+the corresponding license information.
+
+Default is to be quiet.
+
+=item B<-l=>I<N>, B<--lines=>I<N>
+
+Specify the number of lines of each file's header which should be parsed
+for license information. (Default is 60).
+
+=item B<-i=>I<regex>, B<--ignore=>I<regex>
+
+When processing the list of files and directories, the regular
+expression specified by this option will be used to indicate those which
+should not be considered (e.g. backup files, VCS metadata).
+
+=item B<-r>, B<--recursive>
+
+Specify that the contents of directories should be added
+recursively.
+
+=item B<-c=>I<regex>, B<--check=>I<regex>
+
+Specify a pattern against which filenames will be matched in order to
+decide which files to check the license of.
+
+The default includes common source files.
+
+=item B<--copyright>
+
+Also display copyright text found within the file
+
+=item B<--no-conf>, B<--noconf>
+
+Do not read any configuration files. This can only be used as the first
+option given on the command-line.
+
+=back
+
+=head1 CONFIGURATION VARIABLES
+
+The two configuration files F</etc/devscripts.conf> and
+F<~/.devscripts> are sourced by a shell in that order to set
+configuration variables.  Command line options can be used to override
+configuration file settings.  Environment variable settings are
+ignored for this purpose.  The currently recognised variables are:
+
+=over 4
+
+=item B<LICENSECHECK_VERBOSE>
+
+If this is set to I<yes>, then it is the same as the B<--verbose> command
+line parameter being used. The default is I<no>.
+
+=item B<LICENSECHECK_PARSELINES>
+
+If this is set to a positive number then the specified number of lines
+at the start of each file will be read whilst attempting to determine
+the license(s) in use.  This is equivalent to the B<--lines> command line
+option.
+
+=back
+
+=head1 LICENSE
+
+This code is copyright by Adam D. Barratt <I<adam@adam-barratt.org.uk>>,
+all rights reserved; based on a script of the same name from the KDE
+SDK, which is copyright by <I<dfaure@kde.org>>.
+This program comes with ABSOLUTELY NO WARRANTY.
+You are free to redistribute this code under the terms of the GNU
+General Public License, version 2 or later.
+
+=head1 AUTHOR
+
+Adam D. Barratt <adam@adam-barratt.org.uk>
+
+=cut
+
+use strict;
+use warnings;
+use Getopt::Long qw(:config gnu_getopt);
+use File::Basename;
+
+sub fatal($);
+sub parse_copyright($);
+sub parselicense($);
+
+my $progname = basename($0);
+
+# From dpkg-source
+my $default_ignore_regex = '
+# Ignore general backup files
+(?:^|/).*~$|
+# Ignore emacs recovery files
+(?:^|/)\.#.*$|
+# Ignore vi swap files
+(?:^|/)\..*\.swp$|
+# Ignore baz-style junk files or directories
+(?:^|/),,.*(?:$|/.*$)|
+# File-names that should be ignored (never directories)
+(?:^|/)(?:DEADJOE|\.cvsignore|\.arch-inventory|\.bzrignore|\.gitignore)$|
+# File or directory names that should be ignored
+(?:^|/)(?:CVS|RCS|\.deps|\{arch\}|\.arch-ids|\.svn|\.hg|_darcs|\.git|
+\.shelf|_MTN|\.bzr(?:\.backup|tags)?)(?:$|/.*$)
+';
+
+# Take out comments and newlines
+$default_ignore_regex =~ s/^#.*$//mg;
+$default_ignore_regex =~ s/\n//sg;
+
+my $default_check_regex = '\.(c(c|pp|xx)?|h(h|pp|xx)?|f(77|90)?|p(l|m)|xs|sh|php|py|rb|java|vala|el|sc(i|e)|cs|pas|inc|dtd|xsl|mod)$';
+
+my $modified_conf_msg;
+
+my ($opt_verbose, $opt_lines, $opt_noconf, $opt_ignore_regex, $opt_check_regex)
+  = ('', '', '', '', '');
+my $opt_recursive = 0;
+my $opt_copyright = 0;
+my ($opt_help, $opt_version);
+my $def_lines = 60;
+
+# Read configuration files and then command line
+# This is boilerplate
+
+if (@ARGV and $ARGV[0] =~ /^--no-?conf$/) {
+    $modified_conf_msg = "  (no configuration files read)";
+    shift;
+} else {
+    my @config_files = ('/etc/devscripts.conf', '~/.devscripts');
+    my %config_vars = (
+               'LICENSECHECK_VERBOSE' => 'no',
+               'LICENSECHECK_PARSELINES' => $def_lines,
+              );
+    my %config_default = %config_vars;
+
+    my $shell_cmd;
+    # Set defaults
+    foreach my $var (keys %config_vars) {
+    $shell_cmd .= qq[$var="$config_vars{$var}";\n];
+    }
+    $shell_cmd .= 'for file in ' . join(" ", @config_files) . "; do\n";
+    $shell_cmd .= '[ -f $file ] && . $file; done;' . "\n";
+    # Read back values
+    foreach my $var (keys %config_vars) { $shell_cmd .= "echo \$$var;\n" }
+    my $shell_out = `/bin/bash -c '$shell_cmd'`;
+    @config_vars{keys %config_vars} = split /\n/, $shell_out, -1;
+
+    # Check validity
+    $config_vars{'LICENSECHECK_VERBOSE'} =~ /^(yes|no)$/
+    or $config_vars{'LICENSECHECK_VERBOSE'} = 'no';
+    $config_vars{'LICENSECHECK_PARSELINES'} =~ /^[1-9][0-9]*$/
+    or $config_vars{'LICENSECHECK_PARSELINES'} = $def_lines;
+
+    foreach my $var (sort keys %config_vars) {
+    if ($config_vars{$var} ne $config_default{$var}) {
+        $modified_conf_msg .= "  $var=$config_vars{$var}\n";
+    }
+    }
+    $modified_conf_msg ||= "  (none)\n";
+    chomp $modified_conf_msg;
+
+    $opt_verbose = $config_vars{'LICENSECHECK_VERBOSE'} eq 'yes' ? 1 : 0;
+    $opt_lines = $config_vars{'LICENSECHECK_PARSELINES'};
+}
+
+GetOptions("help|h" => \$opt_help,
+       "version|v" => \$opt_version,
+       "verbose!" => \$opt_verbose,
+       "lines|l=i" => \$opt_lines,
+       "ignore|i=s" => \$opt_ignore_regex,
+       "recursive|r" => \$opt_recursive,
+       "check|c=s" => \$opt_check_regex,
+       "copyright" => \$opt_copyright,
+       "noconf" => \$opt_noconf,
+       "no-conf" => \$opt_noconf,
+       )
+    or die "Usage: $progname [options] filelist\nRun $progname --help for more details\n";
+
+$opt_lines = $def_lines if $opt_lines !~ /^[1-9][0-9]*$/;
+$opt_ignore_regex = $default_ignore_regex if ! length $opt_ignore_regex;
+$opt_check_regex = $default_check_regex if ! length $opt_check_regex;
+
+if ($opt_noconf) {
+    fatal "--no-conf is only acceptable as the first command-line option!";
+}
+if ($opt_help) { help(); exit 0; }
+if ($opt_version) { version(); exit 0; }
+
+die "Usage: $progname [options] filelist\nRun $progname --help for more details\n" unless @ARGV;
+
+$opt_lines = $def_lines if not defined $opt_lines;
+
+my @files = ();
+my @find_args = ();
+my $files_count = @ARGV;
+
+push @find_args, qw(-not ( -path */LayoutTests/* -prune ) );
+push @find_args, qw(-not ( -path */out/Debug/* -prune ) );
+push @find_args, qw(-not ( -path */out/Release/* -prune ) );
+push @find_args, qw(-not ( -path *.git* -prune ) );
+push @find_args, qw(-not ( -path *.svn* -prune ) );
+
+push @find_args, qw(-maxdepth 1) unless $opt_recursive;
+push @find_args, qw(-follow -type f -print);
+
+while (@ARGV) {
+    my $file = shift @ARGV;
+
+    if (-d $file) {
+    open FIND, '-|', 'find', $file, @find_args
+        or die "$progname: couldn't exec find: $!\n";
+
+    while (<FIND>) {
+        chomp;
+        next unless m%$opt_check_regex%;
+        # Skip empty files
+        next if (-z $_);
+        push @files, $_ unless m%$opt_ignore_regex%;
+    }
+    close FIND;
+    } else {
+    next unless ($files_count == 1) or $file =~ m%$opt_check_regex%;
+    push @files, $file unless $file =~ m%$opt_ignore_regex%;
+    }
+}
+
+while (@files) {
+    my $file = shift @files;
+    my $content = '';
+    my $copyright_match;
+    my $copyright = '';
+    my $license = '';
+    my %copyrights;
+
+    open (F, "<$file") or die "Unable to access $file\n";
+    while (<F>) {
+        last if ($. > $opt_lines);
+        $content .= $_;
+    }
+    close(F);
+
+    $copyright = join(" / ", values %copyrights);
+
+    print qq(----- $file header -----\n$content----- end header -----\n\n)
+    if $opt_verbose;
+
+    $content =~ tr/\t\r\n/ /;
+    # Remove C / C++ comments
+    $content =~ s#(\*/|/[/*])##g;
+    $content =~ tr% A-Za-z.,@;0-9\(\)/-%%cd;
+    $content =~ s/ c //g; # Remove fortran comments
+    $content =~ tr/ //s;
+
+    $license = parselicense($content);
+    print "$file: ";
+    print $license . "\n";
+    print "  [Copyright: " . $copyright . "]\n"
+      if $copyright and $opt_copyright;
+    print "\n" if $opt_copyright;
+}
+
+sub parse_copyright($) {
+    my $copyright = '';
+    my $match;
+
+    my $copyright_indicator_regex = '
+    (?:copyright	# The full word
+    |copr\.		# Legally-valid abbreviation
+    |\x{00a9}	# Unicode character COPYRIGHT SIGN
+    |\xc2\xa9	# Unicode copyright sign encoded in iso8859
+    |\(c\)		# Legally-null representation of sign
+    )';
+    my $copyright_disindicator_regex = '
+    \b(?:info(?:rmation)?	# Discussing copyright information
+    |notice			# Discussing the notice
+    |and|or                 # Part of a sentence
+    )\b';
+
+    if (m%$copyright_indicator_regex(?::\s*|\s+)(\S.*)$%ix) {
+    $match = $1;
+
+    # Ignore lines matching "see foo for copyright information" etc.
+    if ($match !~ m%^\s*$copyright_disindicator_regex%ix) {
+        # De-cruft
+        $match =~ s/([,.])?\s*$//;
+        $match =~ s/$copyright_indicator_regex//igx;
+        $match =~ s/^\s+//;
+        $match =~ s/\s{2,}/ /g;
+        $match =~ s/\\@/@/g;
+        $copyright = $match;
+    }
+    }
+
+    return $copyright;
+}
+
+sub help {
+   print <<"EOF";
+Usage: $progname [options] filename [filename ...]
+Valid options are:
+   --help, -h             Display this message
+   --version, -v          Display version and copyright info
+   --no-conf, --noconf    Don't read devscripts config files; must be
+                          the first option given
+   --verbose              Display the header of each file before its
+                            license information
+   --lines, -l            Specify how many lines of the file header
+                            should be parsed for license information
+                            (Default: $def_lines)
+   --check, -c            Specify a pattern indicating which files should
+                             be checked
+                             (Default: '$default_check_regex')
+   --recursive, -r        Add the contents of directories recursively
+   --copyright            Also display the file's copyright
+   --ignore, -i		  Specify that files / directories matching the
+                            regular expression should be ignored when
+                            checking files
+                            (Default: '$default_ignore_regex')
+
+Default settings modified by devscripts configuration files:
+$modified_conf_msg
+EOF
+}
+
+sub version {
+    print <<"EOF";
+This is $progname, from the Debian devscripts package, version ###VERSION###
+Copyright (C) 2007, 2008 by Adam D. Barratt <adam\@adam-barratt.org.uk>; based
+on a script of the same name from the KDE SDK by <dfaure\@kde.org>.
+
+This program comes with ABSOLUTELY NO WARRANTY.
+You are free to redistribute this code under the terms of the
+GNU General Public License, version 2, or (at your option) any
+later version.
+EOF
+}
+
+sub parselicense($) {
+    my ($licensetext) = @_;
+
+    my $gplver = "";
+    my $extrainfo = "";
+    my $license = "";
+
+    if ($licensetext =~ /version ([^ ]+) (?:\(?only\)?.? )?(?:of the GNU (Affero )?General Public License )?as published by the Free Software Foundation/i or
+    $licensetext =~ /GNU (?:Affero )?General Public License as published by the Free Software Foundation; version ([^ ]+) /i) {
+
+    $gplver = " (v$1)";
+    } elsif ($licensetext =~ /GNU (Affero ?)General Public License, version ([^ ]+?)[ .]/) {
+    $gplver = " (v$1)";
+    } elsif ($licensetext =~ /either version ([^ ]+) of the License, or \(at your option\) any later version/) {
+    $gplver = " (v$1 or later)";
+    }
+
+    if ($licensetext =~ /permission (?:is (also granted|given))? to link (the code of )?this program with (any edition of )?(Qt|the Qt library)/i) {
+    $extrainfo = " (with Qt exception)$extrainfo"
+    }
+
+    if ($licensetext =~ /(All changes made in this file will be lost|DO NOT (EDIT|delete this file)|Generated (automatically|by|from)|generated.*file)/i) {
+    $license = "GENERATED FILE";
+    }
+
+    if ($licensetext =~ /is free software.? you can redistribute it and\/or modify it under the terms of the (GNU (Library|Lesser) General Public License|LGPL)/i) {
+    $license = "LGPL$gplver$extrainfo $license";
+    }
+
+    if ($licensetext =~ /is free software.? you (can|may) redistribute it and\/or modify it under the terms of (?:version [^ ]+ (?:\(?only\)? )?of )?the GNU General Public License/i) {
+    $license = "GPL$gplver$extrainfo $license";
+    } elsif ($licensetext =~ /is distributed under the terms of the GNU General Public License,/
+    and length $gplver) {
+    $license = "GPL$gplver$extrainfo $license";
+    } elsif ($licensetext =~ /is distributed.*terms.*GPL/) {
+    $license = "GPL (unversioned/unknown version) $license";
+    }
+
+    if ($licensetext =~ /This file is part of the .*Qt GUI Toolkit. This file may be distributed under the terms of the Q Public License as defined/) {
+    $license = "QPL (part of Qt) $license";
+    } elsif ($licensetext =~ /may be distributed under the terms of the Q Public License as defined/) {
+    $license = "QPL $license";
+    }
+
+    if ($licensetext =~ /opensource\.org\/licenses\/mit-license\.php/) {
+    $license = "MIT/X11 (BSD like) $license";
+    } elsif ($licensetext =~ /Permission is hereby granted, free of charge, to any person obtaining a copy of this software and(\/or)? associated documentation files \(the (Software|Materials)\), to deal in the (Software|Materials)/) {
+    $license = "MIT/X11 (BSD like) $license";
+    } elsif ($licensetext =~ /Permission is hereby granted, without written agreement and without license or royalty fees, to use, copy, modify, and distribute this software and its documentation for any purpose/) {
+    $license = "MIT/X11 (BSD like) $license";
+    }
+
+    if ($licensetext  =~ /Permission to use, copy, modify, and(\/or)? distribute this software for any purpose (with or )?without fee is hereby granted, provided.*(copyright|entire) notice.*all copies/) {
+    $license = "ISC $license";
+    }
+
+    if ($licensetext =~ /THIS SOFTWARE IS PROVIDED .*AS IS AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY/) {
+    if ($licensetext =~ /All advertising materials mentioning features or use of this software must display the following/) {
+        $license = "BSD (4 clause) $license";
+    } elsif ($licensetext =~ /be used to endorse or promote products derived from this software/) {
+        $license = "BSD (3 clause) $license";
+    } elsif ($licensetext =~ /Redistributions of source code must retain the above copyright notice/) {
+        $license = "BSD (2 clause) $license";
+    } else {
+        $license = "BSD $license";
+    }
+    } elsif ($licensetext =~ /Use of this source code is governed by a BSD-style license/) {
+        $license = "BSD-like $license";
+    } elsif ($licensetext =~ /BSD terms apply/) {
+        $license = "BSD-like $license";
+    } elsif ($licensetext =~ /GOVERNED BY A BSD-STYLE SOURCE LICENSE/) {
+        $license = "BSD-like $license";
+    }
+
+    if ($licensetext =~ /Mozilla Public License Version ([^ ]+)/) {
+    $license = "MPL (v$1) $license";
+    }
+
+    if ($licensetext =~ /Released under the terms of the Artistic License ([^ ]+)/) {
+    $license = "Artistic (v$1) $license";
+    }
+
+    if ($licensetext =~ /is free software under the Artistic [Ll]icense/) {
+    $license = "Artistic $license";
+    }
+
+    if ($licensetext =~ /This program is free software; you can redistribute it and\/or modify it under the same terms as Perl itself/) {
+    $license = "Perl $license";
+    }
+
+    if ($licensetext =~ /under the terms of the Apache ([^ ]+) License OR version 2 of the GNU/) {
+    $license = "Apache (v$1) GPL (v2) $license";
+    } elsif ($licensetext =~ /under the Apache License, Version ([^ ]+)/) {
+    $license = "Apache (v$1) $license";
+    }
+
+    if ($licensetext =~ /This source file is subject to version ([^ ]+) of the PHP license/) {
+    $license = "PHP (v$1) $license";
+    }
+
+    if ($licensetext =~ /under the terms of the CeCILL /) {
+    $license = "CeCILL $license";
+    }
+
+    if ($licensetext =~ /under the terms of the CeCILL-([^ ]+) /) {
+    $license = "CeCILL-$1 $license";
+    }
+
+    if ($licensetext =~ /under the SGI Free Software (B License|License B)/) {
+    $license = "SGI Free Software License B $license";
+    }
+
+    if ($licensetext =~ /in the public domain/i) {
+    $license = "Public domain";
+    }
+
+    if ($licensetext =~ /terms of the Common Development and Distribution License(, Version ([^(]+))? \(the License\)/) {
+    $license = "CDDL " . ($1 ? "(v$2) " : '') . $license;
+    }
+
+    if ($licensetext =~ /Microsoft Permissive License \(Ms-PL\)/) {
+        $license = "Ms-PL $license";
+    }
+
+    if ($licensetext =~ /as defined in and that are subject to the Apple Public Source License([ ,-]+Version ([^ ]+)?(\.))/) {
+    $license = "APSL " . ($1 ? "(v$2) " : '') . $license;
+    } elsif ($licensetext =~ /provided that if you redistribute the Apple Software in its entirety and without modifications, you must retain this notice and the following text and disclaimers in all such redistributions of the Apple Software/) {
+    # https://fedoraproject.org/wiki/Licensing/Apple_MIT_License
+    $license = "Apple MIT $license";
+    }
+
+    if ($licensetext =~ /Permission is hereby granted, free of charge, to any person or organization obtaining a copy of the software and accompanying documentation covered by this license \(the \"Software\"\)/ or
+    $licensetext =~ /Boost Software License([ ,-]+Version ([^ ]+)?(\.))/i) {
+    $license = "BSL " . ($1 ? "(v$2) " : '') . $license;
+    }
+
+    if ($licensetext =~ /PYTHON SOFTWARE FOUNDATION LICENSE (VERSION ([^ ]+))/i) {
+    $license = "PSF " . ($1 ? "(v$2) " : '') . $license;
+    }
+
+    if ($licensetext =~ /The origin of this software must not be misrepresented.*Altered source versions must be plainly marked as such.*This notice may not be removed or altered from any source distribution/ or
+        $licensetext =~ /see copyright notice in zlib\.h/) {
+    $license = "zlib/libpng $license";
+    } elsif ($licensetext =~ /This code is released under the libpng license/) {
+        $license = "libpng $license";
+    }
+
+    if ($licensetext =~ /under MIT license/) {
+        $license = "MIT/X11 (BSD like) $license";
+    }
+
+    if ($licensetext =~ /As a special exception, you may create a larger work that contains part or all of the Bison parser skeleton and distribute that work under terms of your choice/) {
+        $license = $license . "with Bison parser exception";
+    }
+
+    $license = "UNKNOWN" if (!length($license));
+
+    return $license;
+}
+
+sub fatal($) {
+    my ($pack,$file,$line);
+    ($pack,$file,$line) = caller();
+    (my $msg = "$progname: fatal error at line $line:\n@_\n") =~ tr/\0//d;
+    $msg =~ s/\n\n$/\n/;
+    die $msg;
+}
+
+package Locale::Maketext::Lexicon::Gettext;
+
+use strict;
+
+# ABSTRACT: PO and MO file parser for Maketext
+
+=head1 SYNOPSIS
+
+Called via B<Locale::Maketext::Lexicon>:
+
+    package Hello::I18N;
+    use base 'Locale::Maketext';
+    use Locale::Maketext::Lexicon {
+        de => [Gettext => 'hello/de.mo'],
+    };
+
+Directly calling C<parse()>:
+
+    use Locale::Maketext::Lexicon::Gettext;
+    my %Lexicon = %{ Locale::Maketext::Lexicon::Gettext->parse(<DATA>) };
+    __DATA__
+    #: Hello.pm:10
+    msgid "Hello, World!"
+    msgstr "Hallo, Welt!"
+
+    #: Hello.pm:11
+    msgid "You have %quant(%1,piece) of mail."
+    msgstr "Sie haben %quant(%1,Poststueck,Poststuecken)."
+
+=head1 DESCRIPTION
+
+This module implements a perl-based C<Gettext> parser for
+B<Locale::Maketext>. It transforms all C<%1>, C<%2>, <%*>... sequences
+to C<[_1]>, C<[_2]>, C<[_*]>, and so on.  It accepts either plain PO
+file, or a MO file which will be handled with a pure-perl parser
+adapted from Imacat's C<Locale::Maketext::Gettext>.
+
+Since version 0.03, this module also looks for C<%I<function>(I<args...>)>
+in the lexicon strings, and transform it to C<[I<function>,I<args...>]>.
+Any C<%1>, C<%2>... sequences inside the I<args> will have their percent
+signs (C<%>) replaced by underscores (C<_>).
+
+The name of I<function> above should begin with a letter or underscore,
+followed by any number of alphanumeric characters and/or underscores.
+As an exception, the function name may also consist of a single asterisk
+(C<*>) or pound sign (C<#>), which are C<Locale::Maketext>'s shorthands
+for C<quant> and C<numf>, respectively.
+
+As an additional feature, this module also parses MIME-header style
+metadata specified in the null msgstr (C<"">), and add them to the
+C<%Lexicon> with a C<__> prefix.  For example, the example above will
+set C<__Content-Type> to C<text/plain; charset=iso8859-1>, without
+the newline or the colon.
+
+Any normal entry that duplicates a metadata entry takes precedence.
+Hence, a C<msgid "__Content-Type"> line occurs anywhere should override
+the above value.
+
+=head1 OPTIONS
+
+=head2 use_fuzzy
+
+When parsing PO files, fuzzy entries (entries marked with C<#, fuzzy>)
+are silently ignored.  If you wish to use fuzzy entries, specify a true
+value to the C<_use_fuzzy> option:
+
+    use Locale::Maketext::Lexicon {
+        de => [Gettext => 'hello/de.mo'],
+        _use_fuzzy => 1,
+    };
+
+=head2 allow_empty
+
+When parsing PO files, empty entries (entries with C<msgstr "">) are
+silently ignored.  If you wish to allow empty entries, specify a true
+value to the C<_allow_empty> option:
+
+    use Locale::Maketext::Lexicon {
+        de => [Gettext => 'hello/de.mo'],
+        _allow_empty => 1,
+    };
+
+=cut
+
+my ( $InputEncoding, $OutputEncoding, $DoEncoding );
+
+sub input_encoding  {$InputEncoding}
+sub output_encoding {$OutputEncoding}
+
+sub parse {
+    my $self = shift;
+    my ( %var, $key, @ret );
+    my @metadata;
+    my @comments;
+    my @fuzzy;
+
+    $InputEncoding = $OutputEncoding = $DoEncoding = undef;
+
+    use Carp;
+    Carp::cluck "Undefined source called\n" unless defined $_[0];
+
+    # Check for magic string of MO files
+    return parse_mo( join( '', @_ ) )
+        if ( $_[0] =~ /^\x95\x04\x12\xde/ or $_[0] =~ /^\xde\x12\x04\x95/ );
+
+    local $^W;    # no 'uninitialized' warnings, please.
+
+    require Locale::Maketext::Lexicon;
+    my $KeepFuzzy = Locale::Maketext::Lexicon::option('keep_fuzzy');
+    my $UseFuzzy  = $KeepFuzzy
+        || Locale::Maketext::Lexicon::option('use_fuzzy');
+    my $AllowEmpty = Locale::Maketext::Lexicon::option('allow_empty');
+    my $process    = sub {
+        if ( length( $var{msgstr} ) and ( $UseFuzzy or !$var{fuzzy} ) ) {
+            push @ret, ( map transform($_), @var{ 'msgid', 'msgstr' } );
+        }
+        elsif ($AllowEmpty) {
+            push @ret, ( transform( $var{msgid} ), '' );
+        }
+        if ( $var{msgid} eq '' ) {
+            push @metadata, parse_metadata( $var{msgstr} );
+        }
+        else {
+            push @comments, $var{msgid}, $var{msgcomment};
+        }
+        if ( $KeepFuzzy && $var{fuzzy} ) {
+            push @fuzzy, $var{msgid}, 1;
+        }
+        %var = ();
+    };
+
+    # Parse PO files
+    foreach (@_) {
+        s/[\015\012]*\z//;    # fix CRLF issues
+
+        /^(msgid|msgstr) +"(.*)" *$/
+            ? do {            # leading strings
+            $var{$1} = $2;
+            $key = $1;
+            }
+            :
+
+            /^"(.*)" *$/
+            ? do {            # continued strings
+            $var{$key} .= $1;
+            }
+            :
+
+            /^# (.*)$/
+            ? do {            # user comments
+            $var{msgcomment} .= $1 . "\n";
+            }
+            :
+
+            /^#, +(.*) *$/
+            ? do {            # control variables
+            $var{$_} = 1 for split( /,\s+/, $1 );
+            }
+            :
+
+            /^ *$/ && %var
+            ? do {            # interpolate string escapes
+            $process->($_);
+            }
+            : ();
+
+    }
+
+    # do not silently skip last entry
+    $process->() if keys %var != 0;
+
+    push @ret, map { transform($_) } @var{ 'msgid', 'msgstr' }
+        if length $var{msgstr};
+    push @metadata, parse_metadata( $var{msgstr} )
+        if $var{msgid} eq '';
+
+    return wantarray
+        ? ( { @metadata, @ret }, {@comments}, {@fuzzy} )
+        : ( { @metadata, @ret } );
+
+}
+
+sub parse_metadata {
+    return map {
+              (/^([^\x00-\x1f\x80-\xff :=]+):\s*(.*)$/)
+            ? ( $1 eq 'Content-Type' )
+                ? do {
+                    my $enc = $2;
+                    if ( $enc =~ /\bcharset=\s*([-\w]+)/i ) {
+                        $InputEncoding = $1 || '';
+                        $OutputEncoding
+                            = Locale::Maketext::Lexicon::encoding()
+                            || '';
+                        $InputEncoding = 'utf8'
+                            if $InputEncoding =~ /^utf-?8$/i;
+                        $OutputEncoding = 'utf8'
+                            if $OutputEncoding =~ /^utf-?8$/i;
+                        if (Locale::Maketext::Lexicon::option('decode')
+                            and ( !$OutputEncoding
+                                or $InputEncoding ne $OutputEncoding )
+                            )
+                        {
+                            require Encode::compat if $] < 5.007001;
+                            require Encode;
+                            $DoEncoding = 1;
+                        }
+                    }
+                    ( "__Content-Type", $enc );
+                }
+                : ( "__$1", $2 )
+            : ();
+    } split( /\r*\n+\r*/, transform(pop) );
+}
+
+sub transform {
+    my $str = shift;
+
+    if ( $DoEncoding and $InputEncoding ) {
+        $str
+            = ( $InputEncoding eq 'utf8' )
+            ? Encode::decode_utf8($str)
+            : Encode::decode( $InputEncoding, $str );
+    }
+
+    $str =~ s/\\([0x]..|c?.)/qq{"\\$1"}/eeg;
+
+    if ( $DoEncoding and $OutputEncoding ) {
+        $str
+            = ( $OutputEncoding eq 'utf8' )
+            ? Encode::encode_utf8($str)
+            : Encode::encode( $OutputEncoding, $str );
+    }
+
+    return _gettext_to_maketext($str);
+}
+
+sub _gettext_to_maketext {
+    my $str = shift;
+    $str =~ s{([\~\[\]])}{~$1}g;
+    $str =~ s{
+        ([%\\]%)                        # 1 - escaped sequence
+    |
+        %   (?:
+                ([A-Za-z#*]\w*)         # 2 - function call
+                    \(([^\)]*)\)        # 3 - arguments
+            |
+                ([1-9]\d*|\*)           # 4 - variable
+            )
+    }{
+        $1 ? $1
+           : $2 ? "\[$2,"._unescape($3)."]"
+                : "[_$4]"
+    }egx;
+    $str;
+}
+
+sub _unescape {
+    join( ',',
+        map { /\A(\s*)%([1-9]\d*|\*)(\s*)\z/ ? "$1_$2$3" : $_ }
+            split( /,/, $_[0] ) );
+}
+
+# This subroutine was derived from Locale::Maketext::Gettext::readmo()
+# under the Perl License; the original author is Yi Ma Mao (IMACAT).
+sub parse_mo {
+    my $content = shift;
+    my $tmpl = ( substr( $content, 0, 4 ) eq "\xde\x12\x04\x95" ) ? 'V' : 'N';
+
+    # Check the MO format revision number
+    # There is only one revision now: revision 0.
+    return if unpack( $tmpl, substr( $content, 4, 4 ) ) > 0;
+
+    my ( $num, $offo, $offt );
+
+    # Number of strings
+    $num = unpack $tmpl, substr( $content, 8, 4 );
+
+    # Offset to the beginning of the original strings
+    $offo = unpack $tmpl, substr( $content, 12, 4 );
+
+    # Offset to the beginning of the translated strings
+    $offt = unpack $tmpl, substr( $content, 16, 4 );
+
+    my ( @metadata, @ret );
+    for ( 0 .. $num - 1 ) {
+        my ( $len, $off, $stro, $strt );
+
+        # The first word is the length of the string
+        $len = unpack $tmpl, substr( $content, $offo + $_ * 8, 4 );
+
+        # The second word is the offset of the string
+        $off = unpack $tmpl, substr( $content, $offo + $_ * 8 + 4, 4 );
+
+        # Original string
+        $stro = substr( $content, $off, $len );
+
+        # The first word is the length of the string
+        $len = unpack $tmpl, substr( $content, $offt + $_ * 8, 4 );
+
+        # The second word is the offset of the string
+        $off = unpack $tmpl, substr( $content, $offt + $_ * 8 + 4, 4 );
+
+        # Translated string
+        $strt = substr( $content, $off, $len );
+
+        # Hash it
+        push @metadata, parse_metadata($strt) if $stro eq '';
+        push @ret, ( map transform($_), $stro, $strt ) if length $strt;
+    }
+
+    return { @metadata, @ret };
+}
+
+1;
+
+=head1 SEE ALSO
+
+L<Locale::Maketext>, L<Locale::Maketext::Lexicon>
+
+=head1 AUTHORS
+
+Audrey Tang E<lt>cpan@audreyt.orgE<gt>
+
+=head1 COPYRIGHT
+
+Copyright 2002-2013 by Audrey Tang E<lt>cpan@audreyt.orgE<gt>.
+
+This software is released under the MIT license cited below.
+
+=head2 The "MIT" License
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in
+all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
+OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
+THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+DEALINGS IN THE SOFTWARE.
+
+=cut
+
+#! /usr/bin/perl -w
+#
+#  Author: Sravan Bhamidipati @bsravanin
+#  License: MIT License http://www.opensource.org/licenses/mit-license.php
+#  Courtesy: Symantec Corporation http://www.symantec.com
+#  Date: 23rd November, 2011
+#  Purpose: Modify logs into text databases that vxperf2 can parse.
+#  DONE: esxtop iostat mpstat netstat pidstat prstat sar slabinfo top typeperf vmstat vxfsstatBCache vxfsstatICache vxstat
+#  TODO: sarasc
+
+
+use strict;
+use File::Basename;
+use File::Path;
+
+
+# Name: modifyIostat
+# Purpose: To modify iostat log to table.
+# Parameters: Path to log file, path to table file.
+# Returns: -
+sub modifyIostat {
+    my ($logPath, $tablePath, $time, $firstWord, $os, @temp) = ($_[0], $_[1], "", 0, "");
+
+    open LOG, $logPath or die "Cannot open $logPath for read: $!\n";
+    open MODIFIED, ">$tablePath" or die "Cannot open $tablePath for write: $!\n";
+    print MODIFIED "\n";
+    while (<LOG>) {
+        if ($firstWord == 0) {
+            $firstWord++;
+            if (/Linux/) {$os = "linux"}
+        }
+
+        if ($os eq "linux") {
+            if (/Time:/) {
+                &use24HourFormat();
+                chomp();
+                s#.*(\d\d:\d\d:\d\d).*#$1#g;
+                $time = $_;
+                print MODIFIED "\n";
+            }
+            else {
+                if (/(\d\d)\/(\d\d)\/(\d\d)/ || $_ eq "\n") {}
+                else {
+                    s#^(.*)(avg-cpu:)?#$time\t$1#;
+                    (/Device:/) ? print MODIFIED "\n$_" : print MODIFIED $_;
+                }
+            }
+        }
+        else {
+            if (/\d\d:\d\d:\d\d/) {
+                &use24HourFormat();
+                chomp();
+                @temp = split(/\s+/, $_);
+                $time = $temp[3];
+                print MODIFIED "\n";
+            }
+            elsif (/tty\s+cpu/ || /extended\s+device\s+statistics/) {}
+            elsif (/device/) {print MODIFIED "\n$time\t$_"}
+            else {print MODIFIED "$time\t$_"}
+        }
+    }
+    close MODIFIED;
+    close LOG;
+}
+
+
+# Name: modifyNetstat
+# Purpose: To modify netstat log to table.
+# Parameters: Path to log file, path to table file.
+# Returns: -
+sub modifyNetstat {
+    my ($logPath, $tablePath, $interface, @temp) = ($_[0], $_[1], "");
+
+    open LOG, $logPath or die "Cannot open $logPath for read: $!\n";
+    open MODIFIED, ">$tablePath" or die "Cannot open $tablePath for write: $!\n";
+    print MODIFIED "\n";
+    while (<LOG>) {
+        if (/input/) {
+            @temp = split(/\s+/, $_);
+            $interface = $temp[2];
+        }
+        elsif (/packets/) {print MODIFIED "\n$interface-input-packets\t$interface-input-errs\t$interface-output-packets\t$interface-output-errs\t$interface-output-colls\t$interface-input-total-packets\t$interface-input-total-errs\t$interface-output-total-packets\t$interface-output-total-errs\t$interface-output-total-colls\n"}
+        else {print MODIFIED $_}
+
+    }
+    close MODIFIED;
+    close LOG;
+}
+
+
+# Name: modifySlabinfo
+# Purpose: To modify slabinfo log to table.
+# Parameters: Path to log file, path to table file.
+# Returns: -
+sub modifySlabinfo {
+    my ($logPath, $tablePath, $time) = ($_[0], $_[1], "");
+
+    open LOG, $logPath or die "Cannot open $logPath for read: $!\n";
+    open MODIFIED, ">$tablePath" or die "Cannot open $tablePath for write: $!\n";
+    print MODIFIED "\n";
+    while (<LOG>) {
+        if (/SLAB_INFO > INFO/) {
+            &use24HourFormat();
+            chomp();
+            s#.*(\d\d:\d\d:\d\d).*#$1#g;
+            $time = $_;
+            print MODIFIED "\n";
+        }
+        else {
+            if (/slabinfo\s+-\s+version:/) {}
+            else {
+                s/#|<|>|:|tunables|slabdata//g && s#^#$time\t#;
+                print MODIFIED $_;
+            }
+        }
+    }
+    close MODIFIED;
+    close LOG;
+}
+
+
+# Name: modifySolstat
+# Purpose: To modify mpstat or prstat log of Solaris to tables.
+# Parameters: Path to log file, path to table file.
+# Returns: -
+sub modifySolstat {
+    my ($logPath, $tablePath, $time, @temp) = ($_[0], $_[1]);
+
+    open LOG, $logPath or die "Cannot open $logPath for read: $!\n";
+    open MODIFIED, ">$tablePath" or die "Cannot open $tablePath for write: $!\n";
+    print MODIFIED "\n";
+    while (<LOG>) {
+        if (/Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec/) {
+            &use24HourFormat();
+            chomp();
+            s#.*(\d\d:\d\d:\d\d).*#$1#g;
+            $time = $_;
+            print MODIFIED "\n";
+        }
+        elsif (/Total:/) {
+            @temp = split(/,\s+|\s+/, $_);
+            print MODIFIED "\nprocesses\tlwps\tld1\tld5\tld15\n$temp[1]\t$temp[3]\t$temp[7]\t$temp[8]\t$temp[9]\n\n";
+        }
+        else {
+            if (defined $time) {s#^(Total:|CPU)#\n$time\t$1# || s#^#$time\t#}
+            else {s#^(PID|CPU)#\n$1#}
+            print MODIFIED $_;
+        }
+    }
+    close MODIFIED;
+    close LOG;
+}
+
+
+# Name: modifySysstat
+# Purpose: To modify pidstat or sar log of Sysstat to tables.
+# Parameters: Path to log file, path to table file.
+# Returns: -
+sub modifySysstat {
+    my ($logPath, $tablePath) = ($_[0], $_[1]);
+
+    open LOG, $logPath or die "Cannot open $logPath for read: $!\n";
+    open MODIFIED, ">$tablePath" or die "Cannot open $tablePath for write: $!\n";
+    print MODIFIED "\n";
+    while (<LOG>) {
+        if (/(\d\d)\/(\d\d)\/(\d\d)/ || /Average/) {}
+        else {&use24HourFormat(); print MODIFIED $_}
+    }
+    close MODIFIED;
+    close LOG;
+}
+
+
+# Name: modifyTop
+# Purpose: To modify Unix top log to tables.
+# Parameters: Path to log file, path to table file.
+# Returns: -
+sub modifyTop {
+    my ($logPath, $tablePath, $time, $ld1, $ld5, $ld15, $procs, $idleProcs, $idle, $user, $kernel, $wait, $totalMem, $bufMem, $freeMem, $totalSwap, $freeSwap, @temp) = ($_[0], $_[1], "");
+
+    open LOG, $logPath or die "Cannot open $logPath for read: $!\n";
+    open MODIFIED, ">$tablePath" or die "Cannot open $tablePath for write: $!\n";
+    print MODIFIED "\n";
+    while (<LOG>) {
+        if (/load averages/) {
+            @temp = split(/,\s+|;\s+|\s+/, $_);
+            $ld1 = $temp[2];
+            $ld5 = $temp[3];
+            $ld15 = $temp[4];
+            $time = $temp[5];
+        }
+        elsif (/processes/) {
+            @temp = split(/\s+/, $_);
+            $procs = $temp[0];
+            $idleProcs = $temp[2];
+        }
+        elsif (/CPU states/) {
+            @temp = split(/\s+/, $_);
+            $idle = $temp[2];
+            $user = $temp[4];
+            $kernel = $temp[6];
+            $wait = $temp[8];
+        }
+        elsif (/Memory/) {
+            @temp = split(/\s+/, $_);
+            $totalMem = $temp[1];
+            $bufMem = $temp[3];
+            $freeMem = $temp[5];
+        }
+        elsif (/Swap/) {
+            @temp = split(/\s+/, $_);
+            $totalSwap = $temp[1];
+            $freeSwap = $temp[3];
+        }
+        elsif (/PID/) {
+            print MODIFIED "\nTimestamp\tld1\tld5\tld15\tProcs\tIdleProcs\t%Idle\t%User\t%Kernel\t%Wait\tTotalMem\tBufMem\tFreeMem\tTotalSwap\tFreeSwap\n$time\t$ld1\t$ld5\t$ld15\t$procs\t$idleProcs\t$idle\t$user\t$kernel\t$wait\t$totalMem\t$bufMem\t$freeMem\t$totalSwap\t$freeSwap\n\nTimestamp\t$_";
+        }
+        elsif (/^$/) {}
+        else {print MODIFIED "$time\t$_"}
+    }
+    close MODIFIED;
+    close LOG;
+}
+
+
+# Name: modifyTypeperf
+# Purpose: To modify esxtop (ESX) or typeperf (Windows) log to tables.
+# Parameters: Path to log file, path to table file.
+# Returns: -
+sub modifyTypeperf {
+    my ($logPath, $tablePath) = ($_[0], $_[1]);
+
+    open LOG, $logPath or die "Cannot open $logPath for read: $!\n";
+    open MODIFIED, ">$tablePath" or die "Cannot open $tablePath for write: $!\n";
+    print MODIFIED "\n";
+    while (<LOG>) {
+        s#" "#"0"#g;
+        s#"\(|\)|\\\\##g;
+        s# |\(|\\|\/#-#g;
+        s#",#\t#g;
+        s#"##g;
+        s#-+#-#g;
+        print MODIFIED $_;
+    }
+    close MODIFIED;
+    close LOG;
+}
+
+
+# Name: modifyVmstat
+# Purpose: To modify vmstat log to table.
+# Parameters: Path to log file, path to table file.
+# Returns: -
+sub modifyVmstat {
+    my ($logPath, $tablePath) = ($_[0], $_[1]);
+
+    open LOG, $logPath or die "Cannot open $logPath for read: $!\n";
+    open MODIFIED, ">$tablePath" or die "Cannot open $tablePath for write: $!\n";
+    print MODIFIED "\n";
+    while (<LOG>) {
+        if (/memory/ || /--/) {print MODIFIED "\n"}
+        elsif (/us\s+sy\s+/) {
+            s#us\s+sy\s+#us sys #;
+            print MODIFIED $_;
+        }
+        else {print MODIFIED $_}
+    }
+    close MODIFIED;
+    close LOG;
+}
+
+
+# Name: modifyVrstat
+# Purpose: To modify vrstat logs to tables.
+# Parameters: Path to log file, path to table file.
+# Returns: -
+sub modifyVrstat {
+    my ($logPath, $tablePath, $time) = ($_[0], $_[1]);
+
+    open LOG, $logPath or die "Cannot open $logPath for read: $!\n";
+    open MODIFIED, ">$tablePath" or die "Cannot open $tablePath for write: $!\n";
+    print MODIFIED "\n";
+    while (<LOG>) {
+        if (/Replicated Data Set|Data Status:|sec_vvr:|Network Statistics:|Messages\s+Errors\s+Flow Control|--|HOST\s+NAME\s+OPERATIONS\s+BLOCKS\s+AVG TIME|READ\s+WRITE\s+READ\s+WRITE\s+READ\s+WRITE|Host\s+Pool\s+DG\s+Min\s+Max\s+In\s+Allocated\s+Max\s+Waiting|Size\s+Size\s+Use\s+Used/ || $_ eq "\n") {}
+        elsif (/Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec/) {
+            &use24HourFormat();
+            chomp();
+            s#.*(\d\d:\d\d:\d\d).*#$1#g;
+            $time = $_;
+        }
+        elsif (/#\s+Blocks\s+RT\(msec\)\s+Timeout\s+Stream Memory\s+Delays/) {print MODIFIED "\nTime\t#\tBlocks\tRT(msec)\tTimeout\tStream\tMemory\tDelays\n"}
+        elsif (/Data Volume-I\/O Statistics:/) {print MODIFIED "\nTime\tHost\tName\tDVIO-OpsRd\tDVIO-OpsWr\tDVIO-BlksRd\tDVIO-BlksWr\tDVIO-AvgTimeRd\tDVIO-AvgTimeWr\n"}
+        elsif (/SRL-I\/O Statistics:/) {print MODIFIED "\nTime\tHost\tName\tSRLIO-OpsRd\tSRLIO-OpsWr\tSRLIO-BlksRd\tSRLIO-BlksWr\tSRLIO-AvgTimeRd\tSRLIO-AvgTimeWr\n"}
+        elsif (/Memory-pool Statistics:/) {print MODIFIED "\nTime\tHost\tPool\tDG\tMinSize\tMaxSize\tInUse\tAllocated\tMaxPoolUsed\tWaiting\n"}
+        else {print MODIFIED "$time\t$_"}
+    }
+    close MODIFIED;
+    close LOG;
+}
+
+
+# Name: modifyVvrstat
+# Purpose: To modify vxmemstat, vxrlink, vxrvg logs to tables.
+# Parameters: Path to log file, path to table file.
+# Returns: -
+sub modifyVvrstat {
+    my ($logPath, $tablePath) = ($_[0], $_[1]);
+
+    open LOG, $logPath or die "Cannot open $logPath for read: $!\n";
+    open MODIFIED, ">$tablePath" or die "Cannot open $tablePath for write: $!\n";
+    print MODIFIED "\n";
+    while (<LOG>) {
+        if (/Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec|--|Size\s+Size\s+Use\s+Used|Messages\s+Errors\s+Flow\s+Control|Conflicts\s+Max\sAvg\s+Max\s+Avg/ || $_ eq "\n") {}
+        elsif (/Pool\s+DG\s+Min\s+Max\s+In\s+Allocated\s+Max\s+Pool\s+Waiters/) {print MODIFIED "\nPool\tDG\tMinSize\tMaxSize\tInUse\tAllocated\tMaxPoolUsed\tWaiters\n"}
+        elsif (/#\s+Blocks\s+RT\(msec\)\s+Timeout\s+Stream Memory\s+Delays/) {print MODIFIED "\n#\tBlocks\tRT(msec)\tTimeout\tStream\tMemory\tDelays\n"}
+        elsif (/Read\/Write\s+Concurrency\s+Write-size/) {print MODIFIED "\nRWConflicts\tMaxConcurrency\tAvgConcurrency\tMaxWriteSize\tAvgWriteSize\n"}
+        else {print MODIFIED "$_"}
+    }
+    close MODIFIED;
+    close LOG;
+}
+
+
+# Name: modifyVxfsstatBCache
+# Purpose: To modify vxfsstat_bcache log to table.
+# Parameters: Path to log file, path to table file.
+# Returns: -
+sub modifyVxfsstatBCache {
+    my ($logPath, $tablePath, $time, $current, $maximum, $lookups, $hitRate, $recycleAge, @temp) = ($_[0], $_[1], "", "", "", "", "", "");
+
+    open LOG, $logPath or die "Cannot open $logPath for read: $!\n";
+    open MODIFIED, ">$tablePath" or die "Cannot open $tablePath for write: $!\n";
+    print MODIFIED "\ncurrent\tmaximum\tlookups\thitRate\trecycleAge\n";
+    print MODIFIED "\n";
+    while (<LOG>) {
+        chomp();
+        s#^\s+##;
+        if ($_ eq "\n" || /buffer cache statistics/) {}
+        elsif (/sample/) {
+            ($time, @temp) = split(/\s+/, $_);
+        }
+        elsif (/Kbyte/) {
+            @temp = split(/\s+/, $_);
+            $current = $temp[0];
+            $maximum = $temp[3];
+        }
+        elsif (/lookups/) {
+            @temp = split(/\s+/, $_);
+            $lookups = $temp[0];
+            $hitRate = $temp[2];
+        }
+        elsif (/recycle/) {
+            ($recycleAge, @temp) = split(/\s+/, $_);
+            print MODIFIED "$time\t$current\t$maximum\t$lookups\t$hitRate\t$recycleAge\n";
+        }
+    }
+    close MODIFIED;
+    close LOG;
+}
+
+
+# Name: modifyVxfsstatICache
+# Purpose: To modify vxfsstat_icache log to table.
+# Parameters: Path to log file, path to table file.
+# Returns: -
+sub modifyVxfsstatICache {
+    my ($logPath, $tablePath, $time, $maximumDNLCEntries, $totalLookups, $fastDNLCLookups, $totalDNLCLookups, $DNLCHitRate, $totalEnter, $hitPerEnter, $totalDirCacheSetup, $callsPerSetup, $directoryScan, $fastDirectoryScan, $inodesCurrent, $inodesPeak, $inodesMaximum, $inodeLookups, $inodeHitRate, $inodesAllocated, $inodesFreed, $recycleAge, $freeAge, @temp) = ($_[0], $_[1], "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "");
+
+    open LOG, $logPath or die "Cannot open $logPath for read: $!\n";
+    open MODIFIED, ">$tablePath" or die "Cannot open $tablePath for write: $!\n";
+    print MODIFIED "\n";
+    print MODIFIED "time\tmaximumDNLCEntries\ttotalLookups\tfastDNLCLookups\ttotalDNLCLookups\tDNLCHitRate\ttotalEnter\thitPerEnter\ttotalDirCacheSetup\tcallsPerSetup\tdirectoryScan\tfastDirectoryScan\tinodesCurrent\tinodesPeak\tinodesMaximum\tinodeLookups\tinodeHitRate\tinodesAllocated\tinodesFreed\trecycleAge\tfreeAge\n";
+    while (<LOG>) {
+        chomp();
+        s#^\s+##;
+        if ($_ eq "\n" && /Statistics/i) {}
+        elsif (/sample/) {
+            ($time, @temp) = split(/\s+/, $_);
+        }
+        elsif (/maximum entries in dnlc/) {
+            ($maximumDNLCEntries, @temp) = split(/\s+/, $_);
+        }
+        elsif (/fast lookup/) {
+            @temp = split(/\s+/, $_);
+            $totalLookups = $temp[0];
+            $fastDNLCLookups = $temp[3];
+        }
+        elsif (/dnlc lookup/) {
+            @temp = split(/\s+/, $_);
+            $totalDNLCLookups = $temp[0];
+            $DNLCHitRate = $temp[4];
+        }
+        elsif (/hit per enter/) {
+            @temp = split(/\s+/, $_);
+            $totalEnter = $temp[0];
+            $hitPerEnter = $temp[3];
+        }
+        elsif (/dircache/) {
+            @temp = split(/\s+/, $_);
+            $totalDirCacheSetup = $temp[0];
+            $callsPerSetup = $temp[4];
+        }
+        elsif (/scan/) {
+            @temp = split(/\s+/, $_);
+            $directoryScan = $temp[0];
+            $fastDirectoryScan = $temp[4];
+        }
+        elsif (/inodes current/) {
+            @temp = split(/\s+/, $_);
+            $inodesCurrent = $temp[0];
+            $inodesPeak = $temp[3];
+            $inodesMaximum = $temp[5];
+        }
+        elsif (/% hit rate/) {
+            @temp = split(/\s+/, $_);
+            $inodeLookups = $temp[0];
+            $inodeHitRate = $temp[2];
+        }
+        elsif (/freed/) {
+            @temp = split(/\s+/, $_);
+            $inodesAllocated = $temp[0];
+            $inodesFreed = $temp[3];
+        }
+        elsif (/recycle/) {
+            ($recycleAge, @temp) = split(/\s+/, $_);
+        }
+        elsif (/free age/) {
+            ($freeAge, @temp) = split(/\s+/, $_);
+            print MODIFIED "$time\t$maximumDNLCEntries\t$totalLookups\t$fastDNLCLookups\t$totalDNLCLookups\t$DNLCHitRate\t$totalEnter\t$hitPerEnter\t$totalDirCacheSetup\t$callsPerSetup\t$directoryScan\t$fastDirectoryScan\t$inodesCurrent\t$inodesPeak\t$inodesMaximum\t$inodeLookups\t$inodeHitRate\t$inodesAllocated\t$inodesFreed\t$recycleAge\t$freeAge\n";
+        }
+    }
+    close MODIFIED;
+    close LOG;
+}
+
+
+# Name: modifyVxfsstatFile
+# Purpose: To modify vxfsstat_file log to table.
+# Parameters: Path to log file, path to table file.
+# Returns: -
+sub modifyVxfsstatFile {
+    my ($logPath, $tablePath, $time, @temp) = ($_[0], $_[1], "");
+
+    open LOG, $logPath or die "Cannot open $logPath for read: $!\n";
+    open MODIFIED, ">$tablePath" or die "Cannot open $tablePath for write: $!\n";
+    print MODIFIED "\n";
+    print MODIFIED "Time\tvxi\tCount\n";
+    while (<LOG>) {
+        if ($_ eq "\n") {}
+        elsif (/sample/) {
+            chomp();
+            ($time, @temp) = split(/\s+/, $_);
+        }
+        else {print MODIFIED "$time\t$_"}
+    }
+    close MODIFIED;
+    close LOG;
+}
+
+
+# Name: modifyVxrlinkE
+# Purpose: To modify vxrlink_e logs to tables.
+# Parameters: Path to log file, path to table file.
+# Returns: -
+sub modifyVxrlinkE {
+    my ($logPath, $tablePath) = ($_[0], $_[1]);
+
+    open LOG, $logPath or die "Cannot open $logPath for read: $!\n";
+    open MODIFIED, ">$tablePath" or die "Cannot open $tablePath for write: $!\n";
+    print MODIFIED "\n";
+    print MODIFIED "SentBlks\tFreeMem\tFreeSlots\tFreeMemNmcom\tTimeout\tMissingPkts\tMissingMsgs\tStream\tChecksum\tDeliveryFailed\n";
+    while (<LOG>) {
+        if (/Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec|Messages :|Errors :|--/ || $_ eq "\n")  {}
+        elsif (/transaction/) {
+            s#.*(\d)#$1#g;
+            print MODIFIED "$_";
+        }
+        else {
+            chomp();
+            s#.*(\d)#$1#g;
+            print MODIFIED "$_\t";
+        }
+    }
+    close MODIFIED;
+    close LOG;
+}
+
+
+# Name: modifyVxrlinkStatus
+# Purpose: To modify vxrlink_status logs to tables.
+# Parameters: Path to log file, path to table file.
+# Returns: -
+sub modifyVxrlinkStatus {
+    my ($logPath, $tablePath) = ($_[0], $_[1]);
+
+    open LOG, $logPath or die "Cannot open $logPath for read: $!\n";
+    open MODIFIED, ">$tablePath" or die "Cannot open $tablePath for write: $!\n";
+    print MODIFIED "\n";
+    print MODIFIED "Outstanding\tOccupying\tPercentage\n";
+    while (<LOG>) {
+        if (/Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec/ || $_ eq "\n")  {}
+        elsif (/ is up to date/) {print MODIFIED "Up\tTo\tDate\n"}
+        else {
+            s#.* has ##g;
+            s# outstanding writes, occupying #\t#g;
+            s# Kbytes \(#\t#g;
+            s#%\).*##g;
+            print MODIFIED $_;
+        }
+    }
+    close MODIFIED;
+    close LOG;
+}
+
+
+# Name: modifyVxstat
+# Purpose: To modify vxstat log to table.
+# Parameters: Path to log file, path to table file.
+# Returns: -
+sub modifyVxstat {
+    my ($logPath, $tablePath, $time) = ($_[0], $_[1], "");
+
+    open LOG, $logPath or die "Cannot open $logPath for read: $!\n";
+    open MODIFIED, ">$tablePath" or die "Cannot open $tablePath for write: $!\n";
+    print MODIFIED "\n";
+    while (<LOG>) {
+        if (/OPERATIONS\s+BLOCKS\s+AVG\s+TIME/ || $_ eq "\n") {}
+        elsif (/TYP\s+NAME\s+READ\s+WRITE\s+READ\s+WRITE\s+READ\s+WRITE/) {print MODIFIED "Time\tType\tName\tOpsRd\tOpsWr\tBlksRd\tBlksWr\tAvgTimeRd\tAvgTimeWr\n"}
+        elsif (/Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec/)  {
+            &use24HourFormat();
+            chomp();
+            s#.*(\d\d:\d\d:\d\d).*#$1#g;
+            $time = $_;
+        }
+        else {print MODIFIED "$time\t$_"}
+    }
+    close MODIFIED;
+    close LOG;
+}
+
+
+# Name: use24HourFormat
+# Purpose: To modify a timestamp to 24-hour format.
+# Parameters: String containing timestamp.
+# Returns: -
+sub use24HourFormat {
+    my $colon = ":";	# Timestamp delimiter
+    s#(\d\d):(\d\d):(\d\d)\s+AM#$1:$2:$3#g || s#(\d\d):(\d\d):(\d\d)\s+PM#($1+12).$colon.$2.$colon.$3#eg;
+}
+
+
+1;
+
+
+#__END__
+###########################################DOCUMENTATION###########################################
+=head1
+
+=head1 NAME
+
+B<log2db>
+
+=head1 SYNOPSIS
+
+  use log2db;
+
+  &modifyIostat($logPath, $tablePath);		# iostat
+  &modifyNetstat($logPath, $tablePath);		# netstat
+  &modifySlabinfo($logPath, $tablePath);	# slabinfo
+  &modifySolstat($logPath, $tablePath);		# mpstat, prstat
+  &modifySysstat($logPath, $tablePath);		# pidstat, sar
+  &modifyTop($logPath, $tablePath);			# top
+  &modifyTypeperf($logPath, $tablePath);	# esxtop, typeperf
+  &modifyVmstat($logPath, $tablePath);		# vmstat
+  &modifyVrstat($logPath, $tablePath);		# vrstat
+  &modifyVvrstat($logPath, $tablePath);		# vxmemstat, vxrlink, vxrvg
+  &modifyVxfsstatBCache($logPath, $tablePath);	# vxfsstat_bcache
+  &modifyVxfsstatICache($logPath, $tablePath);	# vxfsstat_icache
+  &modifyVxfsstatFile($logPath, $tablePath);	# vxfsstat_file
+  &modifyVxrlinkE($logPath, $tablePath);	# vxrlink_e
+  &modifyVxrlinkStatus($logPath, $tablePath);	# vxrlink_status
+  &modifyVxstat($logPath, $tablePath);		# vxstat
+
+=head1 DESCRIPTION
+
+B<log2db> is a utility to modify log files generated using esxtop, iostat, mpstat, netstat, pidstat, prstat, sar, slabinfo, typeperf, vmstat, vxfsstat, vxstat into text database that can be parsed by B<vxperf2>. B<log2db.pl> is the Perl wrapper around B<log2db> which can be run from the command-line or called from non-Perl scripts.
+
+=head1 SUBROUTINES
+
+The B<log2db> module contains sixteen subroutines: B<modifyIostat>, B<modifyNetstat>, B<modifySlabinfo>, B<modifySolstat>, B<modifySysstat>, B<modifyTop>, B<modifyTypeperf>, B<modifyVmstat>, B<modifyVrstat>, B<modifyVvrstat>, B<modifyVxfsstatBCache>, B<modifyVxfsstatICache>, B<modifyVxfsstatFile>, B<modifyVxrlinkE>, B<modifyVxrlinkStatus> and B<modifyVxstat>.
+
+All of them take two parameters -- path to the log file to be modified and path to the table file to be saved as. They're all very trivial, basic, and "hardcoded". One golden rule for creating subroutines is that B<the table file should always start with a newline>.
+
+=head1 AUTHOR
+
+B<Sravan Bhamidipati> (Sravan_Bhamidipati@symantec.com, bsravanin@gmail.com)
+
+=head1 CREDITS
+
+Rajalaxmi Angadi contributed to the B<modifyVxfsstatBCache>, B<modifyVxfsstatICache>, B<modifyVxfsstatFile> and B<modifyVxstat> subroutines.
+
+=head1 LICENSE AND COPYRIGHT
+
+MIT License: http://www.opensource.org/licenses/mit-license.php
+Symantec Corporation: http://www.symantec.com
+
+=head1 LAST UPDATED
+
+29th November, 2011
+
+=cut

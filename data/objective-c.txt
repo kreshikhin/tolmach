@@ -1,0 +1,1131 @@
+/******************************************************************************
+ * v. 0.9.1  15 NOV 2012
+ * Filename  LNNumberpad.m
+ * Project:  LNNumberpad
+ * Purpose:  Class to display a custom LNNumberpad on an iPad and properly handle
+ *           the text input.
+ * Author:   Louis Nafziger
+ *
+ * Copyright 2012 Louis Nafziger
+ ******************************************************************************
+ *
+ * This file is part of LNNumberpad.
+ *
+ * COPYRIGHT 2013 Louis Nafziger
+ *
+ * LNNumberpad is free software: you can redistribute it and/or modify
+ * it under the terms of the The MIT License (MIT).
+ *
+ * LNNumberpad is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * The MIT License for more details.
+ *
+ * You should have received a copy of the The MIT License (MIT)
+ * along with LNNumberpad.  If not, see <http://opensource.org/licenses/MIT>.
+ *
+ *****************************************************************************/
+
+#import "LNNumberpad.h"
+
+static NSString *keysSounds[] = {
+    @"key-new-01",
+    @"key-new-02",
+    @"key-new-03",
+    @"key-new-04",
+    @"key-new-05"
+};
+
+typedef enum {
+    KeyTypeDefault,
+    KeyTypeSpace,
+    KeyTypeReturn
+} KeyType;
+
+
+@interface LNNumberpad ()
+
+@property (nonatomic, weak) id<UITextInput> targetTextInput;
+
+@end
+
+
+@implementation LNNumberpad
+
+@synthesize targetTextInput;
+
+- (void)playAudioFile:(KeyType)keyType {
+    NSError *error;
+    NSString *path;
+    NSURL *url;
+    NSInteger randNum;
+    NSString *audioFile;
+
+    switch (keyType) {
+        case KeyTypeDefault:
+            randNum = arc4random() % 5;
+            audioFile = keysSounds[randNum];
+            break;
+
+        case KeyTypeReturn:
+            audioFile = @"return-new";
+            break;
+
+        case KeyTypeSpace:
+            audioFile = @"space-new";
+            break;
+    }
+
+    path = [[NSBundle mainBundle] pathForResource:audioFile ofType:@"mp3"];
+    url = [NSURL fileURLWithPath:path];
+
+    self.audioPlayer = [[AVAudioPlayer alloc] initWithContentsOfURL:url error:&error];
+    if (error) {
+        NSLog(@"Error in audioPlayer: %@", [error localizedDescription]);
+    } else {
+        [self.audioPlayer setDelegate:(id)self];
+        [self.audioPlayer prepareToPlay];
+        [self.audioPlayer play];
+    }
+}
+
+#pragma mark - Shared LNNumberpad method
+
+- (void)key {
+    CGContextRef context = UIGraphicsGetCurrentContext();
+
+    UIColor *shadow = [UIColor darkGrayColor];
+    CGSize shadowOffset = CGSizeMake(0.1, -1.1);
+    CGFloat shadowRadius = 0.5;
+
+    UIBezierPath *ovalPath = [UIBezierPath bezierPathWithOvalInRect:CGRectMake(0, 0, 28, 28)];
+    [[UIColor blackColor] setFill];
+    [ovalPath fill];
+    CGContextSaveGState(context);
+    CGContextSetShadowWithColor(context, shadowOffset, shadowRadius, shadow.CGColor);
+    [[UIColor lightGrayColor] setStroke];
+    ovalPath.lineWidth = 4.5;
+    [ovalPath stroke];
+    CGContextRestoreGState(context);
+}
+
++ (LNNumberpad *)defaultLNNumberpad {
+    static LNNumberpad *defaultLNNumberpad = nil;
+    static dispatch_once_t onceToken;
+
+    dispatch_once(&onceToken, ^{
+        defaultLNNumberpad = [[[NSBundle mainBundle] loadNibNamed:@"LNNumberpad" owner:self options:nil] objectAtIndex:0];
+    });
+
+    return defaultLNNumberpad;
+}
+
+#pragma mark - view lifecycle
+
+- (id)initWithFrame:(CGRect)frame {
+    self = [super initWithFrame:frame];
+    if (self) {
+        [self addObservers];
+    }
+    return self;
+}
+
+- (id)initWithCoder:(NSCoder *)aDecoder {
+    self = [super initWithCoder:aDecoder];
+    if (self) {
+        [self addObservers];
+    }
+    return self;
+}
+
+- (void)addObservers {
+    // Keep track of the textView/Field that we are editing
+    [[NSNotificationCenter defaultCenter] addObserver:self
+                                             selector:@selector(editingDidBegin:)
+                                                 name:UITextFieldTextDidBeginEditingNotification
+                                               object:nil];
+    [[NSNotificationCenter defaultCenter] addObserver:self
+                                             selector:@selector(editingDidBegin:)
+                                                 name:UITextViewTextDidBeginEditingNotification
+                                               object:nil];
+    [[NSNotificationCenter defaultCenter] addObserver:self
+                                             selector:@selector(editingDidEnd:)
+                                                 name:UITextFieldTextDidEndEditingNotification
+                                               object:nil];
+    [[NSNotificationCenter defaultCenter] addObserver:self
+                                             selector:@selector(editingDidEnd:)
+                                                 name:UITextViewTextDidEndEditingNotification
+                                               object:nil];
+}
+
+- (void)dealloc {
+    [[NSNotificationCenter defaultCenter] removeObserver:self
+                                                    name:UITextFieldTextDidBeginEditingNotification
+                                                  object:nil];
+    [[NSNotificationCenter defaultCenter] removeObserver:self
+                                                    name:UITextViewTextDidBeginEditingNotification
+                                                  object:nil];
+    [[NSNotificationCenter defaultCenter] removeObserver:self
+                                                    name:UITextFieldTextDidEndEditingNotification
+                                                  object:nil];
+    [[NSNotificationCenter defaultCenter] removeObserver:self
+                                                    name:UITextViewTextDidEndEditingNotification
+                                                  object:nil];
+    self.targetTextInput = nil;
+}
+
+#pragma mark - editingDidBegin/End
+
+// Editing just began, store a reference to the object that just became the firstResponder
+- (void)editingDidBegin:(NSNotification *)notification {
+    if ([notification.object conformsToProtocol:@protocol(UITextInput)]) {
+        self.targetTextInput = notification.object;
+        return;
+    }
+
+    // Object does not conform to UITextInput so we don't care about it
+    self.targetTextInput = nil;
+}
+
+// Editing just ended.
+- (void)editingDidEnd:(NSNotification *)notification {
+    self.targetTextInput = nil;
+}
+
+#pragma mark - Keypad IBAction's
+
+- (IBAction)numberpadNumberPressed:(UIButton *)sender {
+    if (self.targetTextInput) {
+        NSString *numberPressed  = sender.titleLabel.text;
+        UITextRange *selectedTextRange = self.targetTextInput.selectedTextRange;
+        NSInteger keyType;
+
+        if ([numberPressed length] == 1) {
+            [self textInput:self.targetTextInput replaceTextAtTextRange:selectedTextRange withString:numberPressed];
+            keyType = KeyTypeDefault;
+        } else {
+            if (![numberPressed caseInsensitiveCompare:@"space"]) {
+                [self textInput:self.targetTextInput replaceTextAtTextRange:selectedTextRange withString:@" "];
+                keyType = KeyTypeSpace;
+            } else {
+                [self textInput:self.targetTextInput replaceTextAtTextRange:selectedTextRange withString:@"\n"];
+                keyType = KeyTypeReturn;
+            }
+
+        }
+
+        [self playAudioFile:keyType];
+    }
+}
+
+// The delete button was just pressed on the number pad
+- (IBAction)numberpadDeletePressed:(UIButton *)sender {
+    if (self.targetTextInput) {
+        UITextRange *selectedTextRange = self.targetTextInput.selectedTextRange;
+        if (selectedTextRange) {
+            // Calculate the selected text to delete
+            UITextPosition  *startPosition  = [self.targetTextInput positionFromPosition:selectedTextRange.start offset:-1];
+            if (!startPosition) {
+                return;
+            }
+            UITextPosition  *endPosition    = selectedTextRange.end;
+            if (!endPosition) {
+                return;
+            }
+            UITextRange     *rangeToDelete  = [self.targetTextInput textRangeFromPosition:startPosition
+                                                                               toPosition:endPosition];
+
+            [self textInput:self.targetTextInput replaceTextAtTextRange:rangeToDelete withString:@""];
+        }
+    }
+}
+
+#pragma mark - text replacement routines
+
+// Check delegate methods to see if we should change the characters in range
+- (BOOL)textInput:(id <UITextInput>)textInput shouldChangeCharactersInRange:(NSRange)range withString:(NSString *)string {
+    if (textInput) {
+        if ([textInput isKindOfClass:[UITextField class]]) {
+            UITextField *textField = (UITextField *)textInput;
+            if ([textField.delegate respondsToSelector:@selector(textField:shouldChangeCharactersInRange:replacementString:)]) {
+                if ([textField.delegate textField:textField
+                    shouldChangeCharactersInRange:range
+                                replacementString:string]) {
+                    return YES;
+                }
+            } else {
+                // Delegate does not respond, so default to YES
+                return YES;
+            }
+        } else if ([textInput isKindOfClass:[UITextView class]]) {
+            UITextView *textView = (UITextView *)textInput;
+            if ([textView.delegate respondsToSelector:@selector(textView:shouldChangeTextInRange:replacementText:)]) {
+                if ([textView.delegate textView:textView
+                        shouldChangeTextInRange:range
+                                replacementText:string]) {
+                    return YES;
+                }
+            } else {
+                // Delegate does not respond, so default to YES
+                return YES;
+            }
+        }
+    }
+    return NO;
+}
+
+// Replace the text of the textInput in textRange with string if the delegate approves
+- (void)textInput:(id <UITextInput>)textInput replaceTextAtTextRange:(UITextRange *)textRange withString:(NSString *)string {
+    if (textInput) {
+        if (textRange) {
+            // Calculate the NSRange for the textInput text in the UITextRange textRange:
+            int startPos                    = [textInput offsetFromPosition:textInput.beginningOfDocument
+                                                                 toPosition:textRange.start];
+            int length                      = [textInput offsetFromPosition:textRange.start
+                                                                 toPosition:textRange.end];
+            NSRange selectedRange           = NSMakeRange(startPos, length);
+
+            if ([self textInput:textInput shouldChangeCharactersInRange:selectedRange withString:string]) {
+                // Make the replacement:
+                [textInput replaceRange:textRange withText:string];
+            }
+        }
+    }
+}
+
+@end
+
+/*
+ Copyright 2009-2012 Urban Airship Inc. All rights reserved.
+
+ Redistribution and use in source and binary forms, with or without
+ modification, are permitted provided that the following conditions are met:
+
+ 1. Redistributions of source code must retain the above copyright notice, this
+ list of conditions and the following disclaimer.
+
+ 2. Redistributions in binaryform must reproduce the above copyright notice,
+ this list of conditions and the following disclaimer in the documentation
+ and/or other materials provided withthe distribution.
+
+ THIS SOFTWARE IS PROVIDED BY THE URBAN AIRSHIP INC ``AS IS'' AND ANY EXPRESS OR
+ IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
+ MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO
+ EVENT SHALL URBAN AIRSHIP INC OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT,
+ INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
+ BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+ DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
+ LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE
+ OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
+ ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ */
+
+/* UAInboxOverlayController is based on MTPopupWindow
+ * http://www.touch-code-magazine.com/showing-a-popup-window-in-ios-class-for-download/
+ *
+ * Copyright 2011 Marin Todorov. MIT license
+ * http://www.opensource.org/licenses/mit-license.php
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy of this software
+ * and associated documentation files (the "Software"), to deal in the Software without restriction,
+ * including without limitation the rights to use, copy, modify, merge, publish, distribute,
+ * sublicense, and/or sell copies of the Software, and to permit persons to whom the Software
+ * is furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in all copies or
+ * substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING
+ * BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
+ * NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM,
+ * DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+ */
+
+#import "UAInboxOverlayController.h"
+#import "UAInboxMessage.h"
+#import "UAInboxMessageList.h"
+#import "UAInbox.h"
+#import "UAInboxUI.h"
+#import "UAUtils.h"
+
+#import <QuartzCore/QuartzCore.h>
+
+#define kShadeViewTag 1000
+
+@interface UAInboxOverlayController(Private)
+
+- (id)initWithParentViewController:(UIViewController *)parent andMessageID:(NSString*)messageID;
+- (void)loadMessageAtIndex:(int)index;
+- (void)loadMessageForID:(NSString *)mid;
+- (void)displayWindow;
+- (void)closePopupWindow;
+
+@end
+
+@implementation UAInboxOverlayController
+
+@synthesize webView, message;
+
+
++ (void)showWindowInsideViewController:(UIViewController *)viewController withMessageID:(NSString *)messageID {
+    [[UAInboxOverlayController alloc] initWithParentViewController:viewController andMessageID:messageID];
+}
+
+
+- (id)initWithParentViewController:(UIViewController *)parent andMessageID:(NSString*)messageID {
+    self = [super init];
+    if (self) {
+        // Initialization code here.
+
+        parentViewController = [parent retain];
+        UIView *sview = parent.view;
+
+        bgView = [[[UIView alloc] initWithFrame: sview.bounds] autorelease];
+        bgView.autoresizesSubviews = YES;
+        bgView.autoresizingMask = UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleHeight;
+
+        [sview addSubview: bgView];
+
+        //set the frame later
+        webView = [[UIWebView alloc] initWithFrame:CGRectZero];
+        webView.backgroundColor = [UIColor clearColor];
+        webView.opaque = NO;
+        webView.delegate = self;
+
+        //hack to hide the ugly webview gradient
+        for (UIView* subView in [webView subviews]) {
+            if ([subView isKindOfClass:[UIScrollView class]]) {
+                for (UIView* shadowView in [subView subviews]) {
+                    if ([shadowView isKindOfClass:[UIImageView class]]) {
+                        [shadowView setHidden:YES];
+                    }
+                }
+            }
+        }
+
+        loadingIndicator = [[UABeveledLoadingIndicator indicator] retain];
+
+        //required to receive orientation updates from NSNotificationCenter
+        [[UIDevice currentDevice] beginGeneratingDeviceOrientationNotifications];
+
+        [[NSNotificationCenter defaultCenter] addObserver:self
+                                                 selector:@selector(orientationChanged:)
+                                                     name:UIDeviceOrientationDidChangeNotification object:nil];
+
+        [self loadMessageForID:messageID];
+
+    }
+
+    return self;
+}
+
+- (void)dealloc {
+    self.message = nil;
+    self.webView = nil;
+    [parentViewController release];
+    [loadingIndicator release];
+    [[NSNotificationCenter defaultCenter] removeObserver:self
+                                                    name:UIDeviceOrientationDidChangeNotification
+                                                  object:nil];
+    [super dealloc];
+}
+
+- (void)loadMessageAtIndex:(int)index {
+    self.message = [[UAInbox shared].messageList messageAtIndex:index];
+    if (self.message == nil) {
+        UALOG(@"Can not find message with index: %d", index);
+        [self closePopupWindow];
+        return;
+    }
+
+    NSMutableURLRequest *requestObj = [NSMutableURLRequest requestWithURL: message.messageBodyURL];
+    NSString *auth = [UAUtils userAuthHeaderString];
+
+    [requestObj setValue:auth forHTTPHeaderField:@"Authorization"];
+    [requestObj setTimeoutInterval:5];
+
+    [webView stopLoading];
+    [webView loadRequest:requestObj];
+    [self performSelector:@selector(displayWindow) withObject:nil afterDelay:0.1];
+}
+
+- (void)loadMessageForID:(NSString *)mid {
+    UAInboxMessage *msg = [[UAInbox shared].messageList messageForID:mid];
+    if (msg == nil) {
+        UALOG(@"Can not find message with ID: %@", mid);
+        [self closePopupWindow];
+        return;
+    }
+
+    [self loadMessageAtIndex:[[UAInbox shared].messageList indexOfMessage:msg]];
+}
+
+- (BOOL)shouldTransition {
+    return [UIView respondsToSelector:@selector(transitionFromView:toView:duration:options:completion:)];
+}
+
+- (void)constructWindow {
+
+    //the new panel
+    bigPanelView = [[[UIView alloc] initWithFrame:CGRectMake(0, 0, bgView.frame.size.width, bgView.frame.size.height)] autorelease];
+    bigPanelView.autoresizingMask = UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleHeight;
+    bigPanelView.autoresizesSubviews = YES;
+    bigPanelView.center = CGPointMake( bgView.frame.size.width/2, bgView.frame.size.height/2);
+
+    //add the window background
+    UIView *background = [[[UIView alloc] initWithFrame:CGRectInset
+                           (bigPanelView.frame, 15, 30)] autorelease];
+    background.autoresizingMask = UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleHeight;
+    background.backgroundColor = [UIColor whiteColor];
+    background.layer.borderColor = [[UIColor blackColor] CGColor];
+    background.layer.borderWidth = 2;
+    background.center = CGPointMake(bigPanelView.frame.size.width/2, bigPanelView.frame.size.height/2);
+    [bigPanelView addSubview: background];
+
+    //add the web view
+    int webOffset = 2;
+    webView.frame = CGRectInset(background.frame, webOffset, webOffset);
+    webView.autoresizingMask = UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleHeight;
+
+    [bigPanelView addSubview: webView];
+
+    [webView addSubview:loadingIndicator];
+    loadingIndicator.center = CGPointMake(webView.frame.size.width/2, webView.frame.size.height/2);
+    [loadingIndicator show];
+
+    //add the close button
+    int closeBtnOffset = 10;
+    UIImage* closeBtnImg = [UIImage imageNamed:@"overlayCloseBtn.png"];
+    UIButton* closeBtn = [UIButton buttonWithType:UIButtonTypeCustom];
+    closeBtn.autoresizingMask = UIViewAutoresizingFlexibleLeftMargin;
+    [closeBtn setImage:closeBtnImg forState:UIControlStateNormal];
+    [closeBtn setFrame:CGRectMake( background.frame.origin.x + background.frame.size.width - closeBtnImg.size.width - closeBtnOffset,
+                                  background.frame.origin.y ,
+                                  closeBtnImg.size.width + closeBtnOffset,
+                                  closeBtnImg.size.height + closeBtnOffset)];
+    [closeBtn addTarget:self action:@selector(closePopupWindow) forControlEvents:UIControlEventTouchUpInside];
+    [bigPanelView addSubview: closeBtn];
+
+}
+
+-(void)displayWindow {
+
+    if ([self shouldTransition]) {
+        //faux view
+        UIView* fauxView = [[[UIView alloc] initWithFrame: bgView.bounds] autorelease];
+        fauxView.autoresizesSubviews = YES;
+        fauxView.autoresizingMask = UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleHeight;
+        [bgView addSubview: fauxView];
+
+        //animation options
+        UIViewAnimationOptions options = UIViewAnimationOptionTransitionFlipFromRight |
+        UIViewAnimationOptionAllowUserInteraction    |
+        UIViewAnimationOptionBeginFromCurrentState;
+
+        [self constructWindow];
+
+        //run the animation
+        [UIView transitionFromView:fauxView toView:bigPanelView duration:0.5 options:options completion: ^(BOOL finished) {
+
+            //dim the contents behind the popup window
+            UIView* shadeView = [[[UIView alloc] initWithFrame:bigPanelView.bounds] autorelease];
+            shadeView.autoresizingMask = UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleHeight;
+            shadeView.backgroundColor = [UIColor blackColor];
+            shadeView.alpha = 0.3;
+            shadeView.tag = kShadeViewTag;
+            [bigPanelView addSubview: shadeView];
+            [bigPanelView sendSubviewToBack: shadeView];
+        }];
+    }
+
+    else {
+        [self constructWindow];
+        [bgView addSubview:bigPanelView];
+    }
+}
+
+- (void)onRotationChange:(UIInterfaceOrientation)toInterfaceOrientation {
+
+    if(![parentViewController shouldAutorotateToInterfaceOrientation:toInterfaceOrientation]) {
+        return;
+    }
+
+    switch (toInterfaceOrientation) {
+        case UIDeviceOrientationPortrait:
+            [webView stringByEvaluatingJavaScriptFromString:@"window.__defineGetter__('orientation',function(){return 0;});window.onorientationchange();"];
+            break;
+        case UIDeviceOrientationLandscapeLeft:
+            [webView stringByEvaluatingJavaScriptFromString:@"window.__defineGetter__('orientation',function(){return 90;});window.onorientationchange();"];
+            break;
+        case UIDeviceOrientationLandscapeRight:
+            [webView stringByEvaluatingJavaScriptFromString:@"window.__defineGetter__('orientation',function(){return -90;});window.onorientationchange();"];
+            break;
+        case UIDeviceOrientationPortraitUpsideDown:
+            [webView stringByEvaluatingJavaScriptFromString:@"window.__defineGetter__('orientation',function(){return 180;});window.onorientationchange();"];
+            break;
+        default:
+            break;
+    }
+}
+
+- (void)orientationChanged:(NSNotification *)notification {
+    // Note that face up and face down orientations will be ignored as this
+    // casts a device orientation to an interface orientation
+    [self onRotationChange:(UIInterfaceOrientation)[UIDevice currentDevice].orientation];
+}
+
+- (void)populateJavascriptEnvironment {
+
+    // This will inject the current device orientation
+    // Note that face up and face down orientations will be ignored as this
+    // casts a device orientation to an interface orientation
+    [self onRotationChange:(UIInterfaceOrientation)[UIDevice currentDevice].orientation];
+
+    /*
+     * Define and initialize our one global
+     */
+    NSString* js = @"var UAirship = {};";
+
+    /*
+     * Set the device model.
+     */
+    NSString *model = [UIDevice currentDevice].model;
+    js = [js stringByAppendingFormat:@"UAirship.devicemodel=\"%@\";", model];
+
+    /*
+     * Set the UA user ID.
+     */
+    NSString *userID = [UAUser defaultUser].username;
+    js = [js stringByAppendingFormat:@"UAirship.userID=\"%@\";", userID];
+
+    /*
+     * Set the current message ID.
+     */
+    NSString* messageID = message.messageID;
+    js = [js stringByAppendingFormat:@"UAirship.messageID=\"%@\";", messageID];
+
+    /*
+     * Define UAirship.handleCustomURL.
+     */
+    js = [js stringByAppendingString:@"UAirship.invoke = function(url) { location = url; };"];
+
+    /*
+     * Execute the JS we just constructed.
+     */
+    [webView stringByEvaluatingJavaScriptFromString:js];
+}
+
+- (void)injectViewportFix {
+    NSString *js = @"var metaTag = document.createElement('meta');"
+    "metaTag.name = 'viewport';"
+    "metaTag.content = 'width=device-width; initial-scale=1.0; maximum-scale=1.0;';"
+    "document.getElementsByTagName('head')[0].appendChild(metaTag);";
+
+    [webView stringByEvaluatingJavaScriptFromString:js];
+}
+
+/**
+ * Removes the shade background and calls the finish selector
+ */
+- (void)closePopupWindow {
+    //remove the shade
+    [[bigPanelView viewWithTag: kShadeViewTag] removeFromSuperview];
+    [self performSelector:@selector(finish) withObject:nil afterDelay:0.1];
+
+}
+
+/**
+ * Removes child views from bigPanelView and bgView
+ */
+- (void)removeChildViews {
+    for (UIView* child in bigPanelView.subviews) {
+        [child removeFromSuperview];
+    }
+    for (UIView* child in bgView.subviews) {
+        [child removeFromSuperview];
+    }
+}
+
+
+/**
+ * Removes all views from the hierarchy and releases self
+ */
+-(void)finish {
+
+    if ([self shouldTransition]) {
+
+        //faux view
+        __block UIView* fauxView = [[UIView alloc] initWithFrame: CGRectMake(10, 10, 200, 200)];
+        [bgView addSubview: fauxView];
+
+        //run the animation
+        UIViewAnimationOptions options = UIViewAnimationOptionTransitionFlipFromLeft |
+        UIViewAnimationOptionAllowUserInteraction    |
+        UIViewAnimationOptionBeginFromCurrentState;
+
+        //hold to the bigPanelView, because it'll be removed during the animation
+        [bigPanelView retain];
+
+        [UIView transitionFromView:bigPanelView toView:fauxView duration:0.5 options:options completion:^(BOOL finished) {
+
+            [self removeChildViews];
+            [bigPanelView release];
+            [bgView removeFromSuperview];
+            [self release];
+        }];
+    }
+
+    else {
+        [self removeChildViews];
+        [bgView removeFromSuperview];
+        [self release];
+    }
+}
+
+
+#pragma mark UIWebViewDelegate
+
+- (BOOL)webView:(UIWebView *)wv shouldStartLoadWithRequest:(NSURLRequest *)request navigationType:(UIWebViewNavigationType)navigationType {
+    NSURL *url = [request URL];
+
+    /*
+     ua://callbackArguments:withOptions:/[<arguments>][?<dictionary>]
+     */
+
+    if ([[url scheme] isEqualToString:@"ua"]) {
+        if ((navigationType == UIWebViewNavigationTypeLinkClicked) || (navigationType == UIWebViewNavigationTypeOther)) {
+            [UAInboxMessage performJSDelegate:wv url:url];
+            return NO;
+        }
+    }
+
+    // send iTunes/Phobos urls to AppStore.app
+    else if ((navigationType == UIWebViewNavigationTypeLinkClicked) &&
+             (([[url host] isEqualToString:@"phobos.apple.com"]) ||
+              ([[url host] isEqualToString:@"itunes.apple.com"]))) {
+
+                 // TODO: set the url scheme to http, as it could be itms which will cause the store to launch twice (undesireable)
+
+                 return ![[UIApplication sharedApplication] openURL:url];
+             }
+
+    // send maps.google.com url or maps: to GoogleMaps.app
+    else if ((navigationType == UIWebViewNavigationTypeLinkClicked) &&
+             (([[url host] isEqualToString:@"maps.google.com"]) ||
+              ([[url scheme] isEqualToString:@"maps"]))) {
+
+                 /* Do any special formatting here, for example:
+
+                  NSString *title = @"title";
+                  float latitude = 35.4634;
+                  float longitude = 9.43425;
+                  int zoom = 13;
+                  NSString *stringURL = [NSString stringWithFormat:@"http://maps.google.com/maps?q=%@@%1.6f,%1.6f&z=%d", title, latitude, longitude, zoom];
+
+                  */
+
+                 return ![[UIApplication sharedApplication] openURL:url];
+             }
+
+    // send www.youtube.com url to YouTube.app
+    else if ((navigationType == UIWebViewNavigationTypeLinkClicked) &&
+             ([[url host] isEqualToString:@"www.youtube.com"])) {
+        return ![[UIApplication sharedApplication] openURL:url];
+    }
+
+    // send mailto: to Mail.app
+    else if ((navigationType == UIWebViewNavigationTypeLinkClicked) && ([[url scheme] isEqualToString:@"mailto"])) {
+
+        /* Do any special formatting here if you like, for example:
+
+         NSString *subject = @"Message subject";
+         NSString *body = @"Message body";
+         NSString *address = @"address@domain.com";
+         NSString *cc = @"address@domain.com";
+         NSString *path = [NSString stringWithFormat:@"mailto:%@?cc=%@&subject=%@&body=%@", address, cc, subject, body];
+         NSURL *url = [NSURL URLWithString:[path stringByAddingPercentEscapesUsingEncoding:NSUTF8StringEncoding]];
+
+         For complex body text you may want to use CFURLCreateStringByAddingPercentEscapes.
+
+         */
+
+        return ![[UIApplication sharedApplication] openURL:url];
+    }
+
+    // send tel: to Phone.app
+    else if ((navigationType == UIWebViewNavigationTypeLinkClicked) && ([[url scheme] isEqualToString:@"tel"])) {
+
+        // TODO: Phone number must not contain spaces or brackets. Spaces or plus signs OK. Can add come checks here.
+
+        return ![[UIApplication sharedApplication] openURL:url];
+    }
+
+    // send sms: to Messages.app
+    else if ((navigationType == UIWebViewNavigationTypeLinkClicked) && ([[url scheme] isEqualToString:@"sms"])) {
+        return ![[UIApplication sharedApplication] openURL:url];
+    }
+
+    // load local file and http/https webpages in webview
+    return YES;
+}
+
+
+- (void)webViewDidStartLoad:(UIWebView *)wv {
+    [self populateJavascriptEnvironment];
+}
+
+- (void)webViewDidFinishLoad:(UIWebView *)wv {
+    [loadingIndicator hide];
+
+    // Mark message as read after it has finished loading
+    if(message.unread) {
+        [message markAsRead];
+    }
+
+    [self injectViewportFix];
+}
+
+- (void)webView:(UIWebView *)wv didFailLoadWithError:(NSError *)error {
+
+    [loadingIndicator hide];
+
+    if (error.code == NSURLErrorCancelled)
+        return;
+    UALOG(@"Failed to load message: %@", error);
+    UIAlertView *someError = [[UIAlertView alloc] initWithTitle:UA_INBOX_TR(@"UA_Ooops")
+                                                        message:UA_INBOX_TR(@"UA_Error_Fetching_Message")
+                                                       delegate:self
+                                              cancelButtonTitle:UA_INBOX_TR(@"UA_OK")
+                                              otherButtonTitles:nil];
+    [someError show];
+    [someError release];
+}
+
+
+@end
+
+//
+//  CopyrightTabController.m
+//  iPokedex
+//
+//  Created by Timothy Oliver on 29/11/10.
+//  Copyright 2010 UberGames. All rights reserved.
+//
+//  Permission is hereby granted, free of charge, to any person obtaining a copy
+//  of this software and associated documentation files (the "Software"), to
+//  deal in the Software without restriction, including without limitation the
+//  rights to use, copy, modify, merge, publish, distribute, sublicense, and/or
+//  sell copies of the Software, and to permit persons to whom the Software is
+//  furnished to do so, subject to the following conditions:
+//
+//  The above copyright notice and this permission notice shall be included in
+//  all copies or substantial portions of the Software.
+//
+//  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
+//  OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+//  FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+//  AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
+//  WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR
+//  IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+
+#import "CopyrightViewController.h"
+#import "UIScreen+isRetinaDisplay.h"
+#import "LicenseViewController.h"
+#import "GANTracker.h"
+
+#define COPYRIGHT_HTML_PATH @"HTML/Legal%@.html"
+
+@implementation CopyrightViewController
+
+#pragma mark -
+#pragma mark Initialization
+- (id)init
+{
+    NSString *fileName = [NSString stringWithFormat: COPYRIGHT_HTML_PATH, [[Languages sharedLanguages] currentLanguageSuffixWithUnderscore: NO inCapitals: YES]];
+    NSString *resourcePath = [[NSBundle mainBundle] resourcePath];
+    NSString *htmlPath = [resourcePath stringByAppendingPathComponent: fileName];
+    NSURL *_baseURL = [NSURL fileURLWithPath: resourcePath];
+
+    if( (self = [super initWithURL: htmlPath withBaseURL: _baseURL]) )
+     {
+
+     }
+
+    return self;
+}
+
+- (void)viewDidLoad {
+    [super viewDidLoad];
+
+    self.title = NSLocalizedString(@"Legal", @"Legal Title");
+    self.view.backgroundColor = [UIColor whiteColor];
+}
+
+- (void)viewDidAppear:(BOOL)animated
+{
+    [super viewDidAppear: animated];
+    [[GANTracker sharedTracker] trackPageview: @"/iPokédex/Copyright" withError: nil];
+    //NSLog( @"Logged GAN Dispatch: /iPokédex/Copyright" );
+}
+
+// Override to allow orientations other than the default portrait orientation.
+- (BOOL)shouldAutorotateToInterfaceOrientation:(UIInterfaceOrientation)interfaceOrientation {
+    return YES;
+}
+
+- (BOOL)webView:(UIWebView *)webView shouldStartLoadWithRequest:(NSURLRequest *)request navigationType:(UIWebViewNavigationType)navigationType
+{
+    //License Pages
+    if( [request.URL.scheme isEqualToString: @"ipokedex"] )
+    {
+        if( [request.URL.host isEqualToString: @"veekun_mit"] )
+        {
+            LicenseViewController *veekunController = [[LicenseViewController alloc] initWithHTMLFile: @"HTML/Licenses/VeekunMITLicense.html" withTitle: @"Veekun MIT License" withTagTitle:@"VeekunMITLicense"];
+            [self.navigationController pushViewController: veekunController animated: YES];
+            [veekunController release];
+        }
+        else if( [request.URL.host isEqualToString: @"fmdatabase_mit"] )
+        {
+            LicenseViewController *fmDatabaseController = [[LicenseViewController alloc] initWithHTMLFile: @"HTML/Licenses/FMDatabaseMITLicense.html" withTitle: @"FMDatabase MIT License" withTagTitle:@"FMDatabaseMITLicense"];
+            [self.navigationController pushViewController: fmDatabaseController animated: YES];
+            [fmDatabaseController release];
+        }
+        else if( [request.URL.host isEqualToString: @"appirater_mit"] )
+        {
+            LicenseViewController *appiraterController = [[LicenseViewController alloc] initWithHTMLFile: @"HTML/Licenses/AppiraterMITLicense.html" withTitle: @"Appirater MIT License" withTagTitle:@"AppiraterMITLicense"];
+            [self.navigationController pushViewController: appiraterController animated: YES];
+            [appiraterController release];
+        }
+        else if( [request.URL.host isEqualToString: @"creative_commons"] )
+        {
+            LicenseViewController *ccController = [[LicenseViewController alloc] initWithHTMLFile: @"HTML/Licenses/CCAttributionNonCommercialShareAlikeLicense.html" withTitle: @"Creative Commons Agreement" withTagTitle: @"CCAttributionNonCommercialShareAlikeLicense"];
+            [self.navigationController pushViewController: ccController animated: YES];
+            [ccController release];
+        }
+        else if( [request.URL.host isEqualToString: @"iask_bsd"] )
+        {
+            LicenseViewController *iaskController = [[LicenseViewController alloc] initWithHTMLFile: @"HTML/Licenses/IASKBSDLicense.html" withTitle: @"InAppSettingsKit BSD License" withTagTitle: @"IASKBSDLicense"];
+            [self.navigationController pushViewController: iaskController animated: YES];
+            [iaskController release];
+        }
+        else if( [request.URL.host isEqualToString: @"tbxml_mit"] )
+        {
+            LicenseViewController *tbxmlController = [[LicenseViewController alloc] initWithHTMLFile: @"HTML/Licenses/TBXMLMITLicense.html" withTitle:@"TBXML MIT License" withTagTitle: @"TBXMLMITLicense"];
+            [self.navigationController pushViewController: tbxmlController animated: YES];
+            [tbxmlController release];
+        }
+
+        return NO;
+    }
+
+    //if the mail button is clicked, set up a mail message
+    if( [request.URL.scheme isEqualToString: @"mailto"] )
+    {
+        MFMailComposeViewController* controller = [[MFMailComposeViewController alloc] init];
+        controller.mailComposeDelegate = self;
+        [controller setToRecipients: [NSArray arrayWithObject: @"admin@ubergames.org"]];
+        [controller setSubject: NSLocalizedString(@"iPokédex Query", nil)];
+        if (controller)
+            [self presentModalViewController:controller animated:YES];
+        [controller release];
+
+        return NO;
+    }
+
+    return [super webView: webView shouldStartLoadWithRequest: request navigationType: navigationType];
+}
+
+#pragma mark Mail Delegate
+- (void)mailComposeController:(MFMailComposeViewController*)controller
+          didFinishWithResult:(MFMailComposeResult)result
+                        error:(NSError*)error;
+{
+    [self dismissModalViewControllerAnimated:YES];
+}
+
+
+@end
+
+//
+//  ZFStringScanner.m
+//  Strings
+//
+//  Created by Francesco on 25/06/2013.
+//
+//  Open Source Initiative OSI - The MIT License (MIT):Licensing [OSI Approved License] The MIT License (MIT)
+//  Copyright (c) 2013 ziofritz.
+//
+
+#import "ZFStringScanner.h"
+#import "ZFStringsConverter.h"
+#import "ZFTranslationFile.h"
+#import "Config.h"
+
+@interface ZFStringScanner ()
+
+@property (nonatomic, strong) NSURL *rootURL;
+@property (nonatomic, strong) NSURL *rootIOSURL;
+@property (nonatomic, strong) NSURL *rootAndroidURL;
+
+@end
+
+@implementation ZFStringScanner
+
+@synthesize files = _files;
+@synthesize idioms = _idioms;
+@synthesize defaultIdiom = _defaultIdiom;
+
+#pragma mark getters
+
+- (NSMutableArray *)files {
+    if (!_files) _files = [NSMutableArray array];
+    return _files;
+}
+
+
+- (NSFileManager *)fileManager {
+    return [NSFileManager defaultManager];
+}
+
+- (NSMutableArray *)idioms {
+    if (!_idioms) {
+        _idioms = [NSMutableArray array];
+        [self.files enumerateObjectsUsingBlock:^(ZFTranslationFile *file, NSUInteger idx, BOOL *stop) {
+            [file.allIdioms enumerateObjectsUsingBlock:^(NSString *idiom, NSUInteger idx, BOOL *stop) {
+                if ([_idioms containsObject:idiom]) return;
+                [_idioms addObject:idiom];
+            }];
+        }];
+    }
+    return _idioms;
+}
+
+- (NSString *)defaultIdiom {
+    if (!_defaultIdiom) {
+        NSInteger index = [self.idioms indexOfObject:@"en"];
+        if (index == NSNotFound) index = 0;
+        _defaultIdiom = [self.idioms objectAtIndex:index];
+    }
+    return _defaultIdiom;
+}
+
+- (void)setDefaultIdiom:(NSString *)defaultIdiom {
+    _defaultIdiom = defaultIdiom;
+    [self updateIdioms];
+}
+
+- (void)updateIdioms {
+    [[NSNotificationCenter defaultCenter] postNotificationName:ZF_DEFAULT_IDIOM_NOTIFICATION object:nil userInfo:@{@"idiom" : self.defaultIdiom}];
+}
+
+
+
+#pragma mark - conversions
+
+/*!
+ @abstract
+ Scan the url for translations files for both iOS and Android
+
+ @param url of the resource
+
+ */
+
+- (void)scanAtURL:(NSURL *)URL {
+
+    NSError *error = nil;
+    NSArray *dirContents = [[self fileManager] contentsOfDirectoryAtURL:URL includingPropertiesForKeys:nil options:0 error:&error];
+
+    if (error) NSLog(@"Error: %@", error.debugDescription);
+
+    [dirContents enumerateObjectsUsingBlock:^(NSURL *fileURL, NSUInteger idx, BOOL *stop) {
+
+        BOOL isDir = NO;
+        BOOL exists = [self.fileManager fileExistsAtPath:fileURL.path isDirectory:&isDir];
+
+        if (!exists) return;
+
+        if (!isDir) {
+
+            ZFTranslationFile *file = [[ZFTranslationFile alloc] init];
+            BOOL valid = [file addFileAtURL:fileURL];
+            if (valid) {
+                [self.files addObject:file];
+            }
+
+        }
+        else {
+            [self scanAtURL:fileURL];
+        }
+    }];
+
+}
+
+/*!
+ @abstract
+ Entry point for scanning recursively starting from a given URL
+
+ @param url, root of the scan to perform
+
+ @discussion After the directory scan is complete, all the generated files get merged by languages and resource type (iOS/Android)
+
+ */
+
+- (void)startScanAtURL:(NSURL *)URL {
+    [self scanAtURL:URL];
+
+    NSMutableArray *groups = [NSMutableArray array];
+    [self.files enumerateObjectsUsingBlock:^(ZFTranslationFile *file, NSUInteger idx, BOOL *stop) {
+
+        __block BOOL inserted = NO;
+        [groups enumerateObjectsUsingBlock:^(NSMutableArray *group, NSUInteger idx, BOOL *stop) {
+            if ([file isEqual:[group objectAtIndex:0]]) {
+                [group addObject:file];
+                *stop = YES;
+                inserted = YES;
+            }
+        }];
+        if (!inserted) [groups addObject:[NSMutableArray arrayWithObject:file]];
+    }];
+
+
+    NSMutableArray *result = [NSMutableArray array];
+    [groups enumerateObjectsUsingBlock:^(NSMutableArray *group, NSUInteger idx, BOOL *stop) {
+        ZFTranslationFile *file = [group objectAtIndex:0];
+        [group enumerateObjectsUsingBlock:^(ZFTranslationFile *anotherFile, NSUInteger idx, BOOL *stop) {
+            if (idx == 0) return;
+            [file mergeWithFile:anotherFile];
+        }];
+        [result addObject:file];
+    }];
+
+    _files = result;
+    result = nil;
+    groups = nil;
+    [self updateIdioms];
+
+}
+
+
+- (void)importCSVAtURL:(NSURL *)URL {
+    ZFLangFile *lang = [[ZFLangFile alloc] initWithURL:URL];
+
+    [self.files enumerateObjectsUsingBlock:^(ZFTranslationFile *file, NSUInteger idx, BOOL *stop) {
+        [file.languages enumerateObjectsUsingBlock:^(ZFLangFile *original, NSUInteger idx, BOOL *stop) {
+            if (![original isEqual:lang]) return;
+            if (![original.idiom isEqual:lang.idiom]) return;
+
+            // Found, now substitute
+            [lang.translations enumerateObjectsUsingBlock:^(ZFTranslationLine *line, NSUInteger idx, BOOL *stop) {
+                ZFTranslationLine *originalLine = [original lineForKey:line.key];
+                if (originalLine) [originalLine setValue:line.value];
+                else [original addLine:line];
+            }];
+        }];
+    }];
+    [self updateIdioms];
+
+}
+
+
+@end

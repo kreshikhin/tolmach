@@ -1,0 +1,530 @@
+# mako/filters.py
+# Copyright (C) 2006-2014 the Mako authors and contributors <see AUTHORS file>
+#
+# This module is part of Mako and is released under
+# the MIT License: http://www.opensource.org/licenses/mit-license.php
+
+
+import re
+import codecs
+
+from mako.compat import quote_plus, unquote_plus, codepoint2name, \
+        name2codepoint
+
+from mako import compat
+
+xml_escapes = {
+    '&': '&amp;',
+    '>': '&gt;',
+    '<': '&lt;',
+    '"': '&#34;',   # also &quot; in html-only
+    "'": '&#39;'    # also &apos; in html-only
+}
+
+# XXX: &quot; is valid in HTML and XML
+#      &apos; is not valid HTML, but is valid XML
+
+def legacy_html_escape(s):
+    """legacy HTML escape for non-unicode mode."""
+    s = s.replace("&", "&amp;")
+    s = s.replace(">", "&gt;")
+    s = s.replace("<", "&lt;")
+    s = s.replace('"', "&#34;")
+    s = s.replace("'", "&#39;")
+    return s
+
+
+try:
+    import markupsafe
+    html_escape = markupsafe.escape
+except ImportError:
+    html_escape = legacy_html_escape
+
+def xml_escape(string):
+    return re.sub(r'([&<"\'>])', lambda m: xml_escapes[m.group()], string)
+
+def url_escape(string):
+    # convert into a list of octets
+    string = string.encode("utf8")
+    return quote_plus(string)
+
+def legacy_url_escape(string):
+    # convert into a list of octets
+    return quote_plus(string)
+
+def url_unescape(string):
+    text = unquote_plus(string)
+    if not is_ascii_str(text):
+        text = text.decode("utf8")
+    return text
+
+def trim(string):
+    return string.strip()
+
+
+class Decode(object):
+    def __getattr__(self, key):
+        def decode(x):
+            if isinstance(x, compat.text_type):
+                return x
+            elif not isinstance(x, compat.binary_type):
+                return decode(str(x))
+            else:
+                return compat.text_type(x, encoding=key)
+        return decode
+decode = Decode()
+
+
+_ASCII_re = re.compile(r'\A[\x00-\x7f]*\Z')
+
+def is_ascii_str(text):
+    return isinstance(text, str) and _ASCII_re.match(text)
+
+################################################################
+
+class XMLEntityEscaper(object):
+    def __init__(self, codepoint2name, name2codepoint):
+        self.codepoint2entity = dict([(c, compat.text_type('&%s;' % n))
+                                      for c, n in codepoint2name.items()])
+        self.name2codepoint = name2codepoint
+
+    def escape_entities(self, text):
+        """Replace characters with their character entity references.
+
+        Only characters corresponding to a named entity are replaced.
+        """
+        return compat.text_type(text).translate(self.codepoint2entity)
+
+    def __escape(self, m):
+        codepoint = ord(m.group())
+        try:
+            return self.codepoint2entity[codepoint]
+        except (KeyError, IndexError):
+            return '&#x%X;' % codepoint
+
+
+    __escapable = re.compile(r'["&<>]|[^\x00-\x7f]')
+
+    def escape(self, text):
+        """Replace characters with their character references.
+
+        Replace characters by their named entity references.
+        Non-ASCII characters, if they do not have a named entity reference,
+        are replaced by numerical character references.
+
+        The return value is guaranteed to be ASCII.
+        """
+        return self.__escapable.sub(self.__escape, compat.text_type(text)
+                                    ).encode('ascii')
+
+    # XXX: This regexp will not match all valid XML entity names__.
+    # (It punts on details involving involving CombiningChars and Extenders.)
+    #
+    # .. __: http://www.w3.org/TR/2000/REC-xml-20001006#NT-EntityRef
+    __characterrefs = re.compile(r'''& (?:
+                                          \#(\d+)
+                                          | \#x([\da-f]+)
+                                          | ( (?!\d) [:\w] [-.:\w]+ )
+                                          ) ;''',
+                                 re.X | re.UNICODE)
+
+    def __unescape(self, m):
+        dval, hval, name = m.groups()
+        if dval:
+            codepoint = int(dval)
+        elif hval:
+            codepoint = int(hval, 16)
+        else:
+            codepoint = self.name2codepoint.get(name, 0xfffd)
+            # U+FFFD = "REPLACEMENT CHARACTER"
+        if codepoint < 128:
+            return chr(codepoint)
+        return chr(codepoint)
+
+    def unescape(self, text):
+        """Unescape character references.
+
+        All character references (both entity references and numerical
+        character references) are unescaped.
+        """
+        return self.__characterrefs.sub(self.__unescape, text)
+
+
+_html_entities_escaper = XMLEntityEscaper(codepoint2name, name2codepoint)
+
+html_entities_escape = _html_entities_escaper.escape_entities
+html_entities_unescape = _html_entities_escaper.unescape
+
+
+def htmlentityreplace_errors(ex):
+    """An encoding error handler.
+
+    This python `codecs`_ error handler replaces unencodable
+    characters with HTML entities, or, if no HTML entity exists for
+    the character, XML character references.
+
+    >>> u'The cost was \u20ac12.'.encode('latin1', 'htmlentityreplace')
+    'The cost was &euro;12.'
+    """
+    if isinstance(ex, UnicodeEncodeError):
+        # Handle encoding errors
+        bad_text = ex.object[ex.start:ex.end]
+        text = _html_entities_escaper.escape(bad_text)
+        return (compat.text_type(text), ex.end)
+    raise ex
+
+codecs.register_error('htmlentityreplace', htmlentityreplace_errors)
+
+
+# TODO: options to make this dynamic per-compilation will be added in a later
+# release
+DEFAULT_ESCAPES = {
+    'x': 'filters.xml_escape',
+    'h': 'filters.html_escape',
+    'u': 'filters.url_escape',
+    'trim': 'filters.trim',
+    'entity': 'filters.html_entities_escape',
+    'unicode': 'unicode',
+    'decode': 'decode',
+    'str': 'str',
+    'n': 'n'
+}
+
+if compat.py3k:
+    DEFAULT_ESCAPES.update({
+        'unicode': 'str'
+    })
+
+NON_UNICODE_ESCAPES = DEFAULT_ESCAPES.copy()
+NON_UNICODE_ESCAPES['h'] = 'filters.legacy_html_escape'
+NON_UNICODE_ESCAPES['u'] = 'filters.legacy_url_escape'
+
+# connectors/mxodbc.py
+# Copyright (C) 2005-2014 the SQLAlchemy authors and contributors
+# <see AUTHORS file>
+#
+# This module is part of SQLAlchemy and is released under
+# the MIT License: http://www.opensource.org/licenses/mit-license.php
+
+"""
+Provide an SQLALchemy connector for the eGenix mxODBC commercial
+Python adapter for ODBC. This is not a free product, but eGenix
+provides SQLAlchemy with a license for use in continuous integration
+testing.
+
+This has been tested for use with mxODBC 3.1.2 on SQL Server 2005
+and 2008, using the SQL Server Native driver. However, it is
+possible for this to be used on other database platforms.
+
+For more info on mxODBC, see http://www.egenix.com/
+
+"""
+
+import sys
+import re
+import warnings
+
+from . import Connector
+
+
+class MxODBCConnector(Connector):
+    driver = 'mxodbc'
+
+    supports_sane_multi_rowcount = False
+    supports_unicode_statements = True
+    supports_unicode_binds = True
+
+    supports_native_decimal = True
+
+    @classmethod
+    def dbapi(cls):
+        # this classmethod will normally be replaced by an instance
+        # attribute of the same name, so this is normally only called once.
+        cls._load_mx_exceptions()
+        platform = sys.platform
+        if platform == 'win32':
+            from mx.ODBC import Windows as module
+        # this can be the string "linux2", and possibly others
+        elif 'linux' in platform:
+            from mx.ODBC import unixODBC as module
+        elif platform == 'darwin':
+            from mx.ODBC import iODBC as module
+        else:
+            raise ImportError("Unrecognized platform for mxODBC import")
+        return module
+
+    @classmethod
+    def _load_mx_exceptions(cls):
+        """ Import mxODBC exception classes into the module namespace,
+        as if they had been imported normally. This is done here
+        to avoid requiring all SQLAlchemy users to install mxODBC.
+        """
+        global InterfaceError, ProgrammingError
+        from mx.ODBC import InterfaceError
+        from mx.ODBC import ProgrammingError
+
+    def on_connect(self):
+        def connect(conn):
+            conn.stringformat = self.dbapi.MIXED_STRINGFORMAT
+            conn.datetimeformat = self.dbapi.PYDATETIME_DATETIMEFORMAT
+            conn.decimalformat = self.dbapi.DECIMAL_DECIMALFORMAT
+            conn.errorhandler = self._error_handler()
+        return connect
+
+    def _error_handler(self):
+        """ Return a handler that adjusts mxODBC's raised Warnings to
+        emit Python standard warnings.
+        """
+        from mx.ODBC.Error import Warning as MxOdbcWarning
+
+        def error_handler(connection, cursor, errorclass, errorvalue):
+            if issubclass(errorclass, MxOdbcWarning):
+                errorclass.__bases__ = (Warning,)
+                warnings.warn(message=str(errorvalue),
+                              category=errorclass,
+                              stacklevel=2)
+            else:
+                raise errorclass(errorvalue)
+        return error_handler
+
+    def create_connect_args(self, url):
+        """ Return a tuple of *args,**kwargs for creating a connection.
+
+        The mxODBC 3.x connection constructor looks like this:
+
+            connect(dsn, user='', password='',
+                    clear_auto_commit=1, errorhandler=None)
+
+        This method translates the values in the provided uri
+        into args and kwargs needed to instantiate an mxODBC Connection.
+
+        The arg 'errorhandler' is not used by SQLAlchemy and will
+        not be populated.
+
+        """
+        opts = url.translate_connect_args(username='user')
+        opts.update(url.query)
+        args = opts.pop('host')
+        opts.pop('port', None)
+        opts.pop('database', None)
+        return (args,), opts
+
+    def is_disconnect(self, e, connection, cursor):
+        # TODO: eGenix recommends checking connection.closed here
+        # Does that detect dropped connections ?
+        if isinstance(e, self.dbapi.ProgrammingError):
+            return "connection already closed" in str(e)
+        elif isinstance(e, self.dbapi.Error):
+            return '[08S01]' in str(e)
+        else:
+            return False
+
+    def _get_server_version_info(self, connection):
+        # eGenix suggests using conn.dbms_version instead
+        # of what we're doing here
+        dbapi_con = connection.connection
+        version = []
+        r = re.compile('[.\-]')
+        # 18 == pyodbc.SQL_DBMS_VER
+        for n in r.split(dbapi_con.getinfo(18)[1]):
+            try:
+                version.append(int(n))
+            except ValueError:
+                version.append(n)
+        return tuple(version)
+
+    def _get_direct(self, context):
+        if context:
+            native_odbc_execute = context.execution_options.\
+                get('native_odbc_execute', 'auto')
+            # default to direct=True in all cases, is more generally
+            # compatible especially with SQL Server
+            return False if native_odbc_execute is True else True
+        else:
+            return True
+
+    def do_executemany(self, cursor, statement, parameters, context=None):
+        cursor.executemany(
+            statement, parameters, direct=self._get_direct(context))
+
+    def do_execute(self, cursor, statement, parameters, context=None):
+        cursor.execute(statement, parameters, direct=self._get_direct(context))
+
+# urllib3/connection.py
+# Copyright 2008-2013 Andrey Petrov and contributors (see CONTRIBUTORS.txt)
+#
+# This module is part of urllib3 and is released under
+# the MIT License: http://www.opensource.org/licenses/mit-license.php
+
+import socket
+from socket import timeout as SocketTimeout
+
+try: # Python 3
+    from http.client import HTTPConnection as _HTTPConnection, HTTPException
+except ImportError:
+    from httplib import HTTPConnection as _HTTPConnection, HTTPException
+
+class DummyConnection(object):
+    "Used to detect a failed ConnectionCls import."
+    pass
+
+try: # Compiled with SSL?
+    ssl = None
+    HTTPSConnection = DummyConnection
+
+    class BaseSSLError(BaseException):
+        pass
+
+    try: # Python 3
+        from http.client import HTTPSConnection as _HTTPSConnection
+    except ImportError:
+        from httplib import HTTPSConnection as _HTTPSConnection
+
+    import ssl
+    BaseSSLError = ssl.SSLError
+
+except (ImportError, AttributeError): # Platform-specific: No SSL.
+    pass
+
+from .exceptions import (
+    ConnectTimeoutError,
+)
+from .packages.ssl_match_hostname import match_hostname
+from .util import (
+    assert_fingerprint,
+    resolve_cert_reqs,
+    resolve_ssl_version,
+    ssl_wrap_socket,
+)
+
+
+port_by_scheme = {
+    'http': 80,
+    'https': 443,
+}
+
+
+class HTTPConnection(_HTTPConnection, object):
+    default_port = port_by_scheme['http']
+
+    # By default, disable Nagle's Algorithm.
+    tcp_nodelay = 1
+
+    def _new_conn(self):
+        """ Establish a socket connection and set nodelay settings on it
+
+        :return: a new socket connection
+        """
+        try:
+            conn = socket.create_connection(
+                (self.host, self.port),
+                self.timeout,
+                self.source_address,
+            )
+        except AttributeError: # Python 2.6
+            conn = socket.create_connection(
+                (self.host, self.port),
+                self.timeout,
+            )
+        conn.setsockopt(socket.IPPROTO_TCP, socket.TCP_NODELAY,
+                        self.tcp_nodelay)
+        return conn
+
+    def _prepare_conn(self, conn):
+        self.sock = conn
+        if self._tunnel_host:
+            # TODO: Fix tunnel so it doesn't depend on self.sock state.
+            self._tunnel()
+
+    def connect(self):
+        conn = self._new_conn()
+        self._prepare_conn(conn)
+
+
+class HTTPSConnection(HTTPConnection):
+    default_port = port_by_scheme['https']
+
+    def __init__(self, host, port=None, key_file=None, cert_file=None,
+                 strict=None, timeout=socket._GLOBAL_DEFAULT_TIMEOUT,
+                 source_address=None):
+        try:
+            HTTPConnection.__init__(self, host, port, strict, timeout, source_address)
+        except TypeError: # Python 2.6
+            HTTPConnection.__init__(self, host, port, strict, timeout)
+        self.key_file = key_file
+        self.cert_file = cert_file
+
+    def connect(self):
+        conn = self._new_conn()
+        self._prepare_conn(conn)
+        self.sock = ssl.wrap_socket(conn, self.key_file, self.cert_file)
+
+
+class VerifiedHTTPSConnection(HTTPSConnection):
+    """
+    Based on httplib.HTTPSConnection but wraps the socket with
+    SSL certification.
+    """
+    cert_reqs = None
+    ca_certs = None
+    ssl_version = None
+
+    def set_cert(self, key_file=None, cert_file=None,
+                 cert_reqs=None, ca_certs=None,
+                 assert_hostname=None, assert_fingerprint=None):
+
+        self.key_file = key_file
+        self.cert_file = cert_file
+        self.cert_reqs = cert_reqs
+        self.ca_certs = ca_certs
+        self.assert_hostname = assert_hostname
+        self.assert_fingerprint = assert_fingerprint
+
+    def connect(self):
+        # Add certificate verification
+        try:
+            sock = socket.create_connection(
+                address=(self.host, self.port),
+                timeout=self.timeout,
+            )
+        except SocketTimeout:
+            raise ConnectTimeoutError(
+                self, "Connection to %s timed out. (connect timeout=%s)" %
+                (self.host, self.timeout))
+
+        sock.setsockopt(socket.IPPROTO_TCP, socket.TCP_NODELAY,
+                        self.tcp_nodelay)
+
+        resolved_cert_reqs = resolve_cert_reqs(self.cert_reqs)
+        resolved_ssl_version = resolve_ssl_version(self.ssl_version)
+
+        # the _tunnel_host attribute was added in python 2.6.3 (via
+        # http://hg.python.org/cpython/rev/0f57b30a152f) so pythons 2.6(0-2) do
+        # not have them.
+        if getattr(self, '_tunnel_host', None):
+            self.sock = sock
+            # Calls self._set_hostport(), so self.host is
+            # self._tunnel_host below.
+            self._tunnel()
+
+        # Wrap socket using verification with the root certs in
+        # trusted_root_certs
+        self.sock = ssl_wrap_socket(sock, self.key_file, self.cert_file,
+                                    cert_reqs=resolved_cert_reqs,
+                                    ca_certs=self.ca_certs,
+                                    server_hostname=self.host,
+                                    ssl_version=resolved_ssl_version)
+
+        if resolved_cert_reqs != ssl.CERT_NONE:
+            if self.assert_fingerprint:
+                assert_fingerprint(self.sock.getpeercert(binary_form=True),
+                                   self.assert_fingerprint)
+            elif self.assert_hostname is not False:
+                match_hostname(self.sock.getpeercert(),
+                               self.assert_hostname or self.host)
+
+
+if ssl:
+    # Make a copy for testing.
+    UnverifiedHTTPSConnection = HTTPSConnection
+    HTTPSConnection = VerifiedHTTPSConnection

@@ -1,0 +1,2215 @@
+//
+//  DOHamburgerButton.swift
+//  DOHamburgerButton
+//
+//  Created by Daiki Okumura on 2015/07/20.
+//  Copyright (c) 2015 Daiki Okumura. All rights reserved.
+//
+//  This software is released under the MIT License.
+//  http://opensource.org/licenses/mit-license.php
+//
+
+import UIKit
+
+@IBDesignable
+public class DOHamburgerButton: UIButton {
+
+    var top: CAShapeLayer! = CAShapeLayer()
+    var middle: CAShapeLayer! = CAShapeLayer()
+    var bottom: CAShapeLayer! = CAShapeLayer()
+
+    @IBInspectable public var color: UIColor! = UIColor.blackColor() {
+        didSet {
+            top.strokeColor = color.CGColor
+            middle.strokeColor = color.CGColor
+            bottom.strokeColor = color.CGColor
+        }
+    }
+
+    private let topTransform_select = CAKeyframeAnimation(keyPath: "transform")
+    private let middleOpacity_select = CAKeyframeAnimation(keyPath: "opacity")
+    private let bottomTransform_select = CAKeyframeAnimation(keyPath: "transform")
+
+    private let topTransform_deselect = CAKeyframeAnimation(keyPath: "transform")
+    private let middleOpacity_deselect = CAKeyframeAnimation(keyPath: "opacity")
+    private let bottomTransform_deselect = CAKeyframeAnimation(keyPath: "transform")
+
+    override public var selected : Bool {
+        didSet {
+            updateLayers()
+        }
+    }
+
+    public required init(coder aDecoder: NSCoder) {
+        super.init(coder: aDecoder)
+        createLayers()
+        addTargets()
+    }
+
+    override public required init(frame: CGRect) {
+        super.init(frame: frame)
+        createLayers()
+        addTargets()
+    }
+
+    private func createLayers() {
+
+        let path: CGPath = {
+            let path = CGPathCreateMutable()
+            CGPathMoveToPoint(path, nil, 0, 3.5/2)
+            CGPathAddLineToPoint(path, nil, 20, 3.5/2)
+            return path
+        }()
+
+        top.path = path
+        middle.path = path
+        bottom.path = path
+
+        for layer in [ top, middle, bottom ] {
+            layer.frame = CGRectMake(12, 22 - 3.5 / 2, 20, 3.5)
+            layer.fillColor = nil
+            layer.strokeColor = UIColor.blackColor().CGColor
+            layer.lineWidth = 3.5
+            layer.miterLimit = 3.5
+            layer.lineCap = kCALineCapSquare
+            layer.masksToBounds = true
+            layer.actions = ["transform": NSNull(), "opacity": NSNull()]
+            self.layer.addSublayer(layer)
+        }
+
+        updateLayers()
+
+        //==============================
+        // select animation
+        //==============================
+        // top animation
+        topTransform_select.values = [
+            NSValue(CATransform3D: CATransform3DMakeTranslation(0.0, -7.0, 0.0)),                   //  0/10
+            NSValue(CATransform3D: CATransform3DMakeTranslation(0.0, 1.0, 0.0)),                    //  4/10
+            NSValue(CATransform3D: CATransform3DIdentity),                                          //  5/10
+            NSValue(CATransform3D: CATransform3DMakeRotation(CGFloat(M_PI) / 3, 0.0, 0.0, 1.0)),    //  8/10
+            NSValue(CATransform3D: CATransform3DMakeRotation(CGFloat(M_PI) / 4, 0.0, 0.0, 1.0))     // 10/10
+        ]
+        setCommonProperty(topTransform_select)
+
+        // middle animation
+        middleOpacity_select.values = [
+            1.0,    //  0/10
+            1.0,    //  4/10
+            0.0,    //  5/10
+            0.0,    //  8/10
+            0.0     // 10/10
+        ]
+        setCommonProperty(middleOpacity_select)
+
+        // bottom animation
+        bottomTransform_select.values = [
+            NSValue(CATransform3D: CATransform3DMakeTranslation(0.0, 7.0, 0.0)),                    //  0/10
+            NSValue(CATransform3D: CATransform3DMakeTranslation(0.0, -1.0, 0.0)),                   //  4/10
+            NSValue(CATransform3D: CATransform3DIdentity),                                          //  5/10
+            NSValue(CATransform3D: CATransform3DMakeRotation(-CGFloat(M_PI) / 3, 0.0, 0.0, 1.0)),   //  8/10
+            NSValue(CATransform3D: CATransform3DMakeRotation(-CGFloat(M_PI) / 4, 0.0, 0.0, 1.0))    // 10/10
+        ]
+        setCommonProperty(bottomTransform_select)
+
+        //==============================
+        // deselect animation
+        //==============================
+        // top animation
+        topTransform_deselect.values = [
+            NSValue(CATransform3D: CATransform3DMakeRotation(CGFloat(M_PI) / 4, 0.0, 0.0, 1.0)),                        //  0/10
+            NSValue(CATransform3D: CATransform3DMakeRotation(CGFloat(M_PI) / 4 - CGFloat(M_PI) / 3, 0.0, 0.0, 1.0)),    //  4/10
+            NSValue(CATransform3D: CATransform3DIdentity),                           //  5/10
+            NSValue(CATransform3D: CATransform3DMakeTranslation(0.0, -9.0, 0.0)),    //  8/10
+            NSValue(CATransform3D: CATransform3DMakeTranslation(0.0, -7.0, 0.0))     // 10/10
+        ]
+        setCommonProperty(topTransform_deselect)
+
+        // middle animation
+        middleOpacity_deselect.values = [
+            0.0,    //  0/10
+            0.0,    //  4/10
+            1.0,    //  5/10
+            1.0,    //  8/10
+            1.0     // 10/10
+        ]
+        setCommonProperty(middleOpacity_deselect)
+
+        // bottom animation
+        bottomTransform_deselect.values = [
+            NSValue(CATransform3D: CATransform3DMakeRotation(-CGFloat(M_PI) / 4, 0.0, 0.0, 1.0)),                        //  0/10
+            NSValue(CATransform3D: CATransform3DMakeRotation(-CGFloat(M_PI) / 4 + CGFloat(M_PI) / 3, 0.0, 0.0, 1.0)),    //  4/10
+            NSValue(CATransform3D: CATransform3DIdentity),                          //  5/10
+            NSValue(CATransform3D: CATransform3DMakeTranslation(0.0, 9.0, 0.0)),    //  8/10
+            NSValue(CATransform3D: CATransform3DMakeTranslation(0.0, 7.0, 0.0))     // 10/10
+        ]
+        setCommonProperty(bottomTransform_deselect)
+    }
+
+    private func updateLayers() {
+        if (selected) {
+            top.transform = CATransform3DMakeRotation(CGFloat(M_PI) / 4, 0.0, 0.0, 1.0)
+            middle.opacity = 0.0
+            bottom.transform = CATransform3DMakeRotation(-CGFloat(M_PI) / 4, 0.0, 0.0, 1.0)
+        } else {
+            top.transform = CATransform3DMakeTranslation(0.0, -7.0, 0.0)
+            middle.opacity = 1.0
+            bottom.transform = CATransform3DMakeTranslation(0.0, 7.0, 0.0)
+        }
+    }
+
+    private func setCommonProperty(animation: CAKeyframeAnimation) {
+        animation.duration = 0.3
+        animation.keyTimes = [
+            0.0,    //  0/10
+            0.4,    //  4/10
+            0.5,    //  5/10
+            0.8,    //  8/10
+            1.0     // 10/10
+        ]
+        animation.timingFunction = CAMediaTimingFunction(name: kCAMediaTimingFunctionEaseOut)
+        animation.removedOnCompletion = false
+        animation.fillMode = kCAFillModeForwards
+    }
+
+    private func addTargets() {
+        addTarget(self, action: "touchDown:", forControlEvents: UIControlEvents.TouchDown)
+        addTarget(self, action: "touchUpInside:", forControlEvents: UIControlEvents.TouchUpInside)
+        addTarget(self, action: "touchDragExit:", forControlEvents: UIControlEvents.TouchDragExit)
+        addTarget(self, action: "touchDragEnter:", forControlEvents: UIControlEvents.TouchDragEnter)
+        addTarget(self, action: "touchCancel:", forControlEvents: UIControlEvents.TouchCancel)
+    }
+
+    func touchDown(sender: DOHamburgerButton) {
+        layer.opacity = 0.4
+    }
+    func touchUpInside(sender: DOHamburgerButton) {
+        layer.opacity = 1.0
+    }
+    func touchDragExit(sender: DOHamburgerButton) {
+        layer.opacity = 1.0
+    }
+    func touchDragEnter(sender: DOHamburgerButton) {
+        layer.opacity = 0.4
+    }
+    func touchCancel(sender: DOHamburgerButton) {
+        layer.opacity = 1.0
+    }
+
+    public func select() {
+        selected = true
+
+        // remove all animations
+        top.removeAllAnimations()
+        middle.removeAllAnimations()
+        bottom.removeAllAnimations()
+
+        CATransaction.begin()
+
+        top.addAnimation(topTransform_select, forKey: "transform")
+        middle.addAnimation(middleOpacity_select, forKey: "opacity")
+        bottom.addAnimation(bottomTransform_select, forKey: "transform")
+
+        CATransaction.commit()
+    }
+
+    public func deselect() {
+        selected = false
+
+        // remove all animations
+        top.removeAllAnimations()
+        middle.removeAllAnimations()
+        bottom.removeAllAnimations()
+
+        CATransaction.begin()
+
+        top.addAnimation(topTransform_deselect, forKey: "transform")
+        middle.addAnimation(middleOpacity_deselect, forKey: "opacity")
+        bottom.addAnimation(bottomTransform_deselect, forKey: "transform")
+
+        CATransaction.commit()
+    }
+}
+
+// The MIT License
+//
+// Copyright (c) 2015 Gwendal Roué
+//
+// Permission is hereby granted, free of charge, to any person obtaining a copy
+// of this software and associated documentation files (the "Software"), to deal
+// in the Software without restriction, including without limitation the rights
+// to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+// copies of the Software, and to permit persons to whom the Software is
+// furnished to do so, subject to the following conditions:
+//
+// The above copyright notice and this permission notice shall be included in
+// all copies or substantial portions of the Software.
+//
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+// THE SOFTWARE.
+
+
+extension TemplateAST : CustomDebugStringConvertible {
+    /// A textual representation of `self`, suitable for debugging.
+    var debugDescription: String {
+        let string = TemplateGenerator().stringFromTemplateAST(self)
+        return "TemplateAST(\(string.debugDescription))"
+    }
+}
+
+extension Template : CustomDebugStringConvertible {
+    /// A textual representation of `self`, suitable for debugging.
+    public var debugDescription: String {
+        let string = TemplateGenerator().stringFromTemplateAST(templateAST)
+        return "Template(\(string.debugDescription))"
+    }
+}
+
+final class TemplateGenerator {
+    let configuration: Configuration
+
+    init(configuration: Configuration? = nil) {
+        self.configuration = configuration ?? DefaultConfiguration
+    }
+
+    func stringFromTemplateAST(templateAST: TemplateAST) -> String {
+        buffer = ""
+        renderTemplateAST(templateAST)
+        return buffer
+    }
+
+    private func renderTemplateAST(templateAST: TemplateAST) {
+        for node in templateAST.nodes {
+            renderTemplateASTNode(node)
+        }
+    }
+
+    func renderTemplateASTNode(node: TemplateASTNode) {
+        switch node {
+        case .BlockNode(let block):
+            let tagStartDelimiter = configuration.tagDelimiterPair.0
+            let tagEndDelimiter = configuration.tagDelimiterPair.1
+            let name = block.name
+            buffer.appendContentsOf("\(tagStartDelimiter)$\(name)\(tagEndDelimiter)")
+            renderTemplateAST(block.innerTemplateAST)
+            buffer.appendContentsOf("\(tagStartDelimiter)/\(name)\(tagEndDelimiter)")
+
+        case .PartialOverrideNode(let partialOverride):
+            let tagStartDelimiter = configuration.tagDelimiterPair.0
+            let tagEndDelimiter = configuration.tagDelimiterPair.1
+            let name = partialOverride.parentPartial.name ?? "<null>"
+            buffer.appendContentsOf("\(tagStartDelimiter)<\(name)\(tagEndDelimiter)")
+            renderTemplateAST(partialOverride.childTemplateAST)
+            buffer.appendContentsOf("\(tagStartDelimiter)/\(name)\(tagEndDelimiter)")
+
+        case .PartialNode(let partial):
+            let tagStartDelimiter = configuration.tagDelimiterPair.0
+            let tagEndDelimiter = configuration.tagDelimiterPair.1
+            let name = partial.name ?? "<null>"
+            buffer.appendContentsOf("\(tagStartDelimiter)>\(name)\(tagEndDelimiter)")
+
+        case .SectionNode(let section):
+            // Change delimiters tags are ignored. Always use configuration tag
+            // delimiters.
+            let tagStartDelimiter = configuration.tagDelimiterPair.0
+            let tagEndDelimiter = configuration.tagDelimiterPair.1
+            let expression = ExpressionGenerator().stringFromExpression(section.expression)
+            if section.inverted {
+                buffer.appendContentsOf("\(tagStartDelimiter)^\(expression)\(tagEndDelimiter)")
+            } else {
+                buffer.appendContentsOf("\(tagStartDelimiter)#\(expression)\(tagEndDelimiter)")
+            }
+            renderTemplateAST(section.tag.innerTemplateAST)
+            buffer.appendContentsOf("\(tagStartDelimiter)/\(expression)\(tagEndDelimiter)")
+
+        case .TextNode(let text):
+            buffer.appendContentsOf(text)
+
+        case .VariableNode(let variable):
+            // Change delimiters tags are ignored. Always use configuration tag
+            // delimiters.
+            let tagStartDelimiter = configuration.tagDelimiterPair.0
+            let tagEndDelimiter = configuration.tagDelimiterPair.1
+            let expression = ExpressionGenerator().stringFromExpression(variable.expression)
+            if variable.escapesHTML {
+                buffer.appendContentsOf("\(tagStartDelimiter)\(expression)\(tagEndDelimiter)")
+            } else if tagStartDelimiter == "{{" && tagEndDelimiter == "}}" {
+                buffer.appendContentsOf("\(tagStartDelimiter){\(expression)}\(tagEndDelimiter)")
+            } else {
+                buffer.appendContentsOf("\(tagStartDelimiter)&\(expression)\(tagEndDelimiter)")
+            }
+        }
+    }
+
+    private var buffer: String = ""
+}
+
+//
+// TelegramBot+getStatus.swift
+//
+// Copyright (c) 2015 Andrey Fidrya
+//
+// Licensed under the MIT license. For full copyright and license information,
+// please see the LICENSE file.
+//
+
+import Foundation
+
+extension TelegramBot {
+
+    /// Returns next unprocessed update from Telegram.
+    ///
+    /// If no more updates are available in local queue, the method blocks while
+    /// trying to fetch more from the server.
+    ///
+    /// - Returns: `Update` object. Null on error, in which case details can be
+    ///            obtained using `lastError` property.
+    public func nextUpdate() -> /*NS*/Update? {
+        if unprocessedUpdates.isEmpty {
+            var updates: [/*NS*/Update]?
+            repeat {
+                updates = getUpdates(offset: nextOffset,
+                    limit: defaultUpdatesLimit,
+                    timeout: defaultUpdatesTimeout)
+                if updates == nil {
+                    // Error, report to caller
+                    lastUpdate = nil
+                    return nil
+                }
+            } while updates!.isEmpty // Timeout, retry
+            unprocessedUpdates = updates!
+        }
+
+        guard let update = unprocessedUpdates.first else {
+            lastUpdate = nil
+            return nil
+        }
+
+        let nextUpdateId = update.updateId + 1
+        if nextOffset == nil || nextUpdateId > nextOffset {
+            nextOffset = nextUpdateId
+        }
+        unprocessedUpdates.removeAtIndex(0)
+        lastUpdate = update
+        return update
+    }
+
+    /// Receive incoming updates using long polling.
+    ///
+    /// This is an asynchronous version of the method,
+    /// a blocking one is also available.
+    ///
+    /// - Parameter offset: Identifier of the first update to be returned. If nil,
+    ///                    updates starting with the earliest unconfirmed update
+    ///                    are returned.
+    /// - Parameter limit: Limits the number of updates to be retrieved.
+    ///                    Values between 1—100 are accepted. If nil, defaults
+    ///                    to 100.
+    /// - Parameter timeout: Timeout in seconds for long polling. If nil, short
+    ///                    polling will be used.
+    /// - Parameter completion: Completion handler which will be called on main
+    ///                    queue by default. The queue can be overridden by
+    ///                    setting `queue` property of TelegramBot.
+    /// - Returns: Array of `Update` objects. Null on error, in which case `error`
+    ///                    contains the details.
+    /// - SeeAlso: `func getUpdatesWithLimit(timeout:) -> [Update]?`
+    public func getUpdates(offset offset: Int? = nil, limit: Int? = nil, timeout: Int? = nil, completion: (updates: [/*NS*/Update]?, error: /*NS*/DataTaskError?)->()) {
+        getUpdates(offset: offset, limit: limit, timeout: timeout, queue: queue, completion: completion)
+    }
+
+    /// Receive incoming updates using long polling.
+    ///
+    /// This is a blocking version of the method,
+    /// an asynchronous one is also available.
+    ///
+    /// - Parameter offset: Identifier of the first update to be returned. If nil,
+    ///                    updates starting with the earliest unconfirmed update
+    ///                    are returned.
+    /// - Parameter limit: Limits the number of updates to be retrieved.
+    ///                    Values between 1—100 are accepted. If nil, defaults
+    ///                    to 100.
+    /// - Parameter timeout: Timeout in seconds for long polling. If nil, short
+    ///                    polling will be used.
+    /// - Returns: Array of `Update` objects. Null on error, in which case details
+    ///            can be obtained using `lastError` property.
+    /// - SeeAlso: `func getUpdatesWithLimit(timeout:completion:)->()`
+    public func getUpdates(offset offset: Int? = nil, limit: Int? = nil, timeout: Int? = nil) -> [/*NS*/Update]? {
+        var result: [/*NS*/Update]!
+        let sem = dispatch_semaphore_create(0)
+        let queue = dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0)
+        getUpdates(offset: offset, limit: limit, timeout: timeout, queue: queue) {
+                updates, error in
+            result = updates
+            self.lastError = error
+            dispatch_semaphore_signal(sem)
+        }
+        dispatch_semaphore_wait(sem, DISPATCH_TIME_FOREVER)
+        return result
+    }
+
+    private func getUpdates(offset offset: Int?, limit: Int?, timeout: Int?, queue: dispatch_queue_t, completion: (updates: [/*NS*/Update]?, error: /*NS*/DataTaskError?)->()) {
+        let parameters: [String: Any?] = [
+            "offset": offset,
+            "limit": limit,
+            "timeout": timeout
+        ]
+        startDataTaskForEndpoint("getUpdates", parameters: parameters) {
+                (result, var error) in
+            var updates = [/*NS*/Update]()
+            if error == nil {
+                updates.reserveCapacity(result.count)
+                for updateJson in result.arrayValue {
+                    if let update = /*NS*/Update(json: updateJson) {
+                        updates.append(update)
+                    } else {
+                        error = .ResultParseError(json: result)
+                        break
+                    }
+                }
+            }
+            dispatch_async(queue) {
+                completion(updates: error == nil ? updates : nil,
+                    error: error)
+            }
+        }
+    }
+}
+
+// ChannelTests.swift
+//
+// The MIT License (MIT)
+//
+// Copyright (c) 2015 Zewo
+//
+// Permission is hereby granted, free of charge, to any person obtaining a copy
+// of this software and associated documentation files (the "Software"), to deal
+// in the Software without restriction, including without limitation the rights
+// to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+// copies of the Software, and to permit persons to whom the Software is
+// furnished to do so, subject to the following conditions:
+//
+// The above copyright notice and this permission notice shall be included in all
+// copies or substantial portions of the Software.
+//
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+// SOFTWARE.
+
+import XCTest
+import Venice
+import libmill
+
+class ChannelTests: XCTestCase {
+
+    func testReceiverWaitsForSender() {
+        let channel = Channel<Int>()
+        co {
+            yield
+            channel <- 333
+        }
+        XCTAssert(<-channel == 333)
+    }
+
+    func testSenderWaitsForReceiver() {
+        let channel = Channel<Int>()
+        co {
+            channel <- 444
+        }
+        XCTAssert(<-channel == 444)
+    }
+
+    func testReceivingChannel() {
+        let channel = Channel<Int>()
+        func receive(channel: ReceivingChannel<Int>) {
+            channel <- 888
+        }
+        co(receive(channel.receivingChannel))
+        XCTAssert(<-channel == 888)
+    }
+
+    func testSendingChannel() {
+        let channel = Channel<Int>()
+        func send(channel: SendingChannel<Int>) {
+            XCTAssert(<-channel == 999)
+        }
+        co{
+            channel <- 999
+        }
+        send(channel.sendingChannel)
+    }
+
+    func testTwoSimultaneousSenders() {
+        let channel = Channel<Int>()
+        co {
+            channel <- 888
+        }
+        co {
+            channel <- 999
+        }
+        XCTAssert(<-channel == 888)
+        yield
+        XCTAssert(<-channel == 999)
+    }
+
+    func testTwoSimultaneousReceivers() {
+        let channel = Channel<Int>()
+        co {
+            XCTAssert(<-channel == 333)
+        }
+        co {
+            XCTAssert(<-channel == 444)
+        }
+        channel <- 333
+        channel <- 444
+    }
+
+    func testTypedChannels() {
+        let stringChannel = Channel<String>()
+        co {
+            stringChannel <- "yo"
+        }
+        XCTAssert(<-stringChannel == "yo")
+
+        struct Foo { let bar: Int; let baz: Int }
+
+        let fooChannel = Channel<Foo>()
+        co {
+            fooChannel <- Foo(bar: 555, baz: 222)
+        }
+        let foo = <-fooChannel
+        XCTAssert(foo?.bar == 555 && foo?.baz == 222)
+    }
+
+    func testMessageBuffering() {
+        let channel = Channel<Int>(bufferSize: 2)
+        channel <- 222
+        channel <- 333
+        XCTAssert(<-channel == 222)
+        XCTAssert(<-channel == 333)
+        channel <- 444
+        XCTAssert(<-channel == 444)
+        channel <- 555
+        channel <- 666
+        XCTAssert(<-channel == 555)
+        XCTAssert(<-channel == 666)
+    }
+
+    func testSimpleChannelClose() {
+        let channel1 = Channel<Int>()
+        channel1.close()
+        XCTAssert(<-channel1 == nil)
+        XCTAssert(<-channel1 == nil)
+        XCTAssert(<-channel1 == nil)
+
+        let channel2 = Channel<Int>(bufferSize: 10)
+        channel2.close()
+        XCTAssert(<-channel2 == nil)
+        XCTAssert(<-channel2 == nil)
+        XCTAssert(<-channel2 == nil)
+
+        let channel3 = Channel<Int>(bufferSize: 10)
+        channel3 <- 999
+        channel3.close()
+        XCTAssert(<-channel3 == 999)
+        XCTAssert(<-channel3 == nil)
+        XCTAssert(<-channel3 == nil)
+
+        let channel4 = Channel<Int>(bufferSize: 1)
+        channel4 <- 222
+        channel4.close()
+        XCTAssert(<-channel4 == 222)
+        XCTAssert(<-channel4 == nil)
+        XCTAssert(<-channel4 == nil)
+    }
+
+    func testChannelCloseUnblocks() {
+        let channel1 = Channel<Int>()
+        let channel2 = Channel<Int>()
+        co {
+            XCTAssert(<-channel1 == nil)
+            channel2 <- 0
+        }
+        co {
+            XCTAssert(<-channel1 == nil)
+            channel2 <- 0
+        }
+        channel1.close()
+        XCTAssert(<-channel2 == 0)
+        XCTAssert(<-channel2 == 0)
+    }
+
+    func testBlockedSenderAndItemInTheChannel() {
+        let channel = Channel<Int>(bufferSize: 1)
+        channel <- 1
+        co {
+            channel <- 2
+        }
+        XCTAssert(<-channel == 1)
+        XCTAssert(<-channel == 2)
+    }
+
+    func testPanicWhenSendingToChannelDeadlocks() {
+        let pid = mill_fork()
+        XCTAssert(pid >= 0)
+        if pid == 0 {
+            alarm(1)
+            let channel = Channel<Int>()
+            signal(SIGABRT) { _ in
+                _exit(0)
+            }
+            channel <- 42
+            XCTFail()
+        }
+        var exitCode: Int32 = 0
+        XCTAssert(waitpid(pid, &exitCode, 0) != 0)
+        XCTAssert(exitCode == 0)
+    }
+
+    func testPanicWhenReceivingFromChannelDeadlocks() {
+        let pid = mill_fork()
+        XCTAssert(pid >= 0)
+        if pid == 0 {
+            alarm(1)
+            let channel = Channel<Int>()
+            signal(SIGABRT) { _ in
+                _exit(0)
+            }
+            <-channel
+            XCTFail()
+        }
+        var exitCode: Int32 = 0
+        XCTAssert(waitpid(pid, &exitCode, 0) != 0)
+        XCTAssert(exitCode == 0)
+    }
+
+    func testChannelIteration() {
+        let channel =  Channel<Int>(bufferSize: 2)
+        channel <- 555
+        channel <- 555
+        channel.close()
+        for value in channel {
+            XCTAssert(value == 555)
+        }
+    }
+
+    func testSendingChannelIteration() {
+        let channel =  Channel<Int>(bufferSize: 2)
+        channel <- 444
+        channel <- 444
+        func receive(channel: SendingChannel<Int>) {
+            channel.close()
+            for value in channel {
+                XCTAssert(value == 444)
+            }
+        }
+        receive(channel.sendingChannel)
+    }
+
+}
+
+//
+//  PeripheralManagerBeaconsViewController.swift
+//  BlueCap
+//
+//  Created by Troy Stribling on 9/28/14.
+//  Copyright (c) 2014 Troy Stribling. The MIT License (MIT).
+//
+
+import UIKit
+import BlueCapKit
+
+class PeripheralManagerBeaconsViewController: UITableViewController {
+
+    struct MainStoryboard {
+        static let peripheralManagerBeaconCell      = "PeripheralManagerBeaconCell"
+        static let peripheralManagerEditBeaconSegue = "PeripheralManagerEditBeacon"
+        static let peripheralManagerAddBeaconSegue  = "PeripheralManagerAddBeacon"
+    }
+
+    var peripheral                      : String?
+    var peripheralManagerViewController : PeripheralManagerViewController?
+
+
+    override func viewDidLoad() {
+        super.viewDidLoad()
+    }
+
+    override func viewWillAppear(animated: Bool) {
+        super.viewWillAppear(animated)
+        self.tableView.reloadData()
+        self.navigationItem.title = "Beacons"
+        NSNotificationCenter.defaultCenter().addObserver(self, selector:"didBecomeActive", name:BlueCapNotification.didBecomeActive, object:nil)
+        NSNotificationCenter.defaultCenter().addObserver(self, selector:"didResignActive", name:BlueCapNotification.didResignActive, object:nil)
+    }
+
+    override func viewWillDisappear(animated: Bool) {
+        super.viewWillDisappear(animated)
+        self.navigationItem.title = ""
+        NSNotificationCenter.defaultCenter().removeObserver(self)
+    }
+
+
+    override func prepareForSegue(segue:UIStoryboardSegue, sender:AnyObject?) {
+        if segue.identifier == MainStoryboard.peripheralManagerAddBeaconSegue {
+        } else if segue.identifier == MainStoryboard.peripheralManagerEditBeaconSegue {
+            if let selectedIndexPath = self.tableView.indexPathForCell(sender as! UITableViewCell) {
+                let viewController = segue.destinationViewController as! PeripheralManagerBeaconViewController
+                let beaconNames = PeripheralStore.getBeaconNames()
+                viewController.beaconName = beaconNames[selectedIndexPath.row]
+                if let peripheralManagerViewController = self.peripheralManagerViewController {
+                    viewController.peripheralManagerViewController = peripheralManagerViewController
+                }
+            }
+        }
+    }
+
+    func didResignActive() {
+        Logger.debug()
+        if let peripheralManagerViewController = self.peripheralManagerViewController {
+            self.navigationController?.popToViewController(peripheralManagerViewController, animated:false)
+        }
+    }
+
+    func didBecomeActive() {
+        Logger.debug()
+    }
+
+    override func numberOfSectionsInTableView(tableView:UITableView) -> Int {
+        return 1
+    }
+
+    override func tableView(tableView:UITableView, numberOfRowsInSection section: Int) -> Int {
+        return PeripheralStore.getBeaconNames().count
+    }
+
+    override func tableView(tableView:UITableView, cellForRowAtIndexPath indexPath:NSIndexPath) -> UITableViewCell {
+        let cell = tableView.dequeueReusableCellWithIdentifier(MainStoryboard.peripheralManagerBeaconCell, forIndexPath: indexPath) as! PeripheralManagerBeaconCell
+        let name = PeripheralStore.getBeaconNames()[indexPath.row]
+        cell.nameLabel.text = name
+        if let uuid = PeripheralStore.getBeacon(name) {
+            let beaconConfig = PeripheralStore.getBeaconConfig(name)
+            cell.uuidLabel.text = uuid.UUIDString
+            cell.majorLabel.text = "\(beaconConfig[1])"
+            cell.minorLabel.text = "\(beaconConfig[0])"
+            cell.accessoryType = .None
+            if let peripheral = self.peripheral {
+                if let advertisedBeacon = PeripheralStore.getAdvertisedBeacon(peripheral) {
+                    if advertisedBeacon == name {
+                        cell.accessoryType = .Checkmark
+                    }
+                }
+            }
+        }
+        return cell
+    }
+
+    override func tableView(tableView:UITableView, canEditRowAtIndexPath indexPath:NSIndexPath) -> Bool {
+        return true
+    }
+
+    override func tableView(tableView: UITableView, didSelectRowAtIndexPath indexPath:NSIndexPath) {
+        if let peripheral = self.peripheral {
+            let beaconNames = PeripheralStore.getBeaconNames()
+            PeripheralStore.setAdvertisedBeacon(peripheral, beacon:beaconNames[indexPath.row])
+            self.navigationController?.popViewControllerAnimated(true)
+        }
+    }
+
+    override func tableView(tableView:UITableView, commitEditingStyle editingStyle:UITableViewCellEditingStyle, forRowAtIndexPath indexPath:NSIndexPath) {
+        if editingStyle == .Delete {
+            let beaconNames = PeripheralStore.getBeaconNames()
+            PeripheralStore.removeBeacon(beaconNames[indexPath.row])
+            if let peripheral = self.peripheral {
+                PeripheralStore.removeAdvertisedBeacon(peripheral)
+                PeripheralStore.removeBeaconEnabled(peripheral)
+            }
+            tableView.deleteRowsAtIndexPaths([indexPath], withRowAnimation:.Fade)
+        }
+    }
+}
+
+//
+//  LTMorphingLabel+Anvil.swift
+//  https://github.com/lexrus/LTMorphingLabel
+//
+//  The MIT License (MIT)
+//  Copyright (c) 2014 Lex Tang, http://LexTang.com
+//
+//  Permission is hereby granted, free of charge, to any person obtaining a copy
+//  of this software and associated documentation files (the “Software”), to deal
+//  in the Software without restriction, including without limitation the rights
+//  to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+//  copies of the Software, and to permit persons to whom the Software is
+//  furnished to do so, subject to the following conditions:
+//
+//  The above copyright notice and this permission notice shall be included in
+//  all copies or substantial portions of the Software.
+//
+//  THE SOFTWARE IS PROVIDED “AS IS”, WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+//  IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+//  FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+//  AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+//  LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+//  OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+//  THE SOFTWARE.
+//
+
+import UIKit
+import QuartzCore
+
+
+extension LTMorphingLabel {
+
+    func AnvilLoad() {
+
+        _startClosures["Anvil\(LTMorphingPhaseStart)"] = {
+            self.emitterView.removeAllEmit()
+
+            if countElements(self._newRects) > 0 {
+                let centerRect = self._newRects[Int(self._newRects.count / 2)]
+
+                self.emitterView.createEmitter("leftSmoke", duration: 0.6) {
+                    (layer, cell) in
+                    layer.emitterSize = CGSizeMake(1 , 1)
+                    layer.emitterPosition = CGPointMake(
+                        centerRect.origin.x,
+                        centerRect.origin.y + centerRect.size.height / 1.3)
+                    layer.renderMode = kCAEmitterLayerSurface
+                    cell.contents = UIImage(named: "Smoke")!.CGImage
+                    cell.emissionLongitude = CGFloat(M_PI / 2.0)
+                    cell.scale = self.font.pointSize / 90.0
+                    cell.scaleSpeed = self.font.pointSize / 130
+                    cell.birthRate = 60
+                    cell.velocity = CGFloat(80 + Int(arc4random_uniform(60)))
+                    cell.velocityRange = 100
+                    cell.yAcceleration = -40
+                    cell.xAcceleration = 70
+                    cell.emissionLongitude = CGFloat(-M_PI_2)
+                    cell.emissionRange = CGFloat(M_PI_4) / 5.0
+                    cell.lifetime = self.morphingDuration * 2.0
+                    cell.spin = 10
+                    cell.alphaSpeed = -0.5 / self.morphingDuration
+                }
+
+                self.emitterView.createEmitter("rightSmoke", duration: 0.6) {
+                    (layer, cell) in
+                    layer.emitterSize = CGSizeMake(1 , 1)
+                    layer.emitterPosition = CGPointMake(
+                        centerRect.origin.x,
+                        centerRect.origin.y + centerRect.size.height / 1.3)
+                    layer.renderMode = kCAEmitterLayerSurface
+                    cell.contents = UIImage(named: "Smoke")!.CGImage
+                    cell.emissionLongitude = CGFloat(M_PI / 2.0)
+                    cell.scale = self.font.pointSize / 90.0
+                    cell.scaleSpeed = self.font.pointSize / 130
+                    cell.birthRate = 60
+                    cell.velocity = CGFloat(80 + Int(arc4random_uniform(60)))
+                    cell.velocityRange = 100
+                    cell.yAcceleration = -40
+                    cell.xAcceleration = -70
+                    cell.emissionLongitude = CGFloat(M_PI_2)
+                    cell.emissionRange = CGFloat(-M_PI_4) / 5.0
+                    cell.lifetime = self.morphingDuration * 2.0
+                    cell.spin = -10
+                    cell.alphaSpeed = -0.5 / self.morphingDuration
+                }
+
+                self.emitterView.createEmitter("leftFragments", duration: 0.6) {
+                    (layer, cell) in
+                    layer.emitterSize = CGSizeMake(self.font.pointSize , 1)
+                    layer.emitterPosition = CGPointMake(
+                        centerRect.origin.x,
+                        centerRect.origin.y + centerRect.size.height / 1.3)
+                    cell.contents = UIImage(named: "Fragment")!.CGImage
+                    cell.scale = self.font.pointSize / 90.0
+                    cell.scaleSpeed = self.font.pointSize / 40.0
+                    cell.color = self.textColor.CGColor
+                    cell.birthRate = 60
+                    cell.velocity = 350
+                    cell.yAcceleration = 0
+                    cell.xAcceleration = CGFloat(10 * Int(arc4random_uniform(10)))
+                    cell.emissionLongitude = CGFloat(-M_PI_2)
+                    cell.emissionRange = CGFloat(M_PI_4) / 5.0
+                    cell.alphaSpeed = -2
+                    cell.lifetime = self.morphingDuration
+                }
+
+                self.emitterView.createEmitter("rightFragments", duration: 0.6) {
+                    (layer, cell) in
+                    layer.emitterSize = CGSizeMake(self.font.pointSize , 1)
+                    layer.emitterPosition = CGPointMake(
+                        centerRect.origin.x,
+                        centerRect.origin.y + centerRect.size.height / 1.3)
+                    cell.contents = UIImage(named: "Fragment")!.CGImage
+                    cell.scale = self.font.pointSize / 90.0
+                    cell.scaleSpeed = self.font.pointSize / 40.0
+                    cell.color = self.textColor.CGColor
+                    cell.birthRate = 60
+                    cell.velocity = 350
+                    cell.yAcceleration = 0
+                    cell.xAcceleration = CGFloat(-10 * Int(arc4random_uniform(10)))
+                    cell.emissionLongitude = CGFloat(M_PI_2)
+                    cell.emissionRange = CGFloat(-M_PI_4) / 5.0
+                    cell.alphaSpeed = -2
+                    cell.lifetime = self.morphingDuration
+                }
+
+                self.emitterView.createEmitter("fragments", duration: 0.6) {
+                    (layer, cell) in
+                    layer.emitterSize = CGSizeMake(self.font.pointSize , 1)
+                    layer.emitterPosition = CGPointMake(
+                        centerRect.origin.x,
+                        centerRect.origin.y + centerRect.size.height / 1.3)
+                    cell.contents = UIImage(named: "Fragment")!.CGImage
+                    cell.scale = self.font.pointSize / 90.0
+                    cell.scaleSpeed = self.font.pointSize / 40.0
+                    cell.color = self.textColor.CGColor
+                    cell.birthRate = 60
+                    cell.velocity = 250
+                    cell.velocityRange = CGFloat(Int(arc4random_uniform(20)) + 30)
+                    cell.yAcceleration = 500
+                    cell.emissionLongitude = 0
+                    cell.emissionRange = CGFloat(M_PI_2)
+                    cell.alphaSpeed = -1
+                    cell.lifetime = self.morphingDuration
+                }
+            }
+        }
+
+        _progressClosures["Anvil\(LTMorphingPhaseManipulateProgress)"] = {
+            (index: Int, progress: Float, isNewChar: Bool) in
+
+            if !isNewChar {
+                return min(1.0, max(0.0, progress))
+            }
+
+            let j = Float(sin(Float(index))) * 1.7
+            return min(1.0, max(0.0001, progress + self.morphingCharacterDelay * j))
+
+        }
+
+        _effectClosures["Anvil\(LTMorphingPhaseDisappear)"] = {
+            (char:Character, index: Int, progress: Float) in
+
+            return LTCharacterLimbo(
+                char: char,
+                rect: self._originRects[index],
+                alpha: CGFloat(1.0 - progress),
+                size: self.font.pointSize,
+                drawingProgress: 0.0)
+        }
+
+        _effectClosures["Anvil\(LTMorphingPhaseAppear)"] = {
+            (char:Character, index: Int, progress: Float) in
+
+            var rect = self._newRects[index]
+
+            if progress < 1.0 {
+                let easingValue: Float = LTEasing.easeOutBounce(progress, 0.0, 1.0)
+                rect.origin.y = CGFloat(Float(rect.origin.y) * easingValue)
+            }
+
+            if progress > self.morphingDuration * 0.5 {
+                let end = self.morphingDuration * 0.55
+                self.emitterView.createEmitter("fragments", duration: 0.6) {_ in}.update {
+                    (layer, cell) in
+                    if progress > end {
+                        layer.birthRate = 0
+                    }
+                    }.play()
+                self.emitterView.createEmitter("leftFragments", duration: 0.6) {_ in}.update {
+                    (layer, cell) in
+                    if progress > end {
+                        layer.birthRate = 0
+                    }
+                    }.play()
+                self.emitterView.createEmitter("rightFragments", duration: 0.6) {_ in}.update {
+                    (layer, cell) in
+                    if progress > end {
+                        layer.birthRate = 0
+                    }
+                    }.play()
+            }
+
+            if progress > self.morphingDuration * 0.63 {
+                let end = self.morphingDuration * 0.7
+                self.emitterView.createEmitter("leftSmoke", duration: 0.6) {_ in}.update {
+                    (layer, cell) in
+                    if progress > end {
+                        layer.birthRate = 0
+                    }
+                    }.play()
+                self.emitterView.createEmitter("rightSmoke", duration: 0.6) {_ in}.update {
+                    (layer, cell) in
+                    if progress > end {
+                        layer.birthRate = 0
+                    }
+                    }.play()
+            }
+
+            return LTCharacterLimbo(
+                char: char,
+                rect: rect,
+                alpha: CGFloat(self.morphingProgress),
+                size: self.font.pointSize,
+                drawingProgress: CGFloat(progress)
+            )
+        }
+    }
+
+}
+
+//
+//  The MIT License (MIT)
+//
+//  Copyright (c) 2015 Srdan Rasic (@srdanrasic)
+//
+//  Permission is hereby granted, free of charge, to any person obtaining a copy
+//  of this software and associated documentation files (the "Software"), to deal
+//  in the Software without restriction, including without limitation the rights
+//  to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+//  copies of the Software, and to permit persons to whom the Software is
+//  furnished to do so, subject to the following conditions:
+//
+//  The above copyright notice and this permission notice shall be included in
+//  all copies or substantial portions of the Software.
+//
+//  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+//  IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+//  FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+//  AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+//  LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+//  OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+//  THE SOFTWARE.
+//
+
+/// Abstraction over an event type generated by a ObservableArray.
+/// ObservableArray event encapsulates current state of the array, as well
+/// as the operation that has triggered an event.
+public protocol ObservableArrayEventType {
+  typealias ObservableArrayEventSequenceType: SequenceType
+  var sequence: ObservableArrayEventSequenceType { get }
+  var operation: ObservableArrayOperation<ObservableArrayEventSequenceType.Generator.Element> { get }
+}
+
+/// A concrete array event type.
+public struct ObservableArrayEvent<ObservableArrayEventSequenceType: SequenceType>: ObservableArrayEventType {
+  public let sequence: ObservableArrayEventSequenceType
+  public let operation: ObservableArrayOperation<ObservableArrayEventSequenceType.Generator.Element>
+}
+
+/// Represents an operation that can be applied to a ObservableArray.
+/// Note: Nesting of the .Batch operations is not supported at the moment.
+public indirect enum ObservableArrayOperation<ElementType> {
+  case Insert(elements: [ElementType], fromIndex: Int)
+  case Update(elements: [ElementType], fromIndex: Int)
+  case Remove(range: Range<Int>)
+  case Reset(array: [ElementType])
+  case Batch([ObservableArrayOperation<ElementType>])
+}
+
+/// A array event change set represents a description of the change that
+/// the array event operation does to a array in a way suited for application
+/// to the UIKit collection views like UITableView or UICollectionView
+public enum ObservableArrayEventChangeSet {
+  case Inserts(Set<Int>)
+  case Updates(Set<Int>)
+  case Deletes(Set<Int>)
+}
+
+public func ==(lhs: ObservableArrayEventChangeSet, rhs: ObservableArrayEventChangeSet) -> Bool {
+  switch (lhs, rhs) {
+  case (.Inserts(let l), .Inserts(let r)):
+    return l == r
+  case (.Updates(let l), .Updates(let r)):
+    return l == r
+  case (.Deletes(let l), .Deletes(let r)):
+    return l == r
+  default:
+    return false
+  }
+}
+
+public extension ObservableArrayOperation {
+
+  /// Maps elements encapsulated in the operation.
+  public func map<X>(transform: ElementType -> X) -> ObservableArrayOperation<X> {
+    switch self {
+    case .Reset(let array):
+      return .Reset(array: array.map(transform))
+    case .Insert(let elements, let fromIndex):
+      return .Insert(elements: elements.map(transform), fromIndex: fromIndex)
+    case .Update(let elements, let fromIndex):
+      return .Update(elements: elements.map(transform), fromIndex: fromIndex)
+    case .Remove(let range):
+      return .Remove(range: range)
+    case .Batch(let operations):
+      return .Batch(operations.map{ $0.map(transform) })
+    }
+  }
+
+  public func filter(includeElement: ElementType -> Bool, inout pointers: [Int]) -> ObservableArrayOperation<ElementType>? {
+
+    switch self {
+    case .Insert(let elements, let fromIndex):
+
+      for (index, element) in pointers.enumerate() {
+        if element >= fromIndex {
+          pointers[index] = element + elements.count
+        }
+      }
+
+      var insertedIndices: [Int] = []
+      var insertedElements: [ElementType] = []
+
+      for (index, element) in elements.enumerate() {
+        if includeElement(element) {
+          insertedIndices.append(fromIndex + index)
+          insertedElements.append(element)
+        }
+      }
+
+      if insertedIndices.count > 0 {
+        let insertionPoint = startingIndexForIndex(fromIndex, forPointers: pointers)
+        pointers.insertContentsOf(insertedIndices, at: insertionPoint)
+        return .Insert(elements: insertedElements, fromIndex: insertionPoint)
+      }
+
+    case .Update(let elements, let fromIndex):
+
+      var operations: [ObservableArrayOperation<ElementType>] = []
+
+      for (index, element) in elements.enumerate() {
+        let realIndex = fromIndex + index
+
+        // if element on this index is currently included in filtered array
+        if let location = pointers.indexOf(realIndex) {
+          if includeElement(element) {
+            // update
+            operations.append(.Update(elements: [element], fromIndex: location))
+          } else {
+            // remove
+            pointers.removeAtIndex(location)
+            operations.append(.Remove(range: location..<location+1))
+          }
+        } else { // element in this index is currently NOT included
+          if includeElement(element) {
+            // insert
+            let insertionPoint = startingIndexForIndex(realIndex, forPointers: pointers)
+            pointers.insert(realIndex, atIndex: insertionPoint)
+            operations.append(.Insert(elements: [element], fromIndex: insertionPoint))
+          } else {
+            // not contained, not inserted - do nothing
+          }
+        }
+      }
+
+      if operations.count == 1 {
+        return operations.first!
+      } else if operations.count > 1 {
+        return .Batch(operations)
+      }
+
+    case .Remove(let range):
+
+      var startIndex = -1
+      var endIndex = -1
+
+      for (index, element) in pointers.enumerate() {
+        if element >= range.startIndex {
+          if element < range.endIndex {
+            if startIndex < 0 {
+              startIndex = index
+              endIndex = index + 1
+            } else {
+              endIndex = index + 1
+            }
+          }
+
+          pointers[index] = element - range.count
+        }
+      }
+
+      if startIndex >= 0 {
+        let removedRange = Range(start: startIndex, end: endIndex)
+        pointers.removeRange(removedRange)
+        return .Remove(range: removedRange)
+      }
+
+    case .Reset(let array):
+      pointers = pointersFromSequence(array, includeElement: includeElement)
+      return .Reset(array: array.filter(includeElement))
+
+    case .Batch(let operations):
+
+      var filteredOperations: [ObservableArrayOperation<ElementType>] = []
+
+      for operation in operations {
+        if let filtered = operation.filter(includeElement, pointers: &pointers) {
+          filteredOperations.append(filtered)
+        }
+      }
+
+      if filteredOperations.count == 1 {
+        return filteredOperations.first!
+      } else if filteredOperations.count > 0 {
+        return .Batch(filteredOperations)
+      }
+    }
+
+    return nil
+  }
+
+  /// Generates the `ObservableArrayEventChangeSet` representation of the operation.
+  public func changeSet() -> ObservableArrayEventChangeSet {
+    switch self {
+    case .Insert(let elements, let fromIndex):
+      return .Inserts(Set(fromIndex..<fromIndex+elements.count))
+    case .Update(let elements, let fromIndex):
+      return .Updates(Set(fromIndex..<fromIndex+elements.count))
+    case .Remove(let range):
+      return .Deletes(Set(range))
+    case .Reset:
+      fallthrough
+    case .Batch:
+      fatalError("Dear Sir/Madam, I cannot generate changeset for \(self) operation.")
+    }
+  }
+}
+
+internal func pointersFromSequence<S: SequenceType>(sequence: S, includeElement: S.Generator.Element -> Bool) -> [Int] {
+  var pointers: [Int] = []
+  for (index, element) in sequence.enumerate() {
+    if includeElement(element) {
+      pointers.append(index)
+    }
+  }
+  return pointers
+}
+
+internal func startingIndexForIndex(x: Int, forPointers pointers: [Int]) -> Int {
+  var idx: Int = -1
+  for (index, element) in pointers.enumerate() {
+    if element < x {
+      idx = index
+    } else {
+      break
+    }
+  }
+  return idx + 1
+}
+
+public func operationOffset<T>(operation: ObservableArrayOperation<T>) -> Int {
+  switch operation {
+  case .Insert(let elements, _):
+    return elements.count
+  case .Remove(let range):
+    return -range.count
+  default:
+    return 0
+  }
+}
+
+public func operationStartIndex<T>(operation: ObservableArrayOperation<T>) -> Int {
+  switch operation {
+  case .Insert(_, let fromIndex):
+    return fromIndex
+  case .Remove(let range):
+    return range.startIndex
+  default:
+    return 0
+  }
+}
+
+/// This function is used by UICollectionView and UITableView bindings. Batch operations are expected to be sequentially
+/// applied to the array/array, which is not what those views do. The function converts operations into a "diff" discribing
+/// elements at what indices changed and in what way.
+///
+/// Expected order: .Deletes, .Inserts, .Updates
+///
+/// Deletes are always indexed in the index-space of the original array
+///  -> Deletes are shifted by preceding inserts and deletes at lower indices
+/// Deletes of updated items are substracted from updates set
+/// Deletes of inserted items are substracted from inserts set
+/// Deletes shift preceding inserts at higher indices
+///
+/// Inserts are always indexed in the index-space of the final array
+/// -> Inserts shift preceding inserts at higher indices
+///
+/// Updates are always indexed in the index-space of the original array
+///  -> Updates are shifted by preceding inserts and deletes at lower indices
+/// Updates of inserted items are annihilated
+///
+public func changeSetsFromBatchOperations<T>(operations: [ObservableArrayOperation<T>]) -> [ObservableArrayEventChangeSet] {
+
+  var inserts = Set<Int>()
+  var updates = Set<Int>()
+  var deletes = Set<Int>()
+
+  for (operationIndex, operation) in operations.enumerate() {
+    switch operation {
+    case .Insert(let elements, let fromIndex):
+      // Inserts are always indexed in the index-space of the array as it will look like when all operations are applies
+
+      // Inserts shift preceding inserts at higher indices
+      inserts = Set(inserts.map { $0 >= fromIndex ? $0 + elements.count : $0 })
+
+      inserts.unionInPlace(fromIndex..<fromIndex+elements.count)
+
+    case .Update(let elements, let fromIndex):
+      // Updates are always indexed in the index-space of the array before any operation is applied
+
+      // Updates done to the elements that were inserted in this batch must be discared
+      var newUpdates = Array(Set(fromIndex..<fromIndex+elements.count).subtract(inserts))
+
+      // Any prior insertion or deletion shifts our indices
+      for insert in inserts {
+        newUpdates = newUpdates.map { $0 >= insert ? $0 - 1 : $0 }
+      }
+
+      for delete in deletes {
+        newUpdates = newUpdates.map { $0 >= delete ? $0 + 1 : $0 }
+      }
+
+      updates.unionInPlace(newUpdates)
+
+    case .Remove(let range):
+      // Deletes are always indexed in the index-space of the array before any operation is applied
+
+      let possibleNewDeletes = Set(range)
+
+      // Elements that were inserted and then removed in this batch must be discared
+      let annihilated = inserts.intersect(possibleNewDeletes)
+      inserts.subtractInPlace(annihilated)
+
+      let actualNewDeletes = possibleNewDeletes.subtract(annihilated)
+
+      // Deletes are shifted by preceding inserts and deletes at lower indices
+      var correctionOffset = 0
+      for operation in operations.prefixUpTo(operationIndex) {
+        if range.startIndex >= operationStartIndex(operation) {
+          correctionOffset -= operationOffset(operation)
+        }
+      }
+
+      let newDeletes = actualNewDeletes.map { $0 + correctionOffset }
+      deletes.unionInPlace(newDeletes)
+
+      // Elements that were updated and then removed in this batch must be discared
+      updates.subtractInPlace(newDeletes)
+
+      // Deletes shift preceding inserts at higher indices
+      inserts = Set(inserts.map { $0 >= range.startIndex ? $0 - range.count : $0 })
+
+    case .Reset:
+      fatalError("Dear Sir/Madam, the .Reset operation within the .Batch is not supported at the moment!")
+    case .Batch:
+      fatalError("Dear Sir/Madam, nesting the .Batch operations is not supported at the moment!")
+    }
+  }
+
+  var changeSets: [ObservableArrayEventChangeSet] = []
+
+  if deletes.count > 0 {
+    changeSets.append(.Deletes(deletes))
+  }
+
+  if inserts.count > 0 {
+    changeSets.append(.Inserts(inserts))
+  }
+
+  if updates.count > 0 {
+    changeSets.append(.Updates(updates))
+  }
+
+  return changeSets
+}
+
+// Distributed under the terms of the MIT license
+// Test case submitted to project by https://github.com/practicalswift (practicalswift)
+// Test case found by fuzzing
+
+func i(f: g) -> <j>(() -> j) -> g { func g
+k, l {
+    typealias l = m<k<m>, f>
+}
+func ^(a: BooleanType, Bool) -> Bool {
+    return !(a)
+}
+func b(c) -> <d>(() -> d) {
+}
+func q(v: h) -> <r>(() -> r) -> h {
+  n { u o "\(v): \(u())" }
+}
+struct e<r> {
+    j p: , () -> ())] = []
+}
+protocol p {
+}
+protocol m : p {
+}
+protocol v : p {
+}
+protocol m {
+ v = m
+}
+func s<s : m, v : m u v.v == s> (m: v) {
+}
+func s<v : m u v.v == v> (m: v) {
+}
+s( {
+    ({})
+}
+t
+func f<e>() -> (e, e -> e) -> e {
+    e b e.c = {}
+    {
+        e)
+        {
+            f
+        }
+    }
+    protocol f {
+        class func c()
+    }
+    class e: f {
+        class func c
+    }
+}
+protocol A {
+    func c()l k {
+    func l() -> g {
+        m ""
+    }
+}
+class C: k, A {
+    j func l()q c() -> g {
+        m ""
+    }
+}
+func e<r where r: A, r: k>(n: r) {
+    n.c()
+}
+protocol A {
+    typealias h
+}
+c k<r : A> {
+    p f: r
+    p p: r.h
+}
+protocol C      l.e()
+    }
+}
+class o {
+    typealias l = l
+protocol a {
+}
+protocol h : a {
+}
+protocol k : a {
+}
+protocol g {
+  j n = a
+}
+struct n : g {
+  j n = h
+}
+func i<h : h, f : g m f.n == h> (g: f) {
+}
+func i<n : g m n.n = o) {
+}
+let k = a
+k()
+h
+protocol k : h { func h
+k
+func f(k: Any, j: Any) -> (((Any, Any) -> Any) -> c
+k)
+func c<i>() -> (i, i -> i) -> i {
+   k b k.i = {
+}
+ {
+   i) {
+        k  }
+}
+protocol c {
+   class func i()
+}
+class k: c{  class func i {
+}
+class i {
+    func d((h: (Any, AnyObject)) {
+        d(h)
+    }
+}
+d
+h)
+func d<i>() -> (i, i -> i) -> i {
+   i j i.f = {
+}
+protocol d {
+   class func f()
+}
+class i: d{  class func f {}
+protocol a {
+}
+protocol b : a {
+}
+protocol c : a {
+}
+protocol d {
+  typealias f = a
+}
+struct e : d {
+  typealias f = b
+}
+func i<j : b, k : d where k.f == j> (n: k) {
+}
+func i<l : d where l.f == c> (n: l) {
+}
+i(e())
+class l {
+    func f((k, l() -> f
+}
+class d
+}
+class i: d, g {
+    l func d() -> f {
+        m ""
+    }
+    }
+}
+func m<j n j: g, j: d
+let l = h
+l()
+f
+protocol l : f { func f
+protocol g
+func g<h>() -> (h, h -> h) -> h {
+    f f: ((h, h -> h) -> h)!
+    j f
+}
+protocol f {
+    class func j()
+}
+struct i {
+    f d: f.i
+    func j() {
+        d.j()
+    }
+}
+class g {
+    typealias f = f
+}
+func g(f: Int = k) {
+}
+let i = g
+class k {
+    func l((Any, k))(m }
+}
+func j<f: l: e -> e = {
+ {
+   l) {
+      m  }
+}
+protocol k {
+   class func j()
+}
+class e: k{  class func j
+struct c<d : SequenceType> {
+    var b:  [c<d>] {
+    return []
+}
+protocol a {
+    class func c()
+}
+class b: a {
+    class func c() { }
+}
+(b() as a).dynamicType.c()
+func f<T : BooleanType>(b: T) {
+}
+f(true as BooleanType)
+func a(x: Any, y: Any) -> (((Any, Any) -> Any) -> A  var d: b.Type
+    func e() {
+        d.e()
+    }
+}
+b
+protocol c : b { func b
+otocol A {
+  E == F>(f: B<T>)
+}
+struct  }
+}
+struct c<d : SequenceType> {
+    var b: d
+}
+func a<d>() -> [c<d>] {
+    return []
+}
+func ^(d: e, Bool) -> Bool {g !(d)
+}
+protocol d {
+    f func g()
+f e: d {
+    f func g() { }
+}
+(e() h d).i()
+e
+protocol g : e { func e
+func a(b: Int = 0) {
+}
+let c = a
+c()
+var f = 1
+var e: Int -> Int = {
+    return $0
+}
+let d: Int =  { c, b in
+}(f, e)
+func m<u>() -> (u, u -> u) -> u {
+   p o p.s = {
+}
+ {
+   u) {
+        o  }
+}
+s m {
+   class func s()
+}
+class p: m{  class func s {}
+s p {
+    func m() -> String
+}
+class n {
+    func p() -> String {
+        q ""
+    }
+}
+class e: n, p {
+    v func> String {
+        q ""
+    }
+ {
+  r m = m
+}
+func s<o : m, o : p o o.m == o> (m: o) {
+}
+func s<v : p o v.m == m> (u: String) -> <t>(() -> t) -
+func p<p>() -> (p, p -> p) -> p {
+   l c l.l = {
+}
+ {
+   p) {
+      (e: o, h:o) ->  e
+    })
+}
+j(k(m, k(2, 3)))
+func l(p: j) -> <n>(() -> n
+struct c<d: SequenceType, b where Optional<b> == d.Generator.Element>
+d = i
+}
+class d<j : i, f : i where j.i == f> : e {
+}
+class d<j, f> {
+}
+protocol i {
+    typealias i
+}
+protocol e {
+    class func i()
+}
+i
+(d() as e).j.i()
+d
+protocol i : d { func d
+class k<g>: d {
+    var f: g
+    init(f: g) {
+        self.f = f
+        l. d {
+    typealias i = l
+    typealias j = j<i<l>, i>
+}
+class j {
+    typealias d = d
+struct A<T> {
+    let a: [(T, () -> ())] = []
+}
+func b<d-> d { class d:b class b
+class A<T : A> {
+}
+func c<d {
+    enum c {
+        func e
+        var _ = e
+    }
+}
+protocol a {
+    class func c()
+}
+class b: a {
+    class func c() { }
+}
+(b() as a).dynamicl A {
+    {
+    typealias b = b
+ d.i = {
+}
+ {
+   g) {
+        h  }
+}
+protocol f {
+   class func i()
+}}
+func f<m>() -> (m, m -> m) -> m {
+   e c e.i = {
+}
+ {
+   m) {
+        n  }
+}
+protocol f {
+   class func i()
+}
+class e: f{  class func i {}
+func n<j>() -> (j, j -> j) -> j {
+    var m: ((j> j)!
+    f m
+}
+protocol k {
+    typealias m
+}
+struct e<j : k> {n: j
+    let i: j.m
+}
+l
+func m(c: b) -> <h>(() -> h) -> b {
+  f) -> j) -> > j {
+    l i !(k)
+}
+d
+l)
+func d<m>-> (m, m -
+import Foundation
+class Foo<T>: NSObject {
+    var foo: T
+    init(foo: T) {
+ B>(t: T) {
+    t.c()
+} x
+      x) {
+}
+class a {
+    var _ = i() {
+    }
+}
+a=1 as a=1
+func k<q>() -> [n<q>] {
+    r []
+}
+func k(l: Int = 0) {
+}
+n n = k
+n()
+func n<q {
+    l n {
+        func o
+        o _ = o
+    }
+}
+func ^(k: m, q) -> q {
+    r !(k)
+}
+protocol k {
+  j q
+  j o = q
+  j f = q
+}
+class l<r : n, l : n p r.q == l> : k {
+}
+class l<r, l> {
+}
+protocol n {
+    j q
+}
+protocol k : k {
+}
+class k<f : l, q : l p f.q == q> {
+}
+protocol l {
+    j q
+    j o
+}
+struct n<r : l>
+func k<q {
+    enum k {
+        func j
+        var _ = j
+    }
+}
+class x  {
+    s m
+    func j(m)
+}
+struct j<u> : r {
+    func j(j: j.n) {
+    }
+}
+enum q<v> {   let k: v
+    let u: v.l
+}
+protocol y {
+    o= p>(r: m<v>)
+}
+struct D : y {
+    s p = Int
+    func y<v k r {
+    s m
+}
+class y<D> {
+    w <r:
+func j<v x: v) {
+    x.k()
+}
+func x(j: Int = a) {
+}
+let k = x
+func b((Any, e))(e: (Any) -> <d>(()-> d) -> f
+func a(x: Any, y: Any) -> (((Any, Any) -> Any) -> Any) {
+    return {
+        (m: (Any, Any) -> Any) -> Any in
+        return m(x, y)
+    }
+}
+func b(z: (((Any, Any) -> Any) -> Any)) -> Any {
+    return z({
+        (p: Any, q:Any) -> Any in
+        return p
+    })
+}
+b(a(1, a(2, 3)))
+protocol f : f {
+}
+func h<d {
+    enum h {
+        func e
+        var _ = e
+    }
+}
+protocol e {
+    e func e()
+}
+struct h {
+    var d: e.h
+    func e() {
+        d.e()
+    }
+}
+protocol f {
+  i []
+}
+func f<g>() -> (g, g -> g) -> g
+class A<T : A> n = {
+    return $u
+}
+l o: n = { (d: n, o: n -> n) -> n q
+    return o(d)
+}
+import Foundation
+class m<j>: NSObject {
+    var h: j
+ g -> k = l $n
+}
+b f:  _ = j() {
+    }
+}
+func k<g {
+    enum k {
+        func l
+    var _ = l
+func o() as o).m.k()
+func p(k: b) -> <i>(() -> i) -> b {
+  n { o f "\(k): \(o())" }
+}
+struct d<d : n, o:j n {
+    l p
+}
+protocol o : o {
+}
+func o<
+class a<f : b, g : b where f.d == g> {
+}
+protocol b {
+    typealias d
+    typealias e
+}
+struct c<h : b> : b {
+    typealias d = h
+    typealias e = a<c<h>, d>
+}
+func c<g>() -> (g, g -> g) -> g {
+   d b d.f = {
+}
+ {
+   g) {
+        i  }
+}
+i c {
+   class func f()
+}
+class d: c{  class func f {}
+struct d<c : f,f where g.i == c.i>
+struct l<e : SequenceType> {
+    l g: e
+}
+func h<e>() -> [l<e>] {
+    f []
+}
+func i(e: g) -> <j>(() -> j) -> k
+struct c<e> {
+    let d: [(  h
+}
+func b(g: f) -> <e>(()-> e) -> i
+ h
+}
+func e<l {
+    enum e {
+        func e
+       j {
+   class func n()
+}
+class l: j{  k() -> ())
+}
+({})
+func j<o : BooleanType>(l: o) {
+}
+j(j q BooleanType)
+func p(l: Any, g: Any) -> (((Any, Any) -> Any) -> Any) {
+    return {
+        (p: (Any, Any) -> Any) -> Any in
+func n<n : l,) {
+}
+n(e())
+e
+func a<T>() {
+    enum b {
+        case c
+    }
+}
+o
+class w<r>: c {
+    init(g: r) {
+        n.g = g
+        s.init()
+(t: o
+struct t : o {
+  p v = t
+}
+q t<where n.v ==  t<v : o u m : v {
+}
+struct h<t, j: v where t.h == j
+f> {
+ c(d ())
+}
+func b(e)-> <d>(() -> d)
+func f<T : BooleanType>(b: T) {
+}
+f(true as BooleanType)
+class A: A {
+}
+class B : C {
+}
+typealias C = B
+protocol A {
+    typealias E
+}
+struct B<T : As a {
+    typealias b = b
+}
+func a<T>() {f {
+   class func i()
+}
+class d: f{  class func i {}
+func f() {
+    ({})
+}
+func prefix(with: String) -> <T>(() -> T) -> String {
+  return { g in "\(with): \(g())" }
+}
+protocol a : a {
+}
+class j {
+    func y((Any, j))(v: (Any, AnyObject)) {
+        y(v)
+    }
+}
+func w(j: () -> ()) {
+}
+class v {
+    l _ = w() {
+    }
+}
+({})
+func v<x>() -> (x, x -> x) -> x {
+    l y j s<q : l, y: l m y.n == q.n> {
+}
+o l {
+    u n
+}
+y q<x> {
+    s w(x, () -> ())
+}
+o n {
+    func j()  p
+}
+class r {
+    func s() -> p {
+        t ""
+    }
+}
+class w: r, n {
+    k v: ))] = []
+}
+class n<x : n>
+w
+class x<u>: d {
+    l i: u
+    init(i: u) {
+        o.i = j {
+  r { w s "\(f): \(w())" }
+}
+protoc
+protocol f : b { func b
+() {
+    g g         h g
+    }
+}
+func e(i: d) -> <f>(() -> f)>
+import Foundation
+class k<f>: NSObject {
+    d e: f
+    g(e: f) {
+        j        h.g()
+    }
+}
+d
+protocol i : d { func d
+i
+b
+protocol d : b { func b
+func d(e:  = { (g: h, f: h -> h) -> h in
+    return f(g)
+}
+  }
+}
+class b<i : b> i: g{ func c {}
+e g {
+ : g {
+h func i() ->  }
+struct j<l : o> {
+    k b: l
+}
+func a<l>() -> [j<l>] {
+    return []
+}
+f
+k)
+func f<l>() -> (l, l -> l) -> l {
+   l j l.n = {
+}
+ {
+   l) {
+        n  }
+}
+protocol f {
+   class func n()
+}
+class l: f{  class func n {}
+func a<i>() {
+    b b {
+        l j
+    }
+}
+class a<f : b, l : b m f.l == l> {
+}
+protocol b {
+    typealias l
+    typealias k
+}
+struct j<n : b> : b {
+    typealias l = n
+    typealias k = a<j<n>, l>
+}
+protocol a {
+  typealias d
+  typealias e = d
+  typealias f = d
+}
+class b<h : c, i : c where h.g == i> : a {
+}
+class b<h, i> {
+}
+protocol c {
+    typealias g
+}
+a=1 as a=1
+enum S<T> {
+    case C(T, () -> ())
+}
+n)
+func f<o>() -> (o, o -> o) -> o {
+   o m o.j = {
+}
+ {
+   o) {
+        r  }
+}
+p q) {
+}
+o m = j
+m()
+class m {
+    func r((Any, m))(j: (Any, AnyObject)) {
+        r(j)
+    }
+}
+func m<o {
+    r m {
+        func n
+        n _ = n
+    }
+}
+class k<l : k
+<c b:
+func b<c {
+  enum b {
+   func b
+var _ = b
+func n<p>() -> (p, p -> p) -> p {
+    b, l]
+g(o(q))
+h e {
+    j   class func r()
+}
+class k: h{  class func r {}
+var k = 1
+var s: r -> r t -> r) -> r m
+    u h>] {
+    u []
+}
+func r(e: () -> ()) {
+}
+class n {
+    var _ = r()

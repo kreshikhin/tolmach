@@ -1,0 +1,1521 @@
+// $G $F.go && $L $F.$A && ./$A.out
+
+// Copyright 2009 The Go Authors. All rights reserved.
+// Use of this source code is governed by a BSD-style
+// license that can be found in the LICENSE file.
+
+package main
+
+import (
+    "fmt"
+    "strconv"
+)
+
+const count = 100
+
+func P(a []string) string {
+    s := "{"
+    for i := 0; i < len(a); i++ {
+        if i > 0 {
+            s += ","
+        }
+        s += `"` + a[i] + `"`
+    }
+    s += "}"
+    return s
+}
+
+func main() {
+    // Test a map literal.
+    mlit := map[string]int{"0": 0, "1": 1, "2": 2, "3": 3, "4": 4}
+    for i := 0; i < len(mlit); i++ {
+        s := string([]byte{byte(i) + '0'})
+        if mlit[s] != i {
+            fmt.Printf("mlit[%s] = %d\n", s, mlit[s])
+        }
+    }
+
+    mib := make(map[int]bool)
+    mii := make(map[int]int)
+    mfi := make(map[float32]int)
+    mif := make(map[int]float32)
+    msi := make(map[string]int)
+    mis := make(map[int]string)
+    mss := make(map[string]string)
+    mspa := make(map[string][]string)
+    // BUG need an interface map both ways too
+
+    type T struct {
+        i int64 // can't use string here; struct values are only compared at the top level
+        f float32
+    }
+    mipT := make(map[int]*T)
+    mpTi := make(map[*T]int)
+    mit := make(map[int]T)
+    //	mti := make(map[T] int)
+
+    type M map[int]int
+    mipM := make(map[int]M)
+
+    var apT [2 * count]*T
+
+    for i := 0; i < count; i++ {
+        s := strconv.Itoa(i)
+        s10 := strconv.Itoa(i * 10)
+        f := float32(i)
+        t := T{int64(i), f}
+        apT[i] = new(T)
+        apT[i].i = int64(i)
+        apT[i].f = f
+        apT[2*i] = new(T) // need twice as many entries as we use, for the nonexistence check
+        apT[2*i].i = int64(i)
+        apT[2*i].f = f
+        m := M{i: i + 1}
+        mib[i] = (i != 0)
+        mii[i] = 10 * i
+        mfi[float32(i)] = 10 * i
+        mif[i] = 10.0 * f
+        mis[i] = s
+        msi[s] = i
+        mss[s] = s10
+        mss[s] = s10
+        as := make([]string, 2)
+        as[0] = s10
+        as[1] = s10
+        mspa[s] = as
+        mipT[i] = apT[i]
+        mpTi[apT[i]] = i
+        mipM[i] = m
+        mit[i] = t
+        //	mti[t] = i
+    }
+
+    // test len
+    if len(mib) != count {
+        fmt.Printf("len(mib) = %d\n", len(mib))
+    }
+    if len(mii) != count {
+        fmt.Printf("len(mii) = %d\n", len(mii))
+    }
+    if len(mfi) != count {
+        fmt.Printf("len(mfi) = %d\n", len(mfi))
+    }
+    if len(mif) != count {
+        fmt.Printf("len(mif) = %d\n", len(mif))
+    }
+    if len(msi) != count {
+        fmt.Printf("len(msi) = %d\n", len(msi))
+    }
+    if len(mis) != count {
+        fmt.Printf("len(mis) = %d\n", len(mis))
+    }
+    if len(mss) != count {
+        fmt.Printf("len(mss) = %d\n", len(mss))
+    }
+    if len(mspa) != count {
+        fmt.Printf("len(mspa) = %d\n", len(mspa))
+    }
+    if len(mipT) != count {
+        fmt.Printf("len(mipT) = %d\n", len(mipT))
+    }
+    if len(mpTi) != count {
+        fmt.Printf("len(mpTi) = %d\n", len(mpTi))
+    }
+    //	if len(mti) != count {
+    //		fmt.Printf("len(mti) = %d\n", len(mti))
+    //	}
+    if len(mipM) != count {
+        fmt.Printf("len(mipM) = %d\n", len(mipM))
+    }
+    //	if len(mti) != count {
+    //		fmt.Printf("len(mti) = %d\n", len(mti))
+    //	}
+    if len(mit) != count {
+        fmt.Printf("len(mit) = %d\n", len(mit))
+    }
+
+    // test construction directly
+    for i := 0; i < count; i++ {
+        s := strconv.Itoa(i)
+        s10 := strconv.Itoa(i * 10)
+        f := float32(i)
+        // BUG m := M(i, i+1)
+        if mib[i] != (i != 0) {
+            fmt.Printf("mib[%d] = %t\n", i, mib[i])
+        }
+        if mii[i] != 10*i {
+            fmt.Printf("mii[%d] = %d\n", i, mii[i])
+        }
+        if mfi[f] != 10*i {
+            fmt.Printf("mfi[%d] = %d\n", i, mfi[f])
+        }
+        if mif[i] != 10.0*f {
+            fmt.Printf("mif[%d] = %g\n", i, mif[i])
+        }
+        if mis[i] != s {
+            fmt.Printf("mis[%d] = %s\n", i, mis[i])
+        }
+        if msi[s] != i {
+            fmt.Printf("msi[%s] = %d\n", s, msi[s])
+        }
+        if mss[s] != s10 {
+            fmt.Printf("mss[%s] = %g\n", s, mss[s])
+        }
+        for j := 0; j < len(mspa[s]); j++ {
+            if mspa[s][j] != s10 {
+                fmt.Printf("mspa[%s][%d] = %s\n", s, j, mspa[s][j])
+            }
+        }
+        if mipT[i].i != int64(i) || mipT[i].f != f {
+            fmt.Printf("mipT[%d] = %v\n", i, mipT[i])
+        }
+        if mpTi[apT[i]] != i {
+            fmt.Printf("mpTi[apT[%d]] = %d\n", i, mpTi[apT[i]])
+        }
+        //	if(mti[t] != i) {
+        //		fmt.Printf("mti[%s] = %s\n", s, mti[t])
+        //	}
+        if mipM[i][i] != i+1 {
+            fmt.Printf("mipM[%d][%d] = %d\n", i, i, mipM[i][i])
+        }
+        //	if(mti[t] != i) {
+        //		fmt.Printf("mti[%v] = %d\n", t, mti[t])
+        //	}
+        if mit[i].i != int64(i) || mit[i].f != f {
+            fmt.Printf("mit[%d] = {%d %g}\n", i, mit[i].i, mit[i].f)
+        }
+    }
+
+    // test existence with tuple check
+    // failed lookups yield a false value for the boolean.
+    for i := 0; i < count; i++ {
+        s := strconv.Itoa(i)
+        f := float32(i)
+        {
+            _, b := mib[i]
+            if !b {
+                fmt.Printf("tuple existence decl: mib[%d]\n", i)
+            }
+            _, b = mib[i]
+            if !b {
+                fmt.Printf("tuple existence assign: mib[%d]\n", i)
+            }
+        }
+        {
+            _, b := mii[i]
+            if !b {
+                fmt.Printf("tuple existence decl: mii[%d]\n", i)
+            }
+            _, b = mii[i]
+            if !b {
+                fmt.Printf("tuple existence assign: mii[%d]\n", i)
+            }
+        }
+        {
+            _, b := mfi[f]
+            if !b {
+                fmt.Printf("tuple existence decl: mfi[%d]\n", i)
+            }
+            _, b = mfi[f]
+            if !b {
+                fmt.Printf("tuple existence assign: mfi[%d]\n", i)
+            }
+        }
+        {
+            _, b := mif[i]
+            if !b {
+                fmt.Printf("tuple existence decl: mif[%d]\n", i)
+            }
+            _, b = mif[i]
+            if !b {
+                fmt.Printf("tuple existence assign: mif[%d]\n", i)
+            }
+        }
+        {
+            _, b := mis[i]
+            if !b {
+                fmt.Printf("tuple existence decl: mis[%d]\n", i)
+            }
+            _, b = mis[i]
+            if !b {
+                fmt.Printf("tuple existence assign: mis[%d]\n", i)
+            }
+        }
+        {
+            _, b := msi[s]
+            if !b {
+                fmt.Printf("tuple existence decl: msi[%d]\n", i)
+            }
+            _, b = msi[s]
+            if !b {
+                fmt.Printf("tuple existence assign: msi[%d]\n", i)
+            }
+        }
+        {
+            _, b := mss[s]
+            if !b {
+                fmt.Printf("tuple existence decl: mss[%d]\n", i)
+            }
+            _, b = mss[s]
+            if !b {
+                fmt.Printf("tuple existence assign: mss[%d]\n", i)
+            }
+        }
+        {
+            _, b := mspa[s]
+            if !b {
+                fmt.Printf("tuple existence decl: mspa[%d]\n", i)
+            }
+            _, b = mspa[s]
+            if !b {
+                fmt.Printf("tuple existence assign: mspa[%d]\n", i)
+            }
+        }
+        {
+            _, b := mipT[i]
+            if !b {
+                fmt.Printf("tuple existence decl: mipT[%d]\n", i)
+            }
+            _, b = mipT[i]
+            if !b {
+                fmt.Printf("tuple existence assign: mipT[%d]\n", i)
+            }
+        }
+        {
+            _, b := mpTi[apT[i]]
+            if !b {
+                fmt.Printf("tuple existence decl: mpTi[apT[%d]]\n", i)
+            }
+            _, b = mpTi[apT[i]]
+            if !b {
+                fmt.Printf("tuple existence assign: mpTi[apT[%d]]\n", i)
+            }
+        }
+        {
+            _, b := mipM[i]
+            if !b {
+                fmt.Printf("tuple existence decl: mipM[%d]\n", i)
+            }
+            _, b = mipM[i]
+            if !b {
+                fmt.Printf("tuple existence assign: mipM[%d]\n", i)
+            }
+        }
+        {
+            _, b := mit[i]
+            if !b {
+                fmt.Printf("tuple existence decl: mit[%d]\n", i)
+            }
+            _, b = mit[i]
+            if !b {
+                fmt.Printf("tuple existence assign: mit[%d]\n", i)
+            }
+        }
+        //		{
+        //			_, b := mti[t]
+        //			if !b {
+        //				fmt.Printf("tuple existence decl: mti[%d]\n", i)
+        //			}
+        //			_, b = mti[t]
+        //			if !b {
+        //				fmt.Printf("tuple existence assign: mti[%d]\n", i)
+        //			}
+        //		}
+    }
+
+    // test nonexistence with tuple check
+    // failed lookups yield a false value for the boolean.
+    for i := count; i < 2*count; i++ {
+        s := strconv.Itoa(i)
+        f := float32(i)
+        {
+            _, b := mib[i]
+            if b {
+                fmt.Printf("tuple nonexistence decl: mib[%d]", i)
+            }
+            _, b = mib[i]
+            if b {
+                fmt.Printf("tuple nonexistence assign: mib[%d]", i)
+            }
+        }
+        {
+            _, b := mii[i]
+            if b {
+                fmt.Printf("tuple nonexistence decl: mii[%d]", i)
+            }
+            _, b = mii[i]
+            if b {
+                fmt.Printf("tuple nonexistence assign: mii[%d]", i)
+            }
+        }
+        {
+            _, b := mfi[f]
+            if b {
+                fmt.Printf("tuple nonexistence decl: mfi[%d]", i)
+            }
+            _, b = mfi[f]
+            if b {
+                fmt.Printf("tuple nonexistence assign: mfi[%d]", i)
+            }
+        }
+        {
+            _, b := mif[i]
+            if b {
+                fmt.Printf("tuple nonexistence decl: mif[%d]", i)
+            }
+            _, b = mif[i]
+            if b {
+                fmt.Printf("tuple nonexistence assign: mif[%d]", i)
+            }
+        }
+        {
+            _, b := mis[i]
+            if b {
+                fmt.Printf("tuple nonexistence decl: mis[%d]", i)
+            }
+            _, b = mis[i]
+            if b {
+                fmt.Printf("tuple nonexistence assign: mis[%d]", i)
+            }
+        }
+        {
+            _, b := msi[s]
+            if b {
+                fmt.Printf("tuple nonexistence decl: msi[%d]", i)
+            }
+            _, b = msi[s]
+            if b {
+                fmt.Printf("tuple nonexistence assign: msi[%d]", i)
+            }
+        }
+        {
+            _, b := mss[s]
+            if b {
+                fmt.Printf("tuple nonexistence decl: mss[%d]", i)
+            }
+            _, b = mss[s]
+            if b {
+                fmt.Printf("tuple nonexistence assign: mss[%d]", i)
+            }
+        }
+        {
+            _, b := mspa[s]
+            if b {
+                fmt.Printf("tuple nonexistence decl: mspa[%d]", i)
+            }
+            _, b = mspa[s]
+            if b {
+                fmt.Printf("tuple nonexistence assign: mspa[%d]", i)
+            }
+        }
+        {
+            _, b := mipT[i]
+            if b {
+                fmt.Printf("tuple nonexistence decl: mipT[%d]", i)
+            }
+            _, b = mipT[i]
+            if b {
+                fmt.Printf("tuple nonexistence assign: mipT[%d]", i)
+            }
+        }
+        {
+            _, b := mpTi[apT[i]]
+            if b {
+                fmt.Printf("tuple nonexistence decl: mpTi[apt[%d]]", i)
+            }
+            _, b = mpTi[apT[i]]
+            if b {
+                fmt.Printf("tuple nonexistence assign: mpTi[apT[%d]]", i)
+            }
+        }
+        {
+            _, b := mipM[i]
+            if b {
+                fmt.Printf("tuple nonexistence decl: mipM[%d]", i)
+            }
+            _, b = mipM[i]
+            if b {
+                fmt.Printf("tuple nonexistence assign: mipM[%d]", i)
+            }
+        }
+        //		{
+        //			_, b := mti[t]
+        //			if b {
+        //				fmt.Printf("tuple nonexistence decl: mti[%d]", i)
+        //			}
+        //			_, b = mti[t]
+        //			if b {
+        //				fmt.Printf("tuple nonexistence assign: mti[%d]", i)
+        //			}
+        //		}
+        {
+            _, b := mit[i]
+            if b {
+                fmt.Printf("tuple nonexistence decl: mit[%d]", i)
+            }
+            _, b = mit[i]
+            if b {
+                fmt.Printf("tuple nonexistence assign: mit[%d]", i)
+            }
+        }
+    }
+
+    // tests for structured map element updates
+    for i := 0; i < count; i++ {
+        s := strconv.Itoa(i)
+        mspa[s][i%2] = "deleted"
+        if mspa[s][i%2] != "deleted" {
+            fmt.Printf("update mspa[%s][%d] = %s\n", s, i%2, mspa[s][i%2])
+        }
+
+        mipT[i].i += 1
+        if mipT[i].i != int64(i)+1 {
+            fmt.Printf("update mipT[%d].i = %d\n", i, mipT[i].i)
+        }
+        mipT[i].f = float32(i + 1)
+        if mipT[i].f != float32(i+1) {
+            fmt.Printf("update mipT[%d].f = %g\n", i, mipT[i].f)
+        }
+
+        mipM[i][i]++
+        if mipM[i][i] != (i+1)+1 {
+            fmt.Printf("update mipM[%d][%d] = %i\n", i, i, mipM[i][i])
+        }
+    }
+
+    // test range on nil map
+    var mnil map[string]int
+    for _, _ = range mnil {
+        panic("range mnil")
+    }
+}
+
+// Copyright 2014 Manu Martinez-Almeida.  All rights reserved.
+// Use of this source code is governed by a MIT style
+// license that can be found in the LICENSE file.
+
+package gin
+
+import (
+    "fmt"
+    "io/ioutil"
+    "net/http"
+    "net/http/httptest"
+    "os"
+    "path/filepath"
+    "testing"
+
+    "github.com/stretchr/testify/assert"
+)
+
+func performRequest(r http.Handler, method, path string) *httptest.ResponseRecorder {
+    req, _ := http.NewRequest(method, path, nil)
+    w := httptest.NewRecorder()
+    r.ServeHTTP(w, req)
+    return w
+}
+
+func testRouteOK(method string, t *testing.T) {
+    passed := false
+    passedAny := false
+    r := New()
+    r.Any("/test2", func(c *Context) {
+        passedAny = true
+    })
+    r.Handle(method, "/test", func(c *Context) {
+        passed = true
+    })
+
+    w := performRequest(r, method, "/test")
+    assert.True(t, passed)
+    assert.Equal(t, w.Code, http.StatusOK)
+
+    performRequest(r, method, "/test2")
+    assert.True(t, passedAny)
+}
+
+// TestSingleRouteOK tests that POST route is correctly invoked.
+func testRouteNotOK(method string, t *testing.T) {
+    passed := false
+    router := New()
+    router.Handle(method, "/test_2", func(c *Context) {
+        passed = true
+    })
+
+    w := performRequest(router, method, "/test")
+
+    assert.False(t, passed)
+    assert.Equal(t, w.Code, http.StatusNotFound)
+}
+
+// TestSingleRouteOK tests that POST route is correctly invoked.
+func testRouteNotOK2(method string, t *testing.T) {
+    passed := false
+    router := New()
+    router.HandleMethodNotAllowed = true
+    var methodRoute string
+    if method == "POST" {
+        methodRoute = "GET"
+    } else {
+        methodRoute = "POST"
+    }
+    router.Handle(methodRoute, "/test", func(c *Context) {
+        passed = true
+    })
+
+    w := performRequest(router, method, "/test")
+
+    assert.False(t, passed)
+    assert.Equal(t, w.Code, http.StatusMethodNotAllowed)
+}
+
+func TestRouterMethod(t *testing.T) {
+    router := New()
+    router.PUT("/hey2", func(c *Context) {
+        c.String(200, "sup2")
+    })
+
+    router.PUT("/hey", func(c *Context) {
+        c.String(200, "called")
+    })
+
+    router.PUT("/hey3", func(c *Context) {
+        c.String(200, "sup3")
+    })
+
+    w := performRequest(router, "PUT", "/hey")
+
+    assert.Equal(t, w.Code, 200)
+    assert.Equal(t, w.Body.String(), "called")
+}
+
+func TestRouterGroupRouteOK(t *testing.T) {
+    testRouteOK("GET", t)
+    testRouteOK("POST", t)
+    testRouteOK("PUT", t)
+    testRouteOK("PATCH", t)
+    testRouteOK("HEAD", t)
+    testRouteOK("OPTIONS", t)
+    testRouteOK("DELETE", t)
+    testRouteOK("CONNECT", t)
+    testRouteOK("TRACE", t)
+}
+
+func TestRouteNotOK(t *testing.T) {
+    testRouteNotOK("GET", t)
+    testRouteNotOK("POST", t)
+    testRouteNotOK("PUT", t)
+    testRouteNotOK("PATCH", t)
+    testRouteNotOK("HEAD", t)
+    testRouteNotOK("OPTIONS", t)
+    testRouteNotOK("DELETE", t)
+    testRouteNotOK("CONNECT", t)
+    testRouteNotOK("TRACE", t)
+}
+
+func TestRouteNotOK2(t *testing.T) {
+    testRouteNotOK2("GET", t)
+    testRouteNotOK2("POST", t)
+    testRouteNotOK2("PUT", t)
+    testRouteNotOK2("PATCH", t)
+    testRouteNotOK2("HEAD", t)
+    testRouteNotOK2("OPTIONS", t)
+    testRouteNotOK2("DELETE", t)
+    testRouteNotOK2("CONNECT", t)
+    testRouteNotOK2("TRACE", t)
+}
+
+func TestRouteRedirectTrailingSlash(t *testing.T) {
+    router := New()
+    router.RedirectFixedPath = false
+    router.RedirectTrailingSlash = true
+    router.GET("/path", func(c *Context) {})
+    router.GET("/path2/", func(c *Context) {})
+    router.POST("/path3", func(c *Context) {})
+    router.PUT("/path4/", func(c *Context) {})
+
+    w := performRequest(router, "GET", "/path/")
+    assert.Equal(t, w.Header().Get("Location"), "/path")
+    assert.Equal(t, w.Code, 301)
+
+    w = performRequest(router, "GET", "/path2")
+    assert.Equal(t, w.Header().Get("Location"), "/path2/")
+    assert.Equal(t, w.Code, 301)
+
+    w = performRequest(router, "POST", "/path3/")
+    assert.Equal(t, w.Header().Get("Location"), "/path3")
+    assert.Equal(t, w.Code, 307)
+
+    w = performRequest(router, "PUT", "/path4")
+    assert.Equal(t, w.Header().Get("Location"), "/path4/")
+    assert.Equal(t, w.Code, 307)
+
+    w = performRequest(router, "GET", "/path")
+    assert.Equal(t, w.Code, 200)
+
+    w = performRequest(router, "GET", "/path2/")
+    assert.Equal(t, w.Code, 200)
+
+    w = performRequest(router, "POST", "/path3")
+    assert.Equal(t, w.Code, 200)
+
+    w = performRequest(router, "PUT", "/path4/")
+    assert.Equal(t, w.Code, 200)
+
+    router.RedirectTrailingSlash = false
+
+    w = performRequest(router, "GET", "/path/")
+    assert.Equal(t, w.Code, 404)
+    w = performRequest(router, "GET", "/path2")
+    assert.Equal(t, w.Code, 404)
+    w = performRequest(router, "POST", "/path3/")
+    assert.Equal(t, w.Code, 404)
+    w = performRequest(router, "PUT", "/path4")
+    assert.Equal(t, w.Code, 404)
+}
+
+func TestRouteRedirectFixedPath(t *testing.T) {
+    router := New()
+    router.RedirectFixedPath = true
+    router.RedirectTrailingSlash = false
+
+    router.GET("/path", func(c *Context) {})
+    router.GET("/Path2", func(c *Context) {})
+    router.POST("/PATH3", func(c *Context) {})
+    router.POST("/Path4/", func(c *Context) {})
+
+    w := performRequest(router, "GET", "/PATH")
+    assert.Equal(t, w.Header().Get("Location"), "/path")
+    assert.Equal(t, w.Code, 301)
+
+    w = performRequest(router, "GET", "/path2")
+    assert.Equal(t, w.Header().Get("Location"), "/Path2")
+    assert.Equal(t, w.Code, 301)
+
+    w = performRequest(router, "POST", "/path3")
+    assert.Equal(t, w.Header().Get("Location"), "/PATH3")
+    assert.Equal(t, w.Code, 307)
+
+    w = performRequest(router, "POST", "/path4")
+    assert.Equal(t, w.Header().Get("Location"), "/Path4/")
+    assert.Equal(t, w.Code, 307)
+}
+
+// TestContextParamsGet tests that a parameter can be parsed from the URL.
+func TestRouteParamsByName(t *testing.T) {
+    name := ""
+    lastName := ""
+    wild := ""
+    router := New()
+    router.GET("/test/:name/:last_name/*wild", func(c *Context) {
+        name = c.Params.ByName("name")
+        lastName = c.Params.ByName("last_name")
+        var ok bool
+        wild, ok = c.Params.Get("wild")
+
+        assert.True(t, ok)
+        assert.Equal(t, name, c.Param("name"))
+        assert.Equal(t, name, c.Param("name"))
+        assert.Equal(t, lastName, c.Param("last_name"))
+
+        assert.Empty(t, c.Param("wtf"))
+        assert.Empty(t, c.Params.ByName("wtf"))
+
+        wtf, ok := c.Params.Get("wtf")
+        assert.Empty(t, wtf)
+        assert.False(t, ok)
+    })
+
+    w := performRequest(router, "GET", "/test/john/smith/is/super/great")
+
+    assert.Equal(t, w.Code, 200)
+    assert.Equal(t, name, "john")
+    assert.Equal(t, lastName, "smith")
+    assert.Equal(t, wild, "/is/super/great")
+}
+
+// TestHandleStaticFile - ensure the static file handles properly
+func TestRouteStaticFile(t *testing.T) {
+    // SETUP file
+    testRoot, _ := os.Getwd()
+    f, err := ioutil.TempFile(testRoot, "")
+    if err != nil {
+        t.Error(err)
+    }
+    defer os.Remove(f.Name())
+    f.WriteString("Gin Web Framework")
+    f.Close()
+
+    dir, filename := filepath.Split(f.Name())
+
+    // SETUP gin
+    router := New()
+    router.Static("/using_static", dir)
+    router.StaticFile("/result", f.Name())
+
+    w := performRequest(router, "GET", "/using_static/"+filename)
+    w2 := performRequest(router, "GET", "/result")
+
+    assert.Equal(t, w, w2)
+    assert.Equal(t, w.Code, 200)
+    assert.Equal(t, w.Body.String(), "Gin Web Framework")
+    assert.Equal(t, w.HeaderMap.Get("Content-Type"), "text/plain; charset=utf-8")
+
+    w3 := performRequest(router, "HEAD", "/using_static/"+filename)
+    w4 := performRequest(router, "HEAD", "/result")
+
+    assert.Equal(t, w3, w4)
+    assert.Equal(t, w3.Code, 200)
+}
+
+// TestHandleStaticDir - ensure the root/sub dir handles properly
+func TestRouteStaticListingDir(t *testing.T) {
+    router := New()
+    router.StaticFS("/", Dir("./", true))
+
+    w := performRequest(router, "GET", "/")
+
+    assert.Equal(t, w.Code, 200)
+    assert.Contains(t, w.Body.String(), "gin.go")
+    assert.Equal(t, w.HeaderMap.Get("Content-Type"), "text/html; charset=utf-8")
+}
+
+// TestHandleHeadToDir - ensure the root/sub dir handles properly
+func TestRouteStaticNoListing(t *testing.T) {
+    router := New()
+    router.Static("/", "./")
+
+    w := performRequest(router, "GET", "/")
+
+    assert.Equal(t, w.Code, 404)
+    assert.NotContains(t, w.Body.String(), "gin.go")
+}
+
+func TestRouterMiddlewareAndStatic(t *testing.T) {
+    router := New()
+    static := router.Group("/", func(c *Context) {
+        c.Writer.Header().Add("Last-Modified", "Mon, 02 Jan 2006 15:04:05 MST")
+        c.Writer.Header().Add("Expires", "Mon, 02 Jan 2006 15:04:05 MST")
+        c.Writer.Header().Add("X-GIN", "Gin Framework")
+    })
+    static.Static("/", "./")
+
+    w := performRequest(router, "GET", "/gin.go")
+
+    assert.Equal(t, w.Code, 200)
+    assert.Contains(t, w.Body.String(), "package gin")
+    assert.Equal(t, w.HeaderMap.Get("Content-Type"), "text/plain; charset=utf-8")
+    assert.NotEqual(t, w.HeaderMap.Get("Last-Modified"), "Mon, 02 Jan 2006 15:04:05 MST")
+    assert.Equal(t, w.HeaderMap.Get("Expires"), "Mon, 02 Jan 2006 15:04:05 MST")
+    assert.Equal(t, w.HeaderMap.Get("x-GIN"), "Gin Framework")
+}
+
+func TestRouteNotAllowedEnabled(t *testing.T) {
+    router := New()
+    router.HandleMethodNotAllowed = true
+    router.POST("/path", func(c *Context) {})
+    w := performRequest(router, "GET", "/path")
+    assert.Equal(t, w.Code, http.StatusMethodNotAllowed)
+
+    router.NoMethod(func(c *Context) {
+        c.String(http.StatusTeapot, "responseText")
+    })
+    w = performRequest(router, "GET", "/path")
+    assert.Equal(t, w.Body.String(), "responseText")
+    assert.Equal(t, w.Code, http.StatusTeapot)
+}
+
+func TestRouteNotAllowedDisabled(t *testing.T) {
+    router := New()
+    router.HandleMethodNotAllowed = false
+    router.POST("/path", func(c *Context) {})
+    w := performRequest(router, "GET", "/path")
+    assert.Equal(t, w.Code, 404)
+
+    router.NoMethod(func(c *Context) {
+        c.String(http.StatusTeapot, "responseText")
+    })
+    w = performRequest(router, "GET", "/path")
+    assert.Equal(t, w.Body.String(), "404 page not found")
+    assert.Equal(t, w.Code, 404)
+}
+
+func TestRouterNotFound(t *testing.T) {
+    router := New()
+    router.RedirectFixedPath = true
+    router.GET("/path", func(c *Context) {})
+    router.GET("/dir/", func(c *Context) {})
+    router.GET("/", func(c *Context) {})
+
+    testRoutes := []struct {
+        route  string
+        code   int
+        header string
+    }{
+        {"/path/", 301, "map[Location:[/path]]"},   // TSR -/
+        {"/dir", 301, "map[Location:[/dir/]]"},     // TSR +/
+        {"", 301, "map[Location:[/]]"},             // TSR +/
+        {"/PATH", 301, "map[Location:[/path]]"},    // Fixed Case
+        {"/DIR/", 301, "map[Location:[/dir/]]"},    // Fixed Case
+        {"/PATH/", 301, "map[Location:[/path]]"},   // Fixed Case -/
+        {"/DIR", 301, "map[Location:[/dir/]]"},     // Fixed Case +/
+        {"/../path", 301, "map[Location:[/path]]"}, // CleanPath
+        {"/nope", 404, ""},                         // NotFound
+    }
+    for _, tr := range testRoutes {
+        w := performRequest(router, "GET", tr.route)
+        assert.Equal(t, w.Code, tr.code)
+        if w.Code != 404 {
+            assert.Equal(t, fmt.Sprint(w.Header()), tr.header)
+        }
+    }
+
+    // Test custom not found handler
+    var notFound bool
+    router.NoRoute(func(c *Context) {
+        c.AbortWithStatus(404)
+        notFound = true
+    })
+    w := performRequest(router, "GET", "/nope")
+    assert.Equal(t, w.Code, 404)
+    assert.True(t, notFound)
+
+    // Test other method than GET (want 307 instead of 301)
+    router.PATCH("/path", func(c *Context) {})
+    w = performRequest(router, "PATCH", "/path/")
+    assert.Equal(t, w.Code, 307)
+    assert.Equal(t, fmt.Sprint(w.Header()), "map[Location:[/path]]")
+
+    // Test special case where no node for the prefix "/" exists
+    router = New()
+    router.GET("/a", func(c *Context) {})
+    w = performRequest(router, "GET", "/")
+    assert.Equal(t, w.Code, 404)
+}
+
+// Copyright 2013 Joshua Marsh. All rights reserved.
+// Use of this source code is governed by the MIT
+// license that can be found in the LICENSE file.
+
+package urls
+
+import (
+    "bytes"
+    "encoding/json"
+    "fmt"
+    "net/http"
+    "net/http/httptest"
+    "sort"
+    "strconv"
+    "testing"
+    "time"
+)
+
+func TestGetUrls(t *testing.T) {
+    ds := prep()
+
+    tests := []struct {
+        limit  int
+        offset int
+        err    error
+        when   int
+        start  int
+        end    int
+    }{
+        // Test beginning.
+        {
+            limit:  20,
+            offset: 0,
+            start:  0,
+            end:    20,
+        },
+
+        // Test in the middle
+        {
+            limit:  25,
+            offset: 150,
+            start:  150,
+            end:    175,
+        },
+
+        // Test end.
+        {
+            limit:  25,
+            offset: 175,
+            start:  175,
+            end:    200,
+        },
+
+        // Test a failure.
+        {
+            limit:  25,
+            offset: 175,
+            err:    fmt.Errorf("failure"),
+            when:   1,
+        },
+    }
+
+    a := ds.URLsArray()
+    for k, test := range tests {
+        if test.err != nil {
+            ds.SetError(test.err, test.when)
+        }
+
+        w := httptest.NewRecorder()
+        r, _ := http.NewRequest("GET",
+            fmt.Sprintf("http://localhost/admin/urls?limit=%v&offset=%v",
+                test.limit, test.offset), nil)
+
+        GetURLs(ds, w, r)
+
+        enc, _ := json.Marshal(a[test.start:test.end])
+
+        if test.err != nil {
+            enc = []byte("oops")
+        }
+
+        body := w.Body.Bytes()
+
+        if !bytes.Equal(enc, body) {
+            t.Errorf("Test %v: bodies not equal: expecting %v, got %v",
+                k, string(enc), string(body))
+        }
+    }
+}
+
+func TestCountUrls(t *testing.T) {
+    ds := prep()
+
+    tests := []struct {
+        err      error
+        when     int
+        expected string
+    }{
+        // Test normal get.
+        {
+            expected: `{"count":200}`,
+        },
+
+        // Test an error.
+        {
+            err:      fmt.Errorf("failure"),
+            when:     1,
+            expected: "oops",
+        },
+    }
+
+    for k, test := range tests {
+        if test.err != nil {
+            ds.SetError(test.err, test.when)
+        }
+
+        w := httptest.NewRecorder()
+        r, _ := http.NewRequest("GET", "http://localhost/admin/count/urls", nil)
+
+        CountURLs(ds, w, r)
+
+        body := w.Body.String()
+
+        if test.expected != body {
+            t.Errorf("Test %v: bodies not equal: expecting %v, got %v",
+                k, test.expected, body)
+        }
+    }
+}
+
+func TestDeleteURL(t *testing.T) {
+    ds := prep()
+
+    tests := []struct {
+        id       string
+        code     int
+        expected string
+        err      error
+        when     int
+    }{
+        // Test a normal delete.
+        {
+            id:       "1c",
+            code:     http.StatusOK,
+            expected: ``,
+        },
+
+        // Test an error
+        {
+            id:       "1d",
+            code:     http.StatusInternalServerError,
+            expected: `oops`,
+            err:      fmt.Errorf("failure"),
+            when:     1,
+        },
+    }
+
+    for k, test := range tests {
+        if test.err != nil {
+            ds.SetError(test.err, test.when)
+        }
+
+        w := httptest.NewRecorder()
+        r, _ := http.NewRequest("GET", "http://localhost/"+test.id, nil)
+
+        DeleteURL(ds, w, r)
+
+        body := w.Body.String()
+        if test.expected != body {
+            t.Errorf("Test %v: bodies not equal: expecting %v, got %v",
+                k, test.expected, body)
+        }
+
+        if test.code != w.Code {
+            t.Errorf("Test %v: codes not equal: expecting %v, got %v",
+                k, test.code, w.Code)
+        }
+    }
+}
+
+func TestNewURL(t *testing.T) {
+    ds := prep()
+
+    tests := []struct {
+        long     string
+        short    int64
+        expected string
+        err      error
+        when     int
+    }{
+        // Test a new.
+        {
+            long:  "http://test.new/1000.html",
+            short: 1000,
+        },
+
+        // Test an error
+        {
+            long:     "http://test.new/blah.html",
+            short:    1001,
+            expected: `oops`,
+            err:      fmt.Errorf("failure"),
+            when:     1,
+        },
+    }
+
+    for k, test := range tests {
+        if test.err != nil {
+            ds.SetError(test.err, test.when)
+        }
+
+        var b bytes.Buffer
+        b.Write([]byte(`{"Long":"` + test.long + `"}`))
+        w := httptest.NewRecorder()
+        r, _ := http.NewRequest("POST", "http://localhost/urls", &b)
+
+        NewURL(ds, w, r)
+
+        if test.err != nil {
+            body := w.Body.String()
+            if test.expected != body {
+                t.Errorf("Test %v: bodies not equal: expecting %v, got %v",
+                    k, test.expected, body)
+            }
+        } else {
+            body := w.Body.Bytes()
+            if !bytes.Contains(body, []byte(IntToShort(test.short))) {
+                t.Errorf("Test %v: short id not found: looking for %v, got %v",
+                    k, IntToShort(test.short), string(body))
+            }
+        }
+    }
+}
+
+func TestGetStatistics(t *testing.T) {
+    ds := prep()
+
+    tests := []struct {
+        id       string
+        err      error
+        when     int
+        expected string
+    }{
+        // Test in the middle
+        {
+            id:       "1c",
+            expected: `{"Short":"1c","Clicks":100,"LastUpdated":"0001-01-01T00:00:00Z","Referrers":null,"Browsers":null,"Countries":null,"Platforms":null,"Hours":null}`,
+        },
+
+        // Test a failure.
+        {
+            id:       "1c",
+            err:      fmt.Errorf("failure"),
+            when:     1,
+            expected: "oops",
+        },
+    }
+
+    for k, test := range tests {
+        if test.err != nil {
+            ds.SetError(test.err, test.when)
+        }
+
+        w := httptest.NewRecorder()
+        r, _ := http.NewRequest("GET",
+            fmt.Sprintf("http://localhost/admin/stats/%v",
+                test.id), nil)
+
+        GetStatistics(ds, w, r)
+
+        if w.Body.String() != test.expected {
+            t.Errorf("Test %v: bodies not equal: expecting %v, got %v",
+                k, test.expected, w.Body.String())
+        }
+    }
+}
+
+func TestRedirect(t *testing.T) {
+    ds := prep()
+
+    tests := []struct {
+        id       string
+        location string
+        code     int
+        expected string
+        err      error
+        when     int
+    }{
+        // Test a normal get.
+        {
+            id:       "1c",
+            location: "http://longurl.com/100.html",
+            code:     http.StatusFound,
+            expected: ``,
+        },
+
+        // Test a not found.
+        {
+            id:       "198djd81jd",
+            location: "",
+            code:     http.StatusNotFound,
+            expected: `not found`,
+        },
+
+        // Test a not valid.
+        {
+            id:       "this is invalid",
+            location: "",
+            code:     http.StatusNotFound,
+            expected: `not found`,
+        },
+
+        // Test an error
+        {
+            id:       "123",
+            location: "",
+            code:     http.StatusInternalServerError,
+            expected: `oops`,
+            err:      fmt.Errorf("failure"),
+            when:     1,
+        },
+    }
+
+    for k, test := range tests {
+        if test.err != nil {
+            ds.SetError(test.err, test.when)
+        }
+
+        w := httptest.NewRecorder()
+        r, _ := http.NewRequest("GET", "http://localhost/"+test.id, nil)
+
+        Redirect(ds, w, r)
+
+        body := w.Body.String()
+        if test.expected != body {
+            t.Errorf("Test %v: bodies not equal: expecting %v, got %v",
+                k, test.expected, body)
+        }
+
+        if test.code == http.StatusFound {
+            loc := w.HeaderMap.Get("Location")
+            if test.location != loc {
+                t.Errorf("Test %v: location not equal: expecting %v, got %v",
+                    k, test.location, loc)
+            }
+        }
+
+        if test.code != w.Code {
+            t.Errorf("Test %v: codes not equal: expecting %v, got %v",
+                k, test.code, w.Code)
+        }
+    }
+}
+
+func prep() *mds {
+    ds := &mds{
+        urls:  make(map[string]*URL),
+        stats: make(map[string]*Statistics),
+        logs:  make(map[string][]*Log),
+    }
+
+    ds.count = 1000
+
+    t, _ := time.Parse("Jan 2 2006", "Jan 2 2013")
+
+    // Add a set of urls.
+    var x int64
+    for x = 0; x < 200; x++ {
+        u := &URL{
+            Short:   IntToShort(x),
+            Long:    "http://longurl.com/" + strconv.Itoa(int(x)) + ".html",
+            Created: t.AddDate(0, 0, -int(x)),
+            Clicks:  int(x),
+        }
+
+        ds.PutURL(u)
+
+        ds.PutStatistics(&Statistics{
+            Short:  u.Short,
+            Clicks: int(x),
+        })
+
+        l := make([]*Log, 0, x)
+        var y int64
+        for y = 0; y < x; y++ {
+            l = append(l, &Log{
+                Short:     u.Short,
+                When:      t.AddDate(0, 0, int(-x+y)),
+                Addr:      "1.0.0.23",
+                Referrer:  "www.google.com",
+                UserAgent: "Mozilla/5.0 (Windows NT 6.1) Chrome/28.0.1500.95",
+            })
+        }
+
+        ds.logs[u.Short] = l
+
+    }
+
+    return ds
+}
+
+// mds implements a DataStore in memory suitable for testing.
+type mds struct {
+    urls  map[string]*URL
+    stats map[string]*Statistics
+    logs  map[string][]*Log
+    err   error
+    when  int
+    count int
+}
+
+// SetError marks an error to occur after when calls.
+func (ds *mds) SetError(err error, when int) {
+    ds.err = err
+    ds.when = when
+}
+
+// Error is a helper function that keeps track of the error and when
+// and returns it when it's been called a sufficient number of times.
+func (ds *mds) error() error {
+    if ds.err == nil {
+        return nil
+    }
+
+    if ds.when == 1 {
+        err := ds.err
+        ds.err = nil
+        return err
+    }
+
+    ds.when--
+    return nil
+}
+
+// Implement the URL parts.
+func (ds *mds) CountURLs() (int, error) {
+    if err := ds.error(); err != nil {
+        return 0, err
+    }
+
+    return len(ds.urls), nil
+}
+
+func (ds *mds) URLsArray() []*URL {
+    // Get an array of the urls
+    u := surls{}
+    for _, v := range ds.urls {
+        u = append(u, v)
+    }
+
+    sort.Sort(u)
+
+    return u
+}
+
+func (ds *mds) GetURLs(limit, offset int) ([]*URL, error) {
+    if err := ds.error(); err != nil {
+        return nil, err
+    }
+
+    u := ds.URLsArray()
+
+    if offset > len(u) {
+        return []*URL{}, nil
+    }
+
+    if offset+limit > len(u) {
+        limit = len(u)
+    } else {
+        limit = offset + limit
+    }
+
+    return u[offset:limit], nil
+}
+
+func (ds *mds) GetURL(short string) (*URL, error) {
+    if err := ds.error(); err != nil {
+        return nil, err
+    }
+
+    got := ds.urls[short]
+    if got == nil {
+        return nil, nil
+    }
+
+    return &URL{
+        Short:   got.Short,
+        Long:    got.Long,
+        Created: got.Created,
+        Clicks:  got.Clicks,
+    }, nil
+}
+
+func (ds *mds) PutURL(url *URL) (string, error) {
+    if err := ds.error(); err != nil {
+        return "", err
+    }
+
+    if url.Short == "" {
+        id := IntToShort(int64(ds.count))
+        ds.count++
+
+        url.Short = id
+    }
+
+    ds.urls[url.Short] = &URL{
+        Short:   url.Short,
+        Long:    url.Long,
+        Created: url.Created,
+        Clicks:  url.Clicks,
+    }
+
+    return url.Short, nil
+}
+
+func (ds *mds) DeleteURL(short string) error {
+    if err := ds.error(); err != nil {
+        return err
+    }
+
+    delete(ds.urls, short)
+
+    return nil
+}
+
+func (ds *mds) GetStatistics(short string) (*Statistics, error) {
+    if err := ds.error(); err != nil {
+        return nil, err
+    }
+
+    return ds.stats[short], nil
+}
+
+func (ds *mds) PutStatistics(stats *Statistics) error {
+    if err := ds.error(); err != nil {
+        return err
+    }
+
+    ds.stats[stats.Short] = stats
+    return nil
+}
+
+func (ds *mds) LogClick(l *Log) error {
+    if err := ds.error(); err != nil {
+        return err
+    }
+
+    ls, found := ds.logs[l.Short]
+    if !found {
+        ls = []*Log{}
+    }
+
+    ds.logs[l.Short] = append(ls, l)
+
+    return nil
+}
+
+func (ds *mds) CountLogs(short string) (int, error) {
+    if err := ds.error(); err != nil {
+        return 0, err
+    }
+
+    return len(ds.logs[short]), nil
+}
+
+func (ds *mds) LogsArray(id string) []*Log {
+    // Get an array of the urls
+    u := slogs{}
+    for _, v := range ds.logs[id] {
+        u = append(u, v)
+    }
+
+    sort.Sort(u)
+
+    return u
+}
+
+func (ds *mds) GetLogs(short string, limit, offset int) ([]*Log, error) {
+    if err := ds.error(); err != nil {
+        return nil, err
+    }
+
+    // Get an array of the urls
+    u := ds.LogsArray(short)
+
+    if offset > len(u) {
+        return []*Log{}, nil
+    }
+
+    if offset+limit > len(u) {
+        limit = len(u)
+    } else {
+        limit = offset + limit
+    }
+
+    return u[offset:limit], nil
+}
+
+// These are sort helpers for the url and logs.
+type surls []*URL
+
+func (s surls) Len() int {
+    return len(s)
+}
+
+func (s surls) Less(i, j int) bool {
+    return s[i].Created.After(s[j].Created)
+}
+
+func (s surls) Swap(i, j int) {
+    s[i], s[j] = s[j], s[i]
+}
+
+type slogs []*Log
+
+func (s slogs) Len() int {
+    return len(s)
+}
+
+func (s slogs) Less(i, j int) bool {
+    return s[j].When.After(s[i].When)
+}
+
+func (s slogs) Swap(i, j int) {
+    s[i], s[j] = s[j], s[i]
+}

@@ -1,0 +1,1451 @@
+package org.axway.grapes.tests.acceptance.materials.cases;
+
+
+import java.util.ArrayList;
+import java.util.List;
+
+public class TC04_ProductCase implements TestCase {
+
+    public static final String MODULE1_NAME			        = "tc04Module1";
+    public static final String MODULE1_VERSION              = "2.1.0-SNAPSHOT";
+
+    public static final String MODULE2_NAME			        = "tc04Module2";
+    public static final String MODULE2_VERSION              = "4.5.0-123";
+
+    public static final String ARTIFACT21_GROUPID		    = TEST_GROUPID + ".test.producttc04.tc04module2";
+    public static final String ARTIFACT21_ID	 		    = "artifact21";
+    public static final String ARTIFACT21_EXTENSION         = "pom";
+    public static final String ARTIFACT21_CLASSIFIER	    = "";
+    public static final String ARTIFACT21_VERSION 	        = MODULE2_VERSION;
+    public static final String ARTIFACT21_TYPE 	            = "pom";
+
+    public static final String MODULE3_NAME			        = "tc04Module3";
+    public static final String MODULE3_VERSION              = "1.0.0-1";
+
+    public static final String ARTIFACT31_GROUPID		    = TEST_GROUPID + ".test.producttc04.tc04module3";
+    public static final String ARTIFACT31_ID	 		    = "artifact31";
+    public static final String ARTIFACT31_EXTENSION         = "jar";
+    public static final String ARTIFACT31_CLASSIFIER	    = "";
+    public static final String ARTIFACT31_VERSION 	        = MODULE3_VERSION;
+    public static final String ARTIFACT31_TYPE 	            = "jar";
+
+    public static final String SUB_MODULE3_NAME 			= "tc04Module3:sub";
+    public static final String SUB_MODULE3_VERSION 		    = MODULE3_VERSION;
+
+    public static final String ARTIFACT311_GROUPID		    = TEST_GROUPID + ".test.producttc04.tc04module3.sub";
+    public static final String ARTIFACT311_ID	 		    = "artifact311";
+    public static final String ARTIFACT311_EXTENSION         = "jar";
+    public static final String ARTIFACT311_CLASSIFIER	    = "";
+    public static final String ARTIFACT311_VERSION 	        = MODULE3_VERSION;
+    public static final String ARTIFACT311_TYPE 	        = "jar";
+
+    public static final String SLF4J_DEPENDENCY_GROUPID		= "org.slf4j";
+    public static final String SLF4J_DEPENDENCY_ID	 		= "slf4j-simple";
+    public static final String SLF4J_DEPENDENCY_EXTENSION   = "jar";
+    public static final String SLF4J_DEPENDENCY_CLASSIFIER	= "";
+    public static final String SLF4J_DEPENDENCY_VERSION 	= "1.7.5";
+    public static final String SLF4J_DEPENDENCY_TYPE 	    = "jar";
+    public static final Scope SLF4J_DEPENDENCY_SCOPE 	    = Scope.PROVIDED;
+
+    public static final String MIT_LICENSE_NAME             = "MIT";
+    public static final String MIT_LICENSE_LONG_NAME        = "The MIT License";
+    public static final String MIT_LICENSE_URL              = "http://www.opensource.org/licenses/mit-license.php";
+
+    public static final String MODULE4_NAME			        = "tc04Module4";
+    public static final String MODULE4_VERSION              = "0.9.0-5";
+    public static final String LAST_MODULE4_VERSION         = "1.0.0-1";
+
+    public static final String ARTIFACT41_GROUPID		    = TEST_GROUPID + ".test.producttc04.tc04module4";
+    public static final String ARTIFACT41_ID	 		    = "artifact41";
+    public static final String ARTIFACT41_EXTENSION         = "jar";
+    public static final String ARTIFACT41_CLASSIFIER	    = "";
+    public static final String ARTIFACT41_VERSION 	        = MODULE4_VERSION;
+    public static final String ARTIFACT41_TYPE 	            = "jar";
+
+    public static final String MONGO_DEPENDENCY_GROUPID		= "org.mongodb";
+    public static final String MONGO_DEPENDENCY_ID	 		= "mongo-java-driver";
+    public static final String MONGO_DEPENDENCY_EXTENSION   = "jar";
+    public static final String MONGO_DEPENDENCY_CLASSIFIER	= "";
+    public static final String MONGO_DEPENDENCY_VERSION 	= "2.11.0";
+    public static final String MONGO_DEPENDENCY_TYPE 	    = "jar";
+    public static final Scope  MONGO_DEPENDENCY_SCOPE 	    = Scope.COMPILE;
+
+    public static final String GPL_LICENSE_NAME             = "GPL3.0";
+    public static final String GPL_LICENSE_LONG_NAME        = "GNU General Public License version 3";
+    public static final String GPL_LICENSE_URL              = "http://www.opensource.org/licenses/gpl-3.0.html";
+
+    public static final String JUNIT_DEPENDENCY_GROUPID		= "junit";
+    public static final String JUNIT_DEPENDENCY_ID	 		= "junit";
+    public static final String JUNIT_DEPENDENCY_EXTENSION   = "jar";
+    public static final String JUNIT_DEPENDENCY_CLASSIFIER	= "";
+    public static final String JUNIT_DEPENDENCY_VERSION 	= "4.11";
+    public static final String JUNIT_DEPENDENCY_TYPE 	    = "jar";
+    public static final Scope  JUNIT_DEPENDENCY_SCOPE 	    = Scope.TEST;
+
+    public static final String CPL_LICENSE_NAME             = "CPL-1.0";
+    public static final String CPL_LICENSE_LONG_NAME        = "Common Public License";
+    public static final String CPL_LICENSE_URL              = "http://www.opensource.org/licenses/cpl1.0.txt";
+
+    private final List<Dependency> dependencies = new ArrayList<Dependency>();
+    private final List<Artifact> artifacts = new ArrayList<Artifact>();
+    private final List<Module> modules = new ArrayList<Module>();
+    private final List<License> licenses = new ArrayList<License>();
+    private final List<String> toPromote = new ArrayList<String>();
+    private final List<String> doNotUse = new ArrayList<String>();
+
+    public TC04_ProductCase() {
+        final Module module1 = DataModelFactory.createModule(MODULE1_NAME, MODULE1_VERSION);
+
+        final Module module2 = DataModelFactory.createModule(MODULE2_NAME, MODULE2_VERSION);
+        final Artifact artifact21 = DataModelFactory.createArtifact(ARTIFACT21_GROUPID, ARTIFACT21_ID, ARTIFACT21_VERSION, ARTIFACT21_CLASSIFIER, ARTIFACT21_TYPE, ARTIFACT21_EXTENSION);
+        module2.addArtifact(artifact21);
+        module1.addDependency(DataModelFactory.createDependency(artifact21, Scope.COMPILE));
+
+        final Module module3 = DataModelFactory.createModule(MODULE3_NAME, MODULE3_VERSION);
+        final Artifact artifact31 = DataModelFactory.createArtifact(ARTIFACT31_GROUPID, ARTIFACT31_ID, ARTIFACT31_VERSION, ARTIFACT31_CLASSIFIER, ARTIFACT31_TYPE, ARTIFACT31_EXTENSION);
+        final Module submodule3 = DataModelFactory.createModule(SUB_MODULE3_NAME, SUB_MODULE3_VERSION);
+        final Artifact artifact311 = DataModelFactory.createArtifact(ARTIFACT311_GROUPID, ARTIFACT311_ID, ARTIFACT311_VERSION, ARTIFACT311_CLASSIFIER, ARTIFACT311_TYPE, ARTIFACT311_EXTENSION);
+        module3.addArtifact(artifact31);
+        module3.addSubmodule(submodule3);
+        submodule3.addArtifact(artifact311);
+        module1.addDependency(DataModelFactory.createDependency(artifact31, Scope.COMPILE));
+        module1.addDependency(DataModelFactory.createDependency(artifact311, Scope.COMPILE));
+
+        final Module module4 = DataModelFactory.createModule(MODULE4_NAME, MODULE4_VERSION);
+        final Artifact artifact41 = DataModelFactory.createArtifact(ARTIFACT41_GROUPID, ARTIFACT41_ID, ARTIFACT41_VERSION, ARTIFACT41_CLASSIFIER, ARTIFACT41_TYPE, ARTIFACT41_EXTENSION);
+        module4.addArtifact(artifact41);
+        submodule3.addDependency(DataModelFactory.createDependency(artifact41, Scope.COMPILE));
+
+        final Artifact junit = DataModelFactory.createArtifact(JUNIT_DEPENDENCY_GROUPID, JUNIT_DEPENDENCY_ID, JUNIT_DEPENDENCY_VERSION, JUNIT_DEPENDENCY_CLASSIFIER, JUNIT_DEPENDENCY_TYPE, JUNIT_DEPENDENCY_EXTENSION);
+        final Dependency dep1 = DataModelFactory.createDependency(junit, JUNIT_DEPENDENCY_SCOPE);
+        final License cpl = DataModelFactory.createLicense(CPL_LICENSE_NAME, CPL_LICENSE_LONG_NAME, null, null, CPL_LICENSE_URL);
+        junit.addLicense(CPL_LICENSE_NAME);
+        module1.addDependency(dep1);
+        module2.addDependency(dep1);
+        module3.addDependency(dep1);
+        module4.addDependency(dep1);
+
+        final Artifact slf4j = DataModelFactory.createArtifact(SLF4J_DEPENDENCY_GROUPID, SLF4J_DEPENDENCY_ID, SLF4J_DEPENDENCY_VERSION, SLF4J_DEPENDENCY_CLASSIFIER, SLF4J_DEPENDENCY_TYPE, SLF4J_DEPENDENCY_EXTENSION);
+        final Dependency dep2 = DataModelFactory.createDependency(slf4j, SLF4J_DEPENDENCY_SCOPE);
+        final License mit = DataModelFactory.createLicense(MIT_LICENSE_NAME, MIT_LICENSE_LONG_NAME, null, null, MIT_LICENSE_URL);
+        slf4j.addLicense(MIT_LICENSE_NAME);
+        submodule3.addDependency(dep2);
+
+        final Artifact mongo = DataModelFactory.createArtifact(MONGO_DEPENDENCY_GROUPID, MONGO_DEPENDENCY_ID, MONGO_DEPENDENCY_VERSION, MONGO_DEPENDENCY_CLASSIFIER, MONGO_DEPENDENCY_TYPE, MONGO_DEPENDENCY_EXTENSION);
+        final Dependency dep3 = DataModelFactory.createDependency(mongo, MONGO_DEPENDENCY_SCOPE);
+        final License gpl = DataModelFactory.createLicense(GPL_LICENSE_NAME, GPL_LICENSE_LONG_NAME, null, null, GPL_LICENSE_URL);
+        mongo.addLicense(GPL_LICENSE_NAME);
+        module4.addDependency(dep3);
+
+        final Module module4New = DataModelFactory.createModule(MODULE4_NAME, LAST_MODULE4_VERSION);
+        final Artifact artifact41New = DataModelFactory.createArtifact(ARTIFACT41_GROUPID, ARTIFACT41_ID, LAST_MODULE4_VERSION, ARTIFACT41_CLASSIFIER, ARTIFACT41_TYPE, ARTIFACT41_EXTENSION);
+        module4New.addArtifact(artifact41New);
+        module4New.addDependency(dep3);
+
+        modules.add(module1);
+        modules.add(module2);
+        modules.add(module3);
+        modules.add(module4);
+        modules.add(module4New);
+        artifacts.add(artifact21);
+        artifacts.add(artifact31);
+        artifacts.add(artifact311);
+        artifacts.add(junit);
+        artifacts.add(slf4j);
+        artifacts.add(mongo);
+        dependencies.add(dep1);
+        dependencies.add(dep2);
+        dependencies.add(dep3);
+        licenses.add(cpl);
+        licenses.add(mit);
+        licenses.add(gpl);
+
+        doNotUse.add(mongo.getGavc());
+        toPromote.add(module2.getName());
+        toPromote.add(module3.getName());
+        toPromote.add(module4.getName());
+    }
+    @Override
+    public List<License> getLicenses() {
+        return licenses;
+    }
+
+    @Override
+    public List<Module> getModules() {
+        return modules;
+    }
+
+    @Override
+    public List<Artifact> getArtifacts() {
+        return artifacts;
+    }
+
+    @Override
+    public List<String> getArtifactsToNotUse() {
+        return doNotUse;
+    }
+
+    @Override
+    public List<String> getModulesToPromote() {
+        return toPromote;
+    }
+
+    public List<Dependency> getDependencies() {
+        return dependencies;
+    }
+}
+
+/*
+ * This file is part of EpCraft Launcher.
+ *
+ * Copyright (c) 2013-2013, EpNetwork <http://www.epnetwork.co/>
+ * EpCraft Launcher is licensed under the Spout License Version 1.
+ *
+ * EpCraft Launcher is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * In addition, 180 days after any changes are published, you can use the
+ * software, incorporating those changes, under the terms of the MIT license,
+ * as described in the Spout License Version 1.
+ *
+ * EpCraft Launcher is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public License,
+ * the MIT license and the Spout License Version 1 along with this program.
+ * If not, see <http://www.gnu.org/licenses/> for the GNU Lesser General Public
+ * License and see <http://www.spout.org/SpoutDevLicenseV1.txt> for the full license,
+ * including the MIT license.
+ */
+/*
+ * This file is part of Technic Launcher.
+ *
+ * Copyright (c) 2013-2013, Technic <http://www.technicpack.net/>
+ * Technic Launcher is licensed under the Spout License Version 1.
+ *
+ * Technic Launcher is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * In addition, 180 days after any changes are published, you can use the
+ * software, incorporating those changes, under the terms of the MIT license,
+ * as described in the Spout License Version 1.
+ *
+ * Technic Launcher is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public License,
+ * the MIT license and the Spout License Version 1 along with this program.
+ * If not, see <http://www.gnu.org/licenses/> for the GNU Lesser General Public
+ * License and see <http://www.spout.org/SpoutDevLicenseV1.txt> for the full license,
+ * including the MIT license.
+ */
+
+package org.spoutcraft.diff;
+
+import java.io.DataOutputStream;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.RandomAccessFile;
+import java.util.zip.GZIPOutputStream;
+
+/**
+ * Java Binary Diff utility. Based on
+ * bsdiff (v4.2) by Colin Percival
+ * (see http://www.daemonology.net/bsdiff/ ) and distributed under BSD license.
+ * <p/>
+ * <p>
+ * Running this on large files will probably require an increae of the default
+ * maximum heap size (use java -Xmx200m)
+ * </p>
+ *
+ * @author Joe Desbonnet, joe@galway.net
+ */
+public class JBDiff {
+    @SuppressWarnings("unused")
+    private static final String VERSION = "jbdiff-0.1.0";
+
+    private static final int min(int x, int y) {
+        return x < y ? x : y;
+    }
+
+    private final static void split(int[] I, int[] V, int start, int len, int h) {
+        int i, j, k, x, tmp, jj, kk;
+
+        if (len < 16) {
+            for (k = start; k < start + len; k += j) {
+                j = 1;
+                x = V[I[k] + h];
+                for (i = 1; k + i < start + len; i++) {
+                    if (V[I[k + i] + h] < x) {
+                        x = V[I[k + i] + h];
+                        j = 0;
+                    }
+
+                    if (V[I[k + i] + h] == x) {
+                        tmp = I[k + j];
+                        I[k + j] = I[k + i];
+                        I[k + i] = tmp;
+                        j++;
+                    }
+                }
+
+                for (i = 0; i < j; i++) {
+                    V[I[k + i]] = k + j - 1;
+                }
+                if (j == 1) {
+                    I[k] = -1;
+                }
+            }
+
+            return;
+        }
+
+        x = V[I[start + len / 2] + h];
+        jj = 0;
+        kk = 0;
+        for (i = start; i < start + len; i++) {
+            if (V[I[i] + h] < x) {
+                jj++;
+            }
+            if (V[I[i] + h] == x) {
+                kk++;
+            }
+        }
+
+        jj += start;
+        kk += jj;
+
+        i = start;
+        j = 0;
+        k = 0;
+        while (i < jj) {
+            if (V[I[i] + h] < x) {
+                i++;
+            } else if (V[I[i] + h] == x) {
+                tmp = I[i];
+                I[i] = I[jj + j];
+                I[jj + j] = tmp;
+                j++;
+            } else {
+                tmp = I[i];
+                I[i] = I[kk + k];
+                I[kk + k] = tmp;
+                k++;
+            }
+        }
+
+        while (jj + j < kk) {
+            if (V[I[jj + j] + h] == x) {
+                j++;
+            } else {
+                tmp = I[jj + j];
+                I[jj + j] = I[kk + k];
+                I[kk + k] = tmp;
+                k++;
+            }
+        }
+
+        if (jj > start) {
+            split(I, V, start, jj - start, h);
+        }
+
+        for (i = 0; i < kk - jj; i++) {
+            V[I[jj + i]] = kk - 1;
+        }
+
+        if (jj == kk - 1) {
+            I[jj] = -1;
+        }
+
+        if (start + len > kk) {
+            split(I, V, kk, start + len - kk, h);
+        }
+    }
+
+    /**
+     * Fast suffix sporting.
+     * Larsson and Sadakane's qsufsort algorithm.
+     * See http://www.cs.lth.se/Research/Algorithms/Papers/jesper5.ps
+     *
+     * @param I
+     * @param V
+     * @param oldBuf
+     */
+    private static void qsufsort(int[] I, int[] V, byte[] oldBuf) {
+        int oldsize = oldBuf.length;
+
+        int[] buckets = new int[256];
+        int i, h, len;
+
+        for (i = 0; i < 256; i++) {
+            buckets[i] = 0;
+        }
+
+        for (i = 0; i < oldsize; i++) {
+            buckets[(int) oldBuf[i] & 0xff]++;
+        }
+
+        for (i = 1; i < 256; i++) {
+            buckets[i] += buckets[i - 1];
+        }
+
+        for (i = 255; i > 0; i--) {
+            buckets[i] = buckets[i - 1];
+        }
+
+        buckets[0] = 0;
+
+        for (i = 0; i < oldsize; i++) {
+            I[++buckets[(int) oldBuf[i] & 0xff]] = i;
+        }
+
+        I[0] = oldsize;
+        for (i = 0; i < oldsize; i++) {
+            V[i] = buckets[(int) oldBuf[i] & 0xff];
+        }
+        V[oldsize] = 0;
+
+        for (i = 1; i < 256; i++) {
+            if (buckets[i] == buckets[i - 1] + 1) {
+                I[buckets[i]] = -1;
+            }
+        }
+
+        I[0] = -1;
+
+        for (h = 1; I[0] != -(oldsize + 1); h += h) {
+            len = 0;
+            for (i = 0; i < oldsize + 1; ) {
+                if (I[i] < 0) {
+                    len -= I[i];
+                    i -= I[i];
+                } else {
+                    //if (len) I[i-len]=-len;
+                    if (len != 0) {
+                        I[i - len] = -len;
+                    }
+                    len = V[I[i]] + 1 - i;
+                    split(I, V, i, len, h);
+                    i += len;
+                    len = 0;
+                }
+            }
+
+            if (len != 0) {
+                I[i - len] = -len;
+            }
+        }
+
+        for (i = 0; i < oldsize + 1; i++) {
+            I[V[i]] = i;
+        }
+    }
+
+    /**
+     * Count the number of bytes that match in oldBuf (starting at offset oldOffset)
+     * and newBuf (starting at offset newOffset).
+     *
+     * @param oldBuf
+     * @param oldOffset
+     * @param newBuf
+     * @param newOffset
+     * @return
+     */
+    private final static int matchlen(byte[] oldBuf, int oldOffset, byte[] newBuf, int newOffset) {
+        int end = min(oldBuf.length - oldOffset, newBuf.length - newOffset);
+        int i;
+        for (i = 0; i < end; i++) {
+            if (oldBuf[oldOffset + i] != newBuf[newOffset + i]) {
+                break;
+            }
+        }
+        return i;
+    }
+
+    private final static int search(int[] I, byte[] oldBuf, byte[] newBuf, int newBufOffset, int start, int end, IntByRef pos) {
+        int x, y;
+
+        if (end - start < 2) {
+            x = matchlen(oldBuf, I[start], newBuf, newBufOffset);
+            y = matchlen(oldBuf, I[end], newBuf, newBufOffset);
+
+            if (x > y) {
+                pos.value = I[start];
+                return x;
+            } else {
+                pos.value = I[end];
+                return y;
+            }
+        }
+
+        x = start + (end - start) / 2;
+        if (Util.memcmp(oldBuf, I[x], newBuf, newBufOffset) < 0) {
+            return search(I, oldBuf, newBuf, newBufOffset, x, end, pos);
+        } else {
+            return search(I, oldBuf, newBuf, newBufOffset, start, x, pos);
+        }
+    }
+
+    public static void bsdiff(File oldFile, File newFile, File diffFile) throws IOException {
+        int oldsize = (int) oldFile.length();
+        byte[] oldBuf = new byte[oldsize];
+
+        FileInputStream in = new FileInputStream(oldFile);
+        Util.readFromStream(in, oldBuf, 0, oldsize);
+        in.close();
+
+        int[] I = new int[oldsize + 1];
+        int[] V = new int[oldsize + 1];
+
+        qsufsort(I, V, oldBuf);
+
+        //free(V)
+        V = null;
+        System.gc();
+
+        int newsize = (int) newFile.length();
+        byte[] newBuf = new byte[newsize];
+        in = new FileInputStream(newFile);
+        Util.readFromStream(in, newBuf, 0, newsize);
+        in.close();
+
+        // diff block
+        int dblen = 0;
+        byte[] db = new byte[newsize];
+
+        // extra block
+        int eblen = 0;
+        byte[] eb = new byte[newsize];
+
+        /*
+         * Diff file is composed as follows:
+         *
+         * Header (32 bytes)
+         * Data (from offset 32 to end of file)
+         *
+         * Header:
+         * Offset 0, length 8 bytes: file magic "jbdiff40"
+         * Offset 8, length 8 bytes: length of ctrl block
+         * Offset 16, length 8 bytes: length of compressed diff block
+         * Offset 24, length 8 bytes: length of new file
+         *
+         * Data:
+         * 32  (length ctrlBlockLen): ctrlBlock
+         * 32+ctrlBlockLen (length diffBlockLen): diffBlock (gziped)
+         * 32+ctrlBlockLen+diffBlockLen (to end of file): extraBlock (gziped)
+         *
+         * ctrlBlock comprises a set of records, each record 12 bytes. A record
+         * comprises 3 x 32 bit integers. The ctrlBlock is not compressed.
+         */
+        DataOutputStream diffOut = new DataOutputStream(new FileOutputStream(diffFile));
+
+        /*
+         * Write as much of header as we have now. Size of ctrlBlock and diffBlock
+         * must be filled in later.
+         */
+        diffOut.write("jbdiff40".getBytes("US-ASCII"));
+        diffOut.writeLong(-1); // place holder for ctrlBlockLen
+        diffOut.writeLong(-1); // place holder for diffBlockLen
+        diffOut.writeLong(newsize);
+
+        int oldscore, scsc;
+        int overlap, Ss, lens;
+        int i;
+        int scan = 0;
+        int len = 0;
+        int lastscan = 0;
+        int lastpos = 0;
+        int lastoffset = 0;
+
+        IntByRef pos = new IntByRef();
+        int ctrlBlockLen = 0;
+
+        while (scan < newsize) {
+            oldscore = 0;
+
+            for (scsc = scan += len; scan < newsize; scan++) {
+                len = search(I, oldBuf, newBuf, scan, 0, oldsize, pos);
+
+                for (; scsc < scan + len; scsc++) {
+                    if ((scsc + lastoffset < oldsize) && (oldBuf[scsc + lastoffset] == newBuf[scsc])) {
+                        oldscore++;
+                    }
+                }
+
+                if (((len == oldscore) && (len != 0)) || (len > oldscore + 8)) {
+                    break;
+                }
+
+                if ((scan + lastoffset < oldsize) && (oldBuf[scan + lastoffset] == newBuf[scan])) {
+                    oldscore--;
+                }
+            }
+
+            if ((len != oldscore) || (scan == newsize)) {
+                int s = 0;
+                int Sf = 0;
+                int lenf = 0;
+                for (i = 0; (lastscan + i < scan) && (lastpos + i < oldsize); ) {
+                    if (oldBuf[lastpos + i] == newBuf[lastscan + i])
+                        s++;
+                    i++;
+                    if (s * 2 - i > Sf * 2 - lenf) {
+                        Sf = s;
+                        lenf = i;
+                    }
+                }
+
+                int lenb = 0;
+                if (scan < newsize) {
+                    s = 0;
+                    int Sb = 0;
+                    for (i = 1; (scan >= lastscan + i) && (pos.value >= i); i++) {
+                        if (oldBuf[pos.value - i] == newBuf[scan - i])
+                            s++;
+                        if (s * 2 - i > Sb * 2 - lenb) {
+                            Sb = s;
+                            lenb = i;
+                        }
+                    }
+                }
+
+                if (lastscan + lenf > scan - lenb) {
+                    overlap = (lastscan + lenf) - (scan - lenb);
+                    s = 0;
+                    Ss = 0;
+                    lens = 0;
+                    for (i = 0; i < overlap; i++) {
+                        if (newBuf[lastscan + lenf - overlap + i] == oldBuf[lastpos
+                                + lenf - overlap + i]) {
+                            s++;
+                        }
+                        if (newBuf[scan - lenb + i] == oldBuf[pos.value - lenb + i]) {
+                            s--;
+                        }
+                        if (s > Ss) {
+                            Ss = s;
+                            lens = i + 1;
+                        }
+                    }
+
+                    lenf += lens - overlap;
+                    lenb -= lens;
+                }
+
+                // ? byte casting introduced here -- might affect things
+                for (i = 0; i < lenf; i++) {
+                    db[dblen + i] = (byte) (newBuf[lastscan + i] - oldBuf[lastpos + i]);
+                }
+
+                for (i = 0; i < (scan - lenb) - (lastscan + lenf); i++) {
+                    eb[eblen + i] = newBuf[lastscan + lenf + i];
+                }
+
+                dblen += lenf;
+                eblen += (scan - lenb) - (lastscan + lenf);
+
+                /*
+                 * Write control block entry (3 x int)
+                 */
+                diffOut.writeInt(lenf);
+                diffOut.writeInt((scan - lenb) - (lastscan + lenf));
+                diffOut.writeInt((pos.value - lenb) - (lastpos + lenf));
+                ctrlBlockLen += 12;
+
+                lastscan = scan - lenb;
+                lastpos = pos.value - lenb;
+                lastoffset = pos.value - scan;
+            } // end if
+        } // end while loop
+
+        GZIPOutputStream gzOut;
+
+        /*
+         * Write diff block
+         */
+        gzOut = new GZIPOutputStream(diffOut);
+        gzOut.write(db, 0, dblen);
+        gzOut.finish();
+        int diffBlockLen = diffOut.size() - ctrlBlockLen - 32;
+        //System.err.println ("diffBlockLen=" + diffBlockLen);
+
+        /*
+         * Write extra block
+         */
+        gzOut = new GZIPOutputStream(diffOut);
+        gzOut.write(eb, 0, eblen);
+        gzOut.finish();
+        @SuppressWarnings("unused")
+        long extraBlockLen = diffOut.size() - diffBlockLen - ctrlBlockLen - 32;
+        //System.err.println ("extraBlockLen=" + extraBlockLen);
+
+        diffOut.close();
+
+        /*
+         * Write missing header info. Need to reopen the file with RandomAccessFile
+         * for this.
+         */
+        RandomAccessFile diff = new RandomAccessFile(diffFile, "rw");
+        diff.seek(8);
+        diff.writeLong(ctrlBlockLen);  // ctrlBlockLen (compressed) @offset 8
+        diff.writeLong(diffBlockLen);  // diffBlockLen (compressed) @offset 16
+        diff.close();
+    }
+
+    /**
+     * Run JBDiff from the command line. Params: oldfile newfile difffile.
+     * diff file will be created.
+     *
+     * @param arg
+     * @throws IOException
+     */
+    public static void main(String[] arg) throws IOException {
+        if (arg.length != 3) {
+            System.err.println("usage example: java -Xmx200m ie.wombat.jbdiff.JBDiff oldfile newfile patchfile\n");
+            return;
+        }
+
+        File oldFile = new File(arg[0]);
+        File newFile = new File(arg[1]);
+        File diffFile = new File(arg[2]);
+
+        bsdiff(oldFile, newFile, diffFile);
+    }
+
+    private static class IntByRef {
+        public int value;
+    }
+}
+
+/*
+ * This file is part of EpCraft Launcher.
+ *
+ * Copyright (c) 2013-2013, EpNetwork <http://www.epnetwork.co/>
+ * EpCraft Launcher is licensed under the Spout License Version 1.
+ *
+ * EpCraft Launcher is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * In addition, 180 days after any changes are published, you can use the
+ * software, incorporating those changes, under the terms of the MIT license,
+ * as described in the Spout License Version 1.
+ *
+ * EpCraft Launcher is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public License,
+ * the MIT license and the Spout License Version 1 along with this program.
+ * If not, see <http://www.gnu.org/licenses/> for the GNU Lesser General Public
+ * License and see <http://www.spout.org/SpoutDevLicenseV1.txt> for the full license,
+ * including the MIT license.
+ */
+/*
+ * This file is part of Technic Launcher.
+ *
+ * Copyright (c) 2013-2013, Technic <http://www.technicpack.net/>
+ * Technic Launcher is licensed under the Spout License Version 1.
+ *
+ * Technic Launcher is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * In addition, 180 days after any changes are published, you can use the
+ * software, incorporating those changes, under the terms of the MIT license,
+ * as described in the Spout License Version 1.
+ *
+ * Technic Launcher is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public License,
+ * the MIT license and the Spout License Version 1 along with this program.
+ * If not, see <http://www.gnu.org/licenses/> for the GNU Lesser General Public
+ * License and see <http://www.spout.org/SpoutDevLicenseV1.txt> for the full license,
+ * including the MIT license.
+ */
+
+package org.spoutcraft.launcher.util;
+
+import java.awt.Graphics2D;
+import java.awt.RenderingHints;
+import java.awt.event.ActionListener;
+import java.awt.image.BufferedImage;
+import java.io.IOException;
+import java.net.HttpURLConnection;
+import java.net.URL;
+import java.net.URLConnection;
+import java.util.ArrayList;
+import java.util.List;
+import javax.imageio.ImageIO;
+import javax.swing.DefaultButtonModel;
+import javax.swing.ImageIcon;
+import javax.swing.JButton;
+import javax.swing.JPanel;
+
+import static org.spoutcraft.launcher.util.ResourceUtils.*;
+
+public class ImageUtils {
+    private static int SKIN_WIDTH = 64;
+    private static int SKIN_HEIGHT = 32;
+
+    public static BufferedImage scaleImage(BufferedImage img, int width, int height) {
+        int imgWidth = img.getWidth();
+        int imgHeight = img.getHeight();
+        if (imgWidth * height < imgHeight * width) {
+            width = imgWidth * height / imgHeight;
+        } else {
+            height = imgHeight * width / imgWidth;
+        }
+        BufferedImage newImage = new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB);
+        Graphics2D g = newImage.createGraphics();
+        try {
+            g.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BILINEAR);
+            g.setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_QUALITY);
+            g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+            g.drawImage(img, 0, 0, width, height, null);
+        } finally {
+            g.dispose();
+        }
+        return newImage;
+    }
+
+    public static void drawCharacter(JPanel contentPane, ActionListener listener, String url, int x, int y, List<JButton> buttons) {
+        BufferedImage image = getSkinImage(url);
+        int type = BufferedImage.TYPE_INT_ARGB;
+
+        buttons.add(drawCropped(contentPane, listener, image, type, 8, 8, 16, 16, x, y, 7)); // HEAD
+
+        buttons.add(drawCropped(contentPane, listener, image, type, 20, 20, 28, 32, x, y + 56, 7)); // BODY
+
+        buttons.add(drawCropped(contentPane, listener, image, type, 44, 20, 48, 32, x - 28, y + 56, 7)); // ARMS
+        buttons.add(drawCropped(contentPane, listener, image, type, 44, 20, 48, 32, x + 56, y + 56, 7, true));
+
+        buttons.add(drawCropped(contentPane, listener, image, type, 4, 20, 8, 32, x, y + 140, 7)); // LEGS
+        buttons.add(drawCropped(contentPane, listener, image, type, 4, 20, 8, 32, x + 28, y + 140, 7, true));
+
+        List<JButton> modelList = new ArrayList<JButton>(buttons);
+
+        buttons.add(getShadow(contentPane, modelList, x, y, image));
+    }
+
+    public static JButton drawCropped(JPanel contentPane, ActionListener listener, BufferedImage img, int type, int sx1, int sy1, int sx2, int sy2, int x, int y, int scale) {
+        return drawCropped(contentPane, listener, img, type, sx1, sy1, sx2, sy2, x, y, scale, false);
+    }
+
+    public static JButton drawCropped(JPanel contentPane, ActionListener listener, BufferedImage img, int type, int sx1, int sy1, int sx2, int sy2, int x, int y, int scale, boolean reflect) {
+        BufferedImage resizedImage = new BufferedImage((sx2 - sx1) * scale, (sy2 - sy1) * scale, type);
+        Graphics2D g = resizedImage.createGraphics();
+        int asx2 = sx2, asx1 = sx1;
+        if (reflect) {
+            asx2 = sx1;
+            asx1 = sx2;
+        }
+        g.drawImage(img, 0, 0, (sx2 - sx1) * scale, (sy2 - sy1) * scale, asx1, sy1, asx2, sy2, null);
+        g.dispose();
+
+        JButton tmp = new JButton(new ImageIcon(resizedImage));
+        tmp.setRolloverEnabled(true);
+        tmp.setRolloverIcon(tmp.getIcon());
+        tmp.setSelectedIcon(tmp.getIcon());
+        tmp.setDisabledIcon(tmp.getIcon());
+        tmp.setPressedIcon(tmp.getIcon());
+        tmp.setFocusable(false);
+        tmp.setContentAreaFilled(false);
+        tmp.setBorderPainted(false);
+
+        tmp.setBounds(x, y, (sx2 - sx1) * scale, (sy2 - sy1) * scale);
+        if (listener != null) {
+            tmp.addActionListener(listener);
+        }
+        contentPane.add(tmp);
+        return tmp;
+    }
+
+    private static BufferedImage getSkinImage(String url) {
+        BufferedImage image = null;
+        try {
+            URLConnection conn = (new URL(url)).openConnection();
+            conn.setDoInput(true);
+            conn.setDoOutput(false);
+            System.setProperty("http.agent", "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/535.19 (KHTML, like Gecko) Chrome/18.0.1025.162 Safari/535.19");
+            conn.setRequestProperty("User-Agent", "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/535.19 (KHTML, like Gecko) Chrome/18.0.1025.162 Safari/535.19");
+            HttpURLConnection.setFollowRedirects(true);
+            conn.setUseCaches(false);
+            ((HttpURLConnection)conn).setInstanceFollowRedirects(true);
+            int response = ((HttpURLConnection)conn).getResponseCode();
+            if (response == HttpURLConnection.HTTP_OK) {
+                image = ImageIO.read(conn.getInputStream());
+                if (image.getWidth() != SKIN_WIDTH || image.getHeight() != SKIN_HEIGHT) {
+                    BufferedImage resized = new BufferedImage(SKIN_WIDTH, SKIN_HEIGHT, image.getType());
+                    Graphics2D g = resized.createGraphics();
+                    g.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BILINEAR);
+                    g.drawImage(image, 0, 0, SKIN_WIDTH, SKIN_HEIGHT, 0, 0, image.getWidth(), image.getHeight(), null);
+                    g.dispose();
+                    image = resized;
+                }
+            }
+            if (image != null) {
+                return image;
+            }
+            return ImageIO.read(getResourceAsStream("/org/spoutcraft/launcher/resources/char.png"));
+        } catch (Exception e) {
+            try {
+                return ImageIO.read(getResourceAsStream("/org/spoutcraft/launcher/resources/char.png"));
+            } catch (IOException e1) {
+                throw new RuntimeException("Error loading cached image resource", e1);
+            }
+        }
+    }
+
+    private static final int AVG_COLOR = 0xFF / 2;
+    private static JButton getShadow(JPanel contentPane, List<JButton> buttons, int x, int y, BufferedImage skinImage) {
+        long red = 0, green = 0, blue = 0;
+        int count = 0;
+        for (int dx = 0; dx < skinImage.getWidth(); dx++) {
+            for (int dy = 0; dy < skinImage.getHeight(); dy++) {
+                int rgb = skinImage.getRGB(dx, dy);
+                if (rgb != 0) {
+                    red += (rgb & 0x00FF0000) >> 16;
+                    green += (rgb & 0x0000FF00) >> 8;
+                    blue += rgb & 0x000000FF;
+                    count++;
+                }
+            }
+        }
+        long sum = ((red / count) + (green / count) + (blue / count)) / 3;
+        try {
+            ImageIcon whiteGlow, blackGlow;
+            blackGlow = new ImageIcon(ImageIO.read(getResourceAsStream("/org/spoutcraft/launcher/resources/char_normal.png")));
+            whiteGlow = new ImageIcon(ImageIO.read(getResourceAsStream("/org/spoutcraft/launcher/resources/char_hover.png")));
+
+            ImageIcon main, hover;
+            if (sum < AVG_COLOR) {
+                main = blackGlow;
+                hover = whiteGlow;
+            } else {
+                main = whiteGlow;
+                hover = blackGlow;
+            }
+
+            JButton tmp = new JButton(main);
+            tmp.setRolloverEnabled(true);
+            tmp.setModel(new RolloverModel(buttons));
+            tmp.setRolloverIcon(hover);
+            tmp.setSelectedIcon(tmp.getIcon());
+            tmp.setDisabledIcon(tmp.getIcon());
+            tmp.setPressedIcon(tmp.getIcon());
+            tmp.setFocusable(false);
+            tmp.setContentAreaFilled(false);
+            tmp.setBorderPainted(false);
+            tmp.setBounds(x - 41, y - 18, whiteGlow.getIconWidth(), whiteGlow.getIconHeight());
+            contentPane.add(tmp);
+
+            return tmp;
+        } catch (Exception e) {
+            throw new RuntimeException("Error loading cached image resource", e);
+        }
+    }
+}
+
+class RolloverModel extends DefaultButtonModel {
+    private static final long serialVersionUID = 1L;
+    private final List<JButton> buttons;
+    private boolean previous = false;
+    public RolloverModel(List<JButton> buttons) {
+        this.buttons = buttons;
+    }
+
+    @Override
+    public boolean isRollover() {
+        boolean current = isRolloverImpl();
+        if (current != previous) {
+            previous = current;
+            fireStateChanged();
+        }
+        return current;
+    }
+
+    public boolean isRolloverImpl() {
+        for (JButton button : buttons) {
+            if (button.getModel().isRollover()) {
+                return true;
+            }
+        }
+        return false;
+    }
+}
+
+/*
+ * This file is part of EpCraft Launcher.
+ *
+ * Copyright (c) 2013-2013, EpNetwork <http://www.epnetwork.co/>
+ * EpCraft Launcher is licensed under the Spout License Version 1.
+ *
+ * EpCraft Launcher is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * In addition, 180 days after any changes are published, you can use the
+ * software, incorporating those changes, under the terms of the MIT license,
+ * as described in the Spout License Version 1.
+ *
+ * EpCraft Launcher is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public License,
+ * the MIT license and the Spout License Version 1 along with this program.
+ * If not, see <http://www.gnu.org/licenses/> for the GNU Lesser General Public
+ * License and see <http://www.spout.org/SpoutDevLicenseV1.txt> for the full license,
+ * including the MIT license.
+ */
+/*
+ * This file is part of Technic Launcher.
+ *
+ * Copyright (c) 2013-2013, Technic <http://www.technicpack.net/>
+ * Technic Launcher is licensed under the Spout License Version 1.
+ *
+ * Technic Launcher is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * In addition, 180 days after any changes are published, you can use the
+ * software, incorporating those changes, under the terms of the MIT license,
+ * as described in the Spout License Version 1.
+ *
+ * Technic Launcher is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public License,
+ * the MIT license and the Spout License Version 1 along with this program.
+ * If not, see <http://www.gnu.org/licenses/> for the GNU Lesser General Public
+ * License and see <http://www.spout.org/SpoutDevLicenseV1.txt> for the full license,
+ * including the MIT license.
+ */
+
+package org.spoutcraft.launcher.entrypoint;
+
+import java.awt.Toolkit;
+import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.PrintStream;
+import java.io.PrintWriter;
+import java.io.StringWriter;
+import java.text.SimpleDateFormat;
+import java.util.Date;
+import java.util.logging.Formatter;
+import java.util.logging.Handler;
+import java.util.logging.Level;
+import java.util.logging.LogRecord;
+import java.util.logging.Logger;
+import java.util.logging.StreamHandler;
+
+import javax.swing.UIManager;
+
+import com.beust.jcommander.JCommander;
+import org.apache.commons.io.IOUtils;
+
+import org.spoutcraft.launcher.GameUpdater;
+import org.spoutcraft.launcher.Proxy;
+import org.spoutcraft.launcher.Settings;
+import org.spoutcraft.launcher.GameLauncher;
+import org.spoutcraft.launcher.StartupParameters;
+import org.spoutcraft.launcher.api.Launcher;
+import org.spoutcraft.launcher.skin.ConsoleFrame;
+import org.spoutcraft.launcher.skin.MetroLoginFrame;
+import org.spoutcraft.launcher.technic.PackManager;
+import org.spoutcraft.launcher.technic.skin.ModpackSelector;
+import org.spoutcraft.launcher.util.OperatingSystem;
+import org.spoutcraft.launcher.util.Utils;
+import org.spoutcraft.launcher.yml.YAMLFormat;
+import org.spoutcraft.launcher.yml.YAMLProcessor;
+
+public class SpoutcraftLauncher {
+    private static Logger logger = null;
+    protected static RotatingFileHandler handler = null;
+    protected static ConsoleFrame console;
+    private static StartupParameters params;
+    public SpoutcraftLauncher() {
+        main(new String[0]);
+    }
+
+    public static void main(String[] args) {
+        long start = System.currentTimeMillis();
+        final long startupTime = start;
+
+        // Prefer IPv4
+        System.setProperty("java.net.preferIPv4Stack" , "true");
+
+        params = setupParameters(args);
+
+        cleanup();
+
+        SplashScreen splash = new SplashScreen(Toolkit.getDefaultToolkit().getImage(SplashScreen.class.getResource("/org/spoutcraft/launcher/resources/splash.png")));
+        splash.setVisible(true);
+        Utils.setSplashScreen(splash);
+        setLookAndFeel();
+
+        SpoutcraftLauncher.logger = setupLogger();
+
+        int launcherBuild = parseInt(getLauncherBuild(), -1);
+        logger.info("------------------------------------------");
+        logger.info("EpCraft Launcher is starting....");
+        logger.info("Launcher Build: " + launcherBuild);
+
+        params.logParameters(logger);
+
+        // Setup directories
+        GameUpdater updater = new GameUpdater();
+        Utils.getAssetsDirectory().mkdirs();
+
+        Settings.setLauncherBuild(launcherBuild);
+        setupProxy();
+
+        if (params.isDebugMode()) {
+            logger.info("Initial launcher organization and look and feel time took " + (System.currentTimeMillis() - start)	 + " ms");
+            start = System.currentTimeMillis();
+        }
+
+        if (params.isDebugMode()) {
+            logger.info("Launcher settings took " + (System.currentTimeMillis() - start) + " ms");
+            start = System.currentTimeMillis();
+        }
+
+        relaunch(false);
+
+        if (params.isConsole()) {
+            setupConsole();
+            logger.info("Console Mode Activated");
+        }
+
+        Runtime.getRuntime().addShutdownHook(new ShutdownThread());
+        Thread logThread = new LogFlushThread();
+        logThread.start();
+
+        // Set up the launcher and load login frame
+        MetroLoginFrame frame = new MetroLoginFrame();
+        ModpackSelector selector = frame.getSelector();
+
+        new Launcher(updater, new GameLauncher(), frame);
+        PackManager.initPacks(selector);
+
+        frame.setUser(Settings.getLastUser());
+
+        if (params.isDebugMode()) {
+            logger.info("Launcher skin manager took " + (System.currentTimeMillis() - start) + " ms");
+            start = System.currentTimeMillis();
+        }
+
+        splash.dispose();
+        frame.setVisible(true);
+
+        String lastPack = Settings.getLastModpack();
+
+        if (!Settings.getInstalledPacks().contains(lastPack)) {
+            lastPack = ModpackSelector.DEFAULT_PACK;
+        }
+        selector.selectPack(lastPack);
+        PackManager.loadPack(selector.getPackMap(), lastPack);
+
+        PackManager.addRestPacks(selector);
+        PackManager.addCustomPacks(selector);
+
+        frame.updateFaces();
+
+        if (params.hasAccount()) {
+            frame.disableForm();
+            frame.doLogin(params.getUser(), params.getPass());
+        }
+
+        if (params.isDebugMode()) {
+            logger.info("Launcher default skin loading took " + (System.currentTimeMillis() - start) + " ms");
+            start = System.currentTimeMillis();
+        }
+
+        logger.info("Launcher took: " + (System.currentTimeMillis() - startupTime) + "ms to start");
+    }
+
+    public static void relaunch(boolean force) {
+        if (params.relaunch(logger, force)) {
+            try {
+                Thread.sleep(3000);
+            } catch (InterruptedException e) { }
+            System.exit(0);
+            return;
+        }
+    }
+
+    private static void setupProxy() {
+        Proxy proxy = new Proxy();
+        proxy.setHost(Settings.getProxyHost());
+        proxy.setPort(Settings.getProxyPort());
+        proxy.setUser(Settings.getProxyUsername());
+        String pass = Settings.getProxyPassword();
+        proxy.setPass(pass != null ? pass.toCharArray() : null);
+        proxy.setup();
+    }
+
+
+    private static void cleanup() {
+        File temp = new File(Utils.getLauncherDirectory(), "temp.jar");
+        temp.delete();
+        temp = new File(Utils.getLauncherDirectory(), "temp.exe");
+        temp.delete();
+        temp = new File(Utils.getLauncherDirectory(), "Spoutcraft-Launcher.jar");
+        temp.delete();
+        temp = new File(Utils.getLauncherDirectory(), "mc.patch");
+        temp.delete();
+        temp = new File(Utils.getLauncherDirectory(), "config/libraries.yml");
+        temp.delete();
+        temp = new File(Utils.getLauncherDirectory(), "config/spoutcraft.yml");
+        temp.delete();
+        temp = new File(Utils.getLauncherDirectory(), "config/minecraft.yml");
+        temp.delete();
+    }
+
+    private static void setLookAndFeel() {
+        OperatingSystem os = OperatingSystem.getOS();
+        if (os.isMac()) {
+            System.setProperty("apple.laf.useScreenMenuBar", "true");
+            System.setProperty("com.apple.mrj.application.apple.menu.about.name", "EpCraft Launcher");
+        }
+        try {
+            UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
+        } catch (Exception e) {
+            logger.log(Level.WARNING, "Failed to setup look and feel", e);
+        }
+    }
+
+    private static int parseInt(String s, int def) {
+        try {
+            return Integer.parseInt(s);
+        } catch (NumberFormatException e) {
+            return def;
+        }
+    }
+
+    protected static Logger setupLogger() {
+        final Logger logger = Logger.getLogger("launcher");
+        File logDirectory = new File(Utils.getLauncherDirectory(), "logs");
+        if (!logDirectory.exists()) {
+            logDirectory.mkdir();
+        }
+        File logs = new File(logDirectory, "epcraftlauncher_%D.log");
+        RotatingFileHandler fileHandler = new RotatingFileHandler(logs.getPath());
+
+        fileHandler.setFormatter(new DateOutputFormatter(new SimpleDateFormat("yyyy/MM/dd HH:mm:ss")));
+
+        for (Handler h : logger.getHandlers()) {
+            logger.removeHandler(h);
+        }
+        logger.addHandler(fileHandler);
+
+        SpoutcraftLauncher.handler = fileHandler;
+
+        if (params != null && !params.isDebugMode()) {
+            logger.setUseParentHandlers(false);
+
+            System.setOut(new PrintStream(new LoggerOutputStream(Level.INFO, logger), true));
+            System.setErr(new PrintStream(new LoggerOutputStream(Level.SEVERE, logger), true));
+        }
+
+        Thread.setDefaultUncaughtExceptionHandler(new Thread.UncaughtExceptionHandler() {
+            @Override
+            public void uncaughtException(Thread t, Throwable e) {
+                logger.log(Level.SEVERE, "Unhandled Exception in " + t, e);
+            }
+        });
+
+        return logger;
+    }
+
+    private static StartupParameters setupParameters(String[] args) {
+        StartupParameters params = new StartupParameters(args);
+        try {
+            new JCommander(params, args);
+        } catch (Exception ex) {
+            ex.printStackTrace();
+        }
+        Utils.setStartupParameters(params);
+
+        params.setupProxy();
+
+        return params;
+    }
+
+    public static String getLauncherBuild() {
+        String build = "0";
+        try {
+            build = IOUtils.toString(SpoutcraftLauncher.class.getResource("/org/spoutcraft/launcher/resources/version").openStream(), "UTF-8");
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return build;
+    }
+
+    public static void setupSettings(File file) {
+        File settingsFile = new File(file, "settings.yml");
+        YAMLProcessor settings = new YAMLProcessor(settingsFile, false, YAMLFormat.EXTENDED);
+        Settings.setYAML(settings);
+    }
+
+    public static void setupConsole() {
+        if (console != null) {
+            console.dispose();
+        }
+        console = new ConsoleFrame(2500, true);
+        console.setVisible(true);
+    }
+
+    public static void destroyConsole() {
+        if (console != null) {
+            console.setVisible(false);
+            console.dispose();
+        }
+    }
+}
+
+class LogFlushThread extends Thread {
+    public LogFlushThread() {
+        super("Log Flush Thread");
+        this.setDaemon(true);
+    }
+
+    @Override
+    public void run() {
+        while (!this.isInterrupted()) {
+            if (SpoutcraftLauncher.handler != null) {
+                SpoutcraftLauncher.handler.flush();
+            }
+            try {
+                sleep(60000);
+            } catch (InterruptedException e) { }
+        }
+    }
+}
+
+class ShutdownThread extends Thread {
+    public ShutdownThread() {
+        super("Shutdown Thread");
+        this.setDaemon(true);
+    }
+
+    @Override
+    public void run() {
+        if (SpoutcraftLauncher.handler != null) {
+            SpoutcraftLauncher.handler.flush();
+        }
+    }
+}
+
+class LoggerOutputStream extends ByteArrayOutputStream {
+    private final String separator = System.getProperty("line.separator");
+    private final Level level;
+    private final Logger log;
+
+    public LoggerOutputStream(Level level, Logger log) {
+        super();
+        this.level = level;
+        this.log = log;
+    }
+
+    @Override
+    public synchronized void flush() throws IOException {
+        super.flush();
+        String record = this.toString();
+        super.reset();
+
+        if (record.length() > 0 && !record.equals(separator)) {
+            log.logp(level, "LoggerOutputStream", "log" + level, record);
+            if (SpoutcraftLauncher.console != null) {
+                SpoutcraftLauncher.console.log(record + "\n");
+            }
+        }
+    }
+}
+
+class RotatingFileHandler extends StreamHandler {
+    private final SimpleDateFormat date;
+    private final String logFile;
+    private String filename;
+
+    public RotatingFileHandler(String logFile) {
+        this.logFile = logFile;
+        date = new SimpleDateFormat("yyyy-MM-dd");
+        filename = calculateFilename();
+        try {
+            setOutputStream(new FileOutputStream(filename, true));
+        } catch (FileNotFoundException ex) {
+            ex.printStackTrace();
+        }
+    }
+
+    @Override
+    public synchronized void flush() {
+        if (!filename.equals(calculateFilename())) {
+            filename = calculateFilename();
+            try {
+                setOutputStream(new FileOutputStream(filename, true));
+            } catch (FileNotFoundException ex) {
+                ex.printStackTrace();
+            }
+        }
+        super.flush();
+    }
+
+    private String calculateFilename() {
+        return logFile.replace("%D", date.format(new Date()));
+    }
+}
+
+class DateOutputFormatter extends Formatter {
+    private final SimpleDateFormat date;
+
+    public DateOutputFormatter(SimpleDateFormat date) {
+        this.date = date;
+    }
+
+    @Override
+    public String format(LogRecord record) {
+        StringBuilder builder = new StringBuilder();
+
+        builder.append(date.format(record.getMillis()));
+        builder.append(" [");
+        builder.append(record.getLevel().getLocalizedName().toUpperCase());
+        builder.append("] ");
+        builder.append(formatMessage(record));
+        builder.append('\n');
+
+        if (record.getThrown() != null) {
+            StringWriter writer = new StringWriter();
+            record.getThrown().printStackTrace(new PrintWriter(writer));
+            builder.append(writer.toString());
+        }
+
+        return builder.toString();
+    }
+}

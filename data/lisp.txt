@@ -1,0 +1,2285 @@
+;;; -*- mode: lisp; package: xtal-mode -*-
+;;;;
+;;;; File: xtal-mode/outline.l
+;;;;
+;;;; License:
+;;;;
+;;;;   Copyright (c) 2007 MIYAMUKO Katsuyuki.
+;;;;
+;;;;   xtal-mode is released under an MIT license.
+;;;;   See xtal-mode/docs/MIT-LICENSE for full license.
+;;;;
+
+(eval-when (:compile-toplevel :load-toplevel :execute)
+  (require "xtal-mode/base")
+  (require "xtal-mode/parser")
+  )
+
+(in-package :xtal-mode)
+
+(export '(xtal-forward-statement
+          xtal-backward-statement
+          xtal-forward-statement-in-scope
+          xtal-backward-statement-in-scope
+          xtal-mark-statement
+          xtal-transpose-statement
+          xtal-up-statement
+          xtal-down-statement
+          ))
+
+(defparameter *xtal-outline-regexp*
+  (build-regexp :class *xtal-ident-regexp*
+                :name *xtal-ident-regexp*
+                :kinds '("class" "method" "fun")))
+
+;;; cursor
+
+(defun scan-xtal-syntax (pattern &rest keywords &key syntax)
+  (cursor-moved?
+    (save-current-point-only-if-fail
+      (if (not syntax)
+          (apply 'scan-buffer pattern keywords)
+        (while (apply 'scan-buffer pattern keywords)
+          (let ((data (match-data)))
+            (when (eq (xtal-parse-point-syntax (point) :code) syntax)
+              (store-match-data data)
+              (return t))))))))
+
+(defun scan-eos-forward ()
+  (cursor-moved?
+    (save-current-point-only-if-fail
+      (while (scan-xtal-syntax "[;{}(]" :syntax :code :regexp t :tail t)
+        (if (before-char= #\()
+            (and (backward-char) (goto-matched-parenthesis))
+          (return t))))))
+
+(defun scan-eos-backward ()
+  (cursor-moved?
+    (save-current-point-only-if-fail
+      (while (scan-xtal-syntax "[;{})]" :syntax :code :regexp t :reverse t :tail nil :no-dup t)
+        (if (after-char= #\))
+            (goto-matched-parenthesis)
+          (return t))))))
+
+(defun looking-eos-backward ()
+  (looking-regexp-backward "[;{}]"))
+
+(defun looking-eos-forward ()
+  (looking-regexp-forward "[;{}]"))
+
+(defmacro skip-for-eos (direction)
+  `(xtal-skip-syntax ,direction :comment :block-parameter :white-spaces))
+
+(defun xtal-current-scope-level ()
+  (save-excursion
+    (let (path)
+      (while (scan-xtal-syntax "[{}]" :syntax :code :regexp t :reverse t :no-dup t :tail nil)
+        (case (char-after (point))
+          (#\} (or (goto-matched-parenthesis) (return)))
+          (#\{ (push (point) path))))
+      (values (length path) path))))
+
+(defun xtal-forward-statement ()
+  (interactive)
+  (cursor-moved?
+    (let ((opoint (point)))
+      (skip-for-eos :backward)
+      (when (not (or (bobp) (looking-eos-backward)))
+        (scan-eos-forward))
+      (loop
+        (skip-for-eos :forward)
+        (when (and (not (looking-eos-forward))
+                   (not (eql opoint (point))))
+          (return))
+        (or (scan-eos-forward) (return))))))
+
+(defun xtal-backward-statement ()
+  (interactive)
+  (cursor-moved?
+    (skip-for-eos :backward)
+    (when (bobp)
+      (return-from cursor-moved?))
+    (when (looking-eos-backward)
+      (backward-char))
+    (if (while (scan-eos-backward)
+          (when (save-excursion
+                  (forward-char)
+                  (skip-for-eos :forward)
+                  (not (looking-eos-forward)))
+            (return t)))
+        (forward-char)
+      (goto-char (point-min)))
+    (skip-for-eos :forward)))
+
+(defun xtal-forward-statement-in-scope ()
+  (interactive)
+  (xtal-move-statement-in-scope 'xtal-forward-statement))
+
+(defun xtal-backward-statement-in-scope ()
+  (interactive)
+  (xtal-move-statement-in-scope 'xtal-backward-statement))
+
+(defun xtal-move-statement-in-scope (mover)
+  (interactive)
+  (cursor-moved?
+    (save-current-point-only-if-fail
+      (let ((scope (multiple-value-list (xtal-current-scope-level))))
+        (while (funcall mover)
+          (when (equal scope (multiple-value-list (xtal-current-scope-level)))
+            (return t)))))))
+
+(defun xtal-current-statement-points ()
+  (save-excursion
+    ;; goto start of statement
+    (and
+      (scan-eos-forward)
+      (xtal-backward-statement))
+    (let ((start (point)))
+      (scan-eos-forward)
+      (when (before-char= #\{)
+        (backward-char)
+        (goto-matched-parenthesis)
+        (forward-char))
+      (values start (point)))))
+
+(defun xtal-mark-statement ()
+  (interactive)
+  (multiple-value-bind (start end)
+      (xtal-current-statement-points)
+    (goto-char end)
+    (set-mark-command)
+    (goto-char start)))
+
+(defun xtal-transpose-statement ()
+  (interactive)
+  ;; �s���E�s���Ȃ����ւ����Ɉړ����邾��
+  (cond ((save-excursion (xtal-backward-statement) (bobp))
+         (xtal-forward-statement-in-scope))
+        ((save-excursion (xtal-forward-statement) (eobp))
+         (xtal-backward-statement-in-scope))
+        (t
+         (xtal-transpose-statement0))))
+
+(defun xtal-transpose-statement0 ()
+  (flet ((stmt-points (fn)
+           (funcall fn)
+           (multiple-value-list (xtal-current-statement-points)))
+         (content (points)
+           (apply 'buffer-substring points))
+         (delete-and-insert (points new-content)
+           (apply 'delete-region points)
+           (insert new-content)))
+    (macrolet ((transpose-if-else-if (curr-content next-content)
+                 `(let ((if (and (string-matchp "^if *(" ,curr-content) (match-string 0)))
+                        (elseif (and (string-matchp "^else +if *(" ,next-content) (match-string 0))))
+                    (when (and if elseif)
+                      (setf ,curr-content (substitute-string ,curr-content "^if *(" elseif))
+                      (setf ,next-content (substitute-string ,next-content "^else +if *(" if))))))
+      (multiple-value-bind (curr next)
+          (save-excursion
+            (values (stmt-points 'xtal-backward-statement-in-scope)
+                    (stmt-points 'xtal-forward-statement-in-scope)))
+        (if (< (car curr) (point) (cadr curr))
+            ;; ���ƕ��̊Ԃł͂Ȃ��Ȃ�f�t�H���g�� transpose-sexps ���Ă�
+            (transpose-sexps)
+          (unless (equal curr next)
+            (let ((curr-content (content curr))
+                  (next-content (content next)))
+              ;; if �� else if �Ɋւ��Ă͓��ʂɓ���ւ�����������
+              (transpose-if-else-if curr-content next-content)
+              (delete-and-insert next curr-content)
+              (delete-and-insert curr next-content)
+              (goto-char (cadr next)))))))))
+
+(defun xtal-up-statement ()
+  (interactive)
+  (multiple-value-bind (level path)
+      (xtal-current-scope-level)
+    (when path
+      (goto-char (car (last path)))
+      (xtal-backward-statement))))
+
+(defun xtal-down-statement ()
+  (interactive)
+  (cursor-moved?
+    (save-current-point-only-if-fail
+      (multiple-value-bind (curr-level curr-path)
+          (xtal-current-scope-level)
+        (while (scan-xtal-syntax "[{;]" :syntax :code :regexp t :tail t)
+          (multiple-value-bind (level path)
+              (xtal-current-scope-level)
+            (when (or (< level curr-level)
+                      (not (equal curr-path (subseq path 0 curr-level))))
+              (return nil))
+            (when (< curr-level level)
+              (skip-for-eos :forward)
+              (return t))))))))
+
+
+;;; parser
+
+(defmacro outline-class-name (c)
+  `(nth 0 ,c))
+
+(defmacro outline-class-line-number (c)
+  `(nth 0 (nth 1 ,c)))
+
+(defmacro outline-class-points (c)
+  `(nth 1 (nth 1 ,c)))
+
+(defmacro outline-methods (c)
+  `(nth 2 ,c))
+
+(defmacro outline-method-name (m)
+  `(nth 0 ,m))
+
+(defmacro outline-method-visibility (m)
+  `(nth 1 ,m))
+
+(defmacro outline-method-kind (m)
+  `(nth 2 ,m))
+
+(defmacro outline-method-line-number (m)
+  `(nth 3 ,m))
+
+(defmacro outline-method-points (m)
+  `(nth 4 ,m))
+
+(defmacro scan-xtal-outline (&rest keywords)
+  `(scan-buffer *xtal-outline-regexp* :regexp t ,@keywords))
+
+(defun parse-xtal-outline (s e)
+  (save-excursion
+    (save-restriction
+      (goto-char s)
+      (narrow-to-region s e)
+      (let* ((current-class :toplevel)
+             (result))
+        (while (scan-xtal-outline :tail nil :case-fold t)
+          (do-events)
+          (let ((visibility (match-string 1))
+                (class (match-string 2))
+                (name (match-string 3))
+                (kind (match-string 4))
+                (points `((:whole ,(cons (match-beginning 0) (match-end 0)))
+                          (:name ,(cons (match-beginning 3) (match-end 3)))))
+                (lineno (current-line-number))
+                (end (match-end 0)))
+            (if (string= kind "class")
+                (progn
+                  (setf current-class name)
+                  (push (list name (list lineno points) nil) result))
+              (progn
+                (unless (assoc (or class current-class) result)
+                  (push (list (or class current-class) nil nil) result))
+                (push (list name
+                            (parse-visibility visibility)
+                            kind
+                            lineno
+                            points)
+                      (outline-methods (assoc (or class current-class) result)))))
+            (goto-char end)))
+        (mapcar #'(lambda (e)
+                    (list (car e) (cadr e) (reverse (caddr e))))
+                (reverse result))))))
+
+#+xtal-mode-debug
+(defun user::xtal-parse-outline-debug ()
+  (interactive)
+  (msgbox "~S" (parse-xtal-outline (point-min) (point-max))))
+
+
+;;; list-function
+
+(defun xtal-build-summary-of-functions ()
+  (let (result)
+    (macrolet ((push-result (lineno name)
+                 `(push (list ,lineno ,name) result)))
+      (dolist (c (parse-xtal-outline (point-min) (point-max)))
+        (let* ((class-name (outline-class-name c))
+               (toplevel-p (eq class-name :toplevel))
+               (pseudo-class-p (or (not (outline-class-points c))
+                                   toplevel-p)))
+          (unless pseudo-class-p
+            (push-result (outline-class-line-number c) (outline-class-name c)))
+          (dolist (m (outline-methods c))
+            (push-result (outline-method-line-number m)
+                         (if toplevel-p
+                             (outline-method-name m)
+                           (concat class-name "::" (outline-method-name m)))))))
+      (unless result
+        (error "�N���X�܂��̓��\�b�h���ЂƂ�����܂���"))
+      (sort (nreverse result)
+            #'(lambda (a b)
+                (< (car a) (car b)))))))
+
+;;; tag
+
+(defun xtal-maketags (file count)
+  (macrolet ((gentag (name points)
+               `(progn
+                  (format t "~A~A~D" ,name file
+                          (caadr (assoc :name ,points)))
+                  (incf count))))
+    (dolist (c (parse-xtal-outline (point-min) (point-max)))
+      (when (outline-class-points c)
+        (gentag (outline-class-name c) (outline-class-points c)))
+      (dolist (m (outline-methods c))
+        (gentag (outline-method-name m) (outline-method-points m))))
+    count))
+
+(defun tags-find-xtal-point (class name functionp point)
+  (goto-char (- point *jump-tag-limit*))
+  (and (scan-buffer (build-regexp :name (regexp-quote name)
+                                  :class *xtal-ident-regexp*
+                                  :kinds '("class" "method" "fun"))
+                    :regexp t :limit (+ point ed::*jump-tag-limit*))
+       (point)))
+
+(pushnew '(xtal-maketags "*.xtal") *maketags-list* :key #'car)
+
+
+(defun xtal-mode-setup-outline ()
+  ;; forward|backward-paragraph �ňړ�����i���ʒu
+  (set-local-variable paragraph-start "^$\\|\f")
+  (set-local-variable paragraph-separate paragraph-start)
+
+  ;; tag
+  (set-local-variable tags-find-target #'ed::tags-find-target-simple)
+  (set-local-variable tags-find-point 'tags-find-xtal-point)
+
+  ;; list-function
+  (set-local-variable ed::build-summary-function 'xtal-build-summary-of-functions))
+
+
+(provide "xtal-mode/outline")
+
+;;;; End
+
+;;;; -*- Mode: LISP; Syntax: ANSI-Common-Lisp; Base: 10 -*-
+
+;;;; *************************************************************************
+;;;; FILE IDENTIFICATION
+;;;;
+;;;; Name:          clacman.lisp
+;;;; Purpose:       A Pacman game.
+;;;; Programmer:    Nicolas Lamirault <nicolas.lamirault@gmail.com>
+;;;;
+;;;; This file, part of clacman, is Copyright (c) 2007, 2015 by Nicolas Lamirault
+;;;;
+;;;; clacman users are granted the rights to distribute and use this software
+;;;; as governed by the terms of the MIT License :
+;;;; http://www.opensource.org/licenses/mit-license.php
+;;;;
+;;;; *************************************************************************
+
+
+(in-package :clacman)
+
+
+(if *clacman-directory*
+      (pal:define-tags background
+                       (pal:load-image (concatenate 'string
+                                                    *clacman-directory*
+                                                    +background+)
+                                       t)
+                       pacman
+                       (pal:load-image (concatenate 'string
+                                                    *clacman-directory*
+                                                    +pacman+)
+                                       t)
+                       ghost-inky
+                       (pal:load-image (concatenate 'string
+                                                    *clacman-directory*
+                                                    +inky+)
+                                       t)
+                       ghost-pinky
+                       (pal:load-image (concatenate 'string
+                                                    *clacman-directory*
+                                                    +pinky+)
+                                        t)
+                       ghost-blinky
+                       (pal:load-image (concatenate 'string
+                                                    *clacman-directory*
+                                                    +blinky+)
+                                        t)
+                       ghost-clyde
+                       (pal:load-image (concatenate 'string
+                                                    *clacman-directory*
+                                                    +clyde+)
+                                       t))
+      (error "CLACMAN directory isn't defined : *CLACMAN-DIRECTORY*"))
+
+
+(defun original-coordonates (position)
+  "Find the original coordonates on the game.
+POSITION is a cons of coordonates (x . y)."
+  (cons (+ +game-left-corner-x+ (* (car position) 20))
+        (+ +game-left-corner-y+ (* (cdr position) 20))))
+
+
+(defclass entity-base ()
+  ((image :accessor entity-base-image :initarg :image)))
+
+
+(defclass phantom-background (entity-base)
+  ()
+  (:default-initargs :image (pal:tag 'background)))
+
+
+(defgeneric draw (entity-base x y)
+  (:documentation "Draw a Pacman entity."))
+
+
+(defmethod draw ((entity-base entity-base) x y)
+  (pal:draw-image (entity-base-image entity-base) (pal:v x y)))
+
+
+(defun draw-square (x y r g b)
+  "Draw a square from (X,Y) with color defined by R G B codes."
+  (pal:draw-polygon (list (pal:v x y)
+                          (pal:v (+ x 18) y)
+                          (pal:v (+ x 18) (+ y 18))
+                          (pal:v x (+ y 18)))
+                    r g b
+                    255))
+
+
+(defun draw-ball (x y r g b)
+  "Draw a ball."
+  (pal:draw-circle (pal:v x y) 2 r g b 255))
+
+
+(defclass entity ()
+  ((position :initform nil
+             :initarg :position
+             :accessor entity-position)
+   (image :initform nil
+          :initarg :image
+          :accessor entity-image))
+  (:documentation "A game entity."))
+
+
+(defun collision-p (matrix x y)
+  "Check if (X,Y) is in the matrix. and if place is empty."
+  (when *debug*
+     (format t "~&Check ~Ax~A ~A"
+             x y (aref matrix y x)))
+  (or (<= x 0)
+      ;;(>= x 20)
+      (> x +matrix-width+)
+      (<= y 0)
+      ;;(>= y 15)
+      (> y +matrix-height+)
+      (= 0 (aref matrix y x))
+      (= 1 (aref matrix y x))))
+
+
+(defun get-points (matrix x y)
+  "Check if in (X,Y) position there is a ball."
+  (if (= 3 (aref matrix y x)) 1 0))
+
+
+(defgeneric move (entity matrix new-x new-y)
+  (:documentation "Change the location of ENTITY to (X,Y) on the matrix."))
+
+
+(defmethod move ((entity entity) matrix new-x new-y)
+  (with-slots (position x y) entity
+    (unless (collision-p matrix new-x new-y)
+      (setf (aref matrix (cdr position) (car position)) 4
+            position (cons new-x new-y)
+            (aref matrix new-y new-x) 1))))
+
+
+(defclass phantom (entity)
+  ((eaten :initform nil
+          :initarg :eaten
+          :accessor phantom-eaten))
+  (:documentation "The phantom entity."))
+
+
+(defclass pacman (entity)
+  ((force :initform 0
+          :initarg :force
+          :accessor pacman-force)
+   (invincible :initform nil
+               :initarg :invicible
+               :accessor pacman-invincible))
+  (:documentation "The Pacman entity."))
+
+
+(defclass game ()
+  ((matrix :initform nil
+           :initarg :matrix
+           :accessor game-matrix)
+   (phantoms :initform nil
+             :initarg :phantoms
+             :accessor game-phantoms)
+   (pacman :initform nil
+           :initarg :pacman
+           :accessor game-pacman))
+  (:documentation "A pacman game."))
+
+
+(defgeneric draw-game (game level points &optional username)
+  (:documentation "Draw the MATRIX game, LEVEL is for the user."))
+
+
+(defmethod draw-game ((game game) level points &optional username)
+  (pal:clear-screen (pal:color 0 0 0))
+  (with-slots (matrix phantoms pacman) game
+    (loop ;;for y from 0 to 15 ;;29
+       for y below +matrix-height+
+       as y0 = (+ (* y 20) +game-left-corner-y+)
+       do (loop ;; for x from 0 to 20 ;;28
+             for x below +matrix-width+
+             as x0 = (+ (* x 20) +game-left-corner-x+)
+             do (let (r g b)
+                  (cond ((= 0 (aref matrix y x))
+                         (setf r 0
+                               g 0
+                               b 155))
+;;                         ((= 3 (aref matrix y x))
+;;                          (setf r 255
+;;                                g 255
+;;                                b 255))
+                        (t (setf r (first +matrix-background+)
+                                 g (second +matrix-background+)
+                                 b (third +matrix-background+))))
+                  (draw-square x0 y0 r g b)
+                  (when (= 3 (aref matrix y x))
+                    (draw-ball (+ 10 x0) (+ 10 y0) 255 255 255)))))
+    (pal:draw-text (format nil "Level ~A" level) (pal:v 15 20))
+    (pal:draw-text (format nil "Points ~A" points) (pal:v 15 105))
+    (when username
+      (pal:draw-text (format nil "~A" username) (pal:v 15 145)))
+    (with-slots (image position) pacman
+      (let ((coords (original-coordonates position)))
+        (draw image (car coords) (cdr coords))))
+    (loop for phantom in phantoms
+       as image = (entity-image phantom)
+       as pos = (entity-position phantom)
+       as coords = (original-coordonates pos)
+       do (draw image (car coords) (cdr coords)))))
+
+
+(defun init-game ()
+  "Creates a new game object."
+  (let* ((rs (make-random-state t))
+         (matrix (make-array (list +matrix-height+ +matrix-width+))) ;;30 29)))
+         (pacman (make-instance 'pacman
+                                :image (make-instance 'entity-base
+                                                      :image (pal:tag 'pacman))
+                                :force nil
+                                :invicible nil
+                                :position (cons 10 15)))
+         (phantoms
+          (loop for ghost in '(ghost-inky ghost-pinky ghost-blinky ghost-clyde)
+             as x = (random 25 rs) then (1+ (random 25 rs))
+             as y = (random 25 rs) then (1+ (random 25 rs))
+             collect (make-instance 'phantom
+                                    :image (make-instance 'entity-base
+                                                          :image (pal:tag ghost))
+                                    :position (cons x y)
+                                    :eaten nil))))
+    (loop for phantom in phantoms
+       do (with-slots (position) phantom
+            (setf (aref matrix (cdr position) (car position)) 1)))
+    (with-slots (position) pacman
+      (setf (aref matrix (cdr position) (car position)) 1))
+    (make-instance 'game
+                   :matrix matrix
+                   :pacman pacman
+                   :phantoms phantoms)))
+
+
+(defun load-game (number)
+  "Creates a new game object from an identified level."
+  (multiple-value-bind (matrix pacman-pos balls-pos ghosts-pos)
+      (load-level number)
+    (declare (ignore balls-pos))
+    (let ((pacman (make-instance 'pacman
+                                 :image (make-instance 'entity-base
+                                                       :image (pal:tag 'pacman))
+                                 :force nil
+                                 :invicible nil
+                                 :position pacman-pos))
+          (phantoms
+           (loop for ghost in '(ghost-inky ghost-pinky ghost-blinky ghost-clyde)
+              as i = 0 then (1+ i)
+              collect (make-instance 'phantom
+                                     :image (make-instance 'entity-base
+                                                           :image (pal:tag ghost))
+                                     :position (nth i ghosts-pos)
+                                     :eaten nil))))
+      (loop for phantom in phantoms
+         do (with-slots (position) phantom
+              (setf (aref matrix (cdr position) (car position)) 1)))
+      (with-slots (position) pacman
+        (setf (aref matrix (cdr position) (car position)) 1))
+      (make-instance 'game
+                     :matrix matrix
+                     :pacman pacman
+                     :phantoms phantoms))))
+
+
+(defun clacman (&optional username)
+  "Start a new Clacman game."
+  (pal:with-pal (:width +width+ :height +height+
+                 :fullscreenp nil :fps *speed*
+                 :paths (concatenate 'string *clacman-directory* "font/"))
+    (let ((game (load-game "0")) ;;(init-game))
+          (level 0)
+          (points 0)
+          (state :ready))
+      (with-slots (matrix phantoms pacman) game
+        (pal:event-loop ()
+          (case state
+
+            (:ready
+             (pal:test-keys
+               ;;(:key-a (display-about))
+               (:key-s (setf state :playing))
+               (:key-q (return-from pal:event-loop))))
+
+            (:paused
+             (pal:test-keys
+               (:key-p (setf state :playing))
+               (:key-q (return-from pal:event-loop))))
+
+            (:playing
+             (pal:test-keys
+               (:key-p (setf state :paused))
+               (:key-left (when *debug*
+                            (format t "~&Left "))
+                          (with-slots (position) pacman
+                            (let ((new-x (1- (car position)))
+                                  (new-y (cdr position)))
+                              (setf points
+                                    (+ points (get-points matrix new-x new-y)))
+                              (move pacman matrix new-x new-y))))
+               (:key-right (when *debug*
+                             (format t "~&Right"))
+                           (with-slots (position) pacman
+                             (let ((new-x (1+ (car position)))
+                                   (new-y (cdr position)))
+                               (setf points
+                                     (+ points (get-points matrix new-x new-y)))
+                               (move pacman matrix new-x new-y))))
+               (:key-up (when *debug*
+                          (format t "~&Up"))
+                        (with-slots (position) pacman
+                          (let ((new-x (car position))
+                                (new-y (1- (cdr position))))
+                            (setf points
+                                  (+ points (get-points matrix new-x new-y)))
+                             (move pacman matrix new-x new-y))))
+               (:key-down (when *debug*
+                            (format t "~&Down"))
+                          (with-slots (position) pacman
+                            (let ((new-x (car position))
+                                  (new-y (1+ (cdr position))))
+                              (setf points
+                                  (+ points (get-points matrix new-x new-y)))
+                             (move pacman matrix new-x new-y))))
+;;                (:key-space (when *debug*
+;;                              (format t "~&Space"))
+;;                            (loop for ghost in phantoms
+;;                               as pos = (next-position matrix
+;;                                                       (car (entity-position ghost))
+;;                                                       (cdr (entity-position ghost))
+;;                                                       (car (entity-position pacman))
+;;                                                       (cdr (entity-position pacman)))
+;;                               unless (or (null (first pos))
+;;                                          (null (second pos)))
+;;                               do (move ghost matrix (first pos) (second pos))))
+               (:key-h (when *debug*
+                         (format t "~&Help")))
+               (:key-q (return-from pal:event-loop)))))
+
+          (when (eq state :playing)
+            (loop for ghost in phantoms
+               as pos = (next-position matrix
+                                       (car (entity-position ghost))
+                                       (cdr (entity-position ghost))
+                                       (car (entity-position pacman))
+                                       (cdr (entity-position pacman)))
+               unless (or (null (first pos))
+                          (null (second pos)))
+               do (move ghost matrix (first pos) (second pos))))
+
+          (draw-game game level points username))))))
+
+;;; -*- Mode: Lisp; Syntax: Common-Lisp; Package: PTTPP; Base: 10; common-lisp-style: poem -*-
+
+;;; Copyright (c) 1986 Mark E. Stickel, SRI International, Menlo Park, CA 94025 USA
+;;; Copyright (c) 2012 Matthias Hölzl
+;;;
+;;; This file is licensed under the MIT license; see the file LICENSE
+;;; in the root directory for further information.
+
+(in-package #:pttpp)
+(declaim (optimize (debug 3)))
+
+(eval-when (:compile-toplevel :load-toplevel :execute)
+(defvar *integration-test-generators* '())
+
+(when (not (fboundp 'undefine-all-test-predicates))
+  (defun undefine-all-test-predicates ()
+    (undefine-predicates 'a 'b 'c 'd 'e 'f 'g 'h 'i 'j 'k 'l 'm
+                         'n 'o 'p 'q 'r 's 't 'u 'v 'w 'x 'y 'z
+                         'member)))
+
+(defmacro generate-integration-test (name &body body)
+  (let ((generator-name (let ((*print-case* :upcase))
+                          (intern (format nil "~A-GENERATOR" name)))))
+    (pushnew generator-name *integration-test-generators*)
+    `(defun ,generator-name ()
+       (let ((*print-compile-names* nil)
+             (*print-compile-times* nil)
+             (*print-execution-time* nil)
+             (*print-clauses* nil)
+             (*trace-search* nil)
+             (*print-proof* nil)
+             (*print-trail* nil)
+             (*print-success-notification* nil)
+             (*single-solution* t))
+         ,@body
+         (let ((bindings '())
+               (tests `((5am:is (= ,(rt-trail-index *runtime-data*)
+                                   (rt-trail-index *runtime-data*)))))
+               (counter 0))
+           (labels ((name (prefix)
+                      (intern (format nil "~A-~A" prefix (incf counter))))
+                    (walk (obj form)
+                      (cond ((variable-p obj)
+                             (let* ((name (name "VAR"))
+                                    (value (variable-value obj)))
+                               (push `(,name ,form) bindings)
+                               (push `(5am:is (= ',(variable-level obj)
+                                                 (variable-level ,name)))
+                                     tests)
+                               (push `(5am:is (eql ',(variable-name obj)
+                                                     (variable-name ,name)))
+                                     tests)
+                               (when (atom value)
+                                 (push `(5am:is (equalp ',value
+                                                        (variable-value ,name)))
+                                       tests))
+                               (walk value `(variable-value ,name))))
+                            ((consp obj)
+                             (let ((name (name "PRED")))
+                               (push `(,name ,form) bindings)
+                               (dotimes (i (length obj))
+                                 (if (zerop i)
+                                     (push `(5am:is (eql ',(nth i obj)
+                                                         (first ,name))) tests)
+                                     (let ((value (nth i obj)))
+                                       (when (atom value)
+                                         (push `(5am:is (equalp ',value
+                                                                (nth ,i ,name)))
+                                               tests))
+                                       (walk value `(nth ,i ,name)))))))
+                            (t
+                             ;; Do nothing
+                             nil))))
+             (dotimes (i (1+ (rt-trail-index *runtime-data*)))
+               (walk (aref (rt-trail-array *runtime-data*) i)
+                     `(aref (rt-trail-array *runtime-data*) ,i)))
+             `(define-integration-test ,',name
+                ,@',body
+                (let* (,@(nreverse bindings))
+                  ,@(nreverse tests)))))))))
+
+(defun run-all-generators (&optional (output-stream nil))
+  (let ((*print-case* :downcase)
+        (*print-circle* nil)
+        (*print-readably* t))
+    (format output-stream "~&~{#+5AM~%~W~2%~}"
+            (mapcar (lambda (g)
+                      (funcall g))
+                    (reverse *integration-test-generators*)))))
+
+(defun generate-integration-test-file (&optional (file-name "integration-tests.lisp"))
+  (with-open-file (stream file-name :direction :output :if-exists :supersede)
+    (format stream
+            "~
+;;; -*- Mode: Lisp; Syntax: Common-Lisp; Package: PTTPP; Base: 10; common-lisp-style: poem -*-
+
+;;; THIS FILE IS AUTOMATICALLY GENERATED BY THE INTEGRATION TEST GENERATOR.
+;;; Edit generate-integration-tests.lisp instead of this file.
+
+;;; Copyright (c) 1986 Mark E. Stickel, SRI International, Menlo Park, CA 94025 USA
+;;; Copyright (c) 2012 Matthias Hölzl
+;;;
+;;; This file is licensed under the MIT license; see the file LICENSE
+;;; in the root directory for further information.
+
+(in-package #:pttpp)
+(declaim (optimize (debug 3)))
+
+(defun undefine-all-test-predicates ()
+  (undefine-predicates 'a 'b 'c 'd 'e 'f 'g 'h 'i 'j 'k 'l 'm
+                       'n 'o 'p 'q 'r 's 't 'u 'v 'w 'x 'y 'z
+                       'member))
+
+")
+    (run-all-generators stream)))
+) ;; eval-when
+
+(generate-integration-test simple-integration-test-01
+  (undefine-all-test-predicates)
+  (program '()
+       '((f a b)
+         (<- (query) (f a b)))
+       :traceable nil)
+  (query)
+  (undefine-all-test-predicates))
+
+(generate-integration-test simple-integration-test-02
+  (undefine-all-test-predicates)
+  (program '(x y)
+       '((g a b)
+         (<- (f x y) (g x y))
+         (<- (query)
+              (f x b)))
+       :traceable nil)
+  (query)
+  (undefine-all-test-predicates))
+
+(generate-integration-test simple-integration-test-03
+  (undefine-all-test-predicates)
+  (program '(x y)
+       '((f a b)
+         (<- (query)
+          (and
+           (f x b)))))
+  (query)
+  (undefine-all-test-predicates))
+
+(generate-integration-test simple-integration-test-04
+  (undefine-all-test-predicates)
+  (program '(x y)
+       '((g a b)
+         (g c d)
+         (g a d)
+         (h a a)
+         (h a b)
+         (h c c)
+         (<- (f x y) (and (g x y) (h x x)))
+         (<- (query)
+          (and
+           (f x b)
+           (f c y)
+           (f x y)))))
+  (query)
+  (undefine-all-test-predicates))
+
+(generate-integration-test simple-integration-test-04a
+  (undefine-all-test-predicates)
+  (program '(x y)
+       '((g a b)
+         (g c d)
+         (g a d)
+         (h a a)
+         (h a b)
+         (h c c)
+         (<- (f x y) (and (g x y) (h x x)))
+         (<- (query)
+          (and
+           (f x d)
+           (f c y)
+           (f x y))))
+       :traceable nil)
+  (query)
+  (undefine-all-test-predicates))
+
+(generate-integration-test simple-integration-test-04b
+  (undefine-all-test-predicates)
+  (program '(x y)
+       '((g a b)
+         (g c d)
+         (g a d)
+         (h a b)
+         (h c c)
+         (<- (f x y) (and (g x y) (h x x)))
+         (<- (query)
+          (and
+           (f x b)
+           (f c y)
+           (f x y)))))
+  (query)
+  (undefine-all-test-predicates))
+
+(generate-integration-test simple-integration-test-05
+  (undefine-all-test-predicates)
+  (program '(x y)
+       '((g a b)
+         (g c d)
+         (g a d)
+         (h a a)
+         (h a b)
+         (h c c)
+         (<- (f x y) (or (g x y) (h x x)))
+         (<- (query)
+          (and
+           (f x b)
+           (f c y)
+           (f x y)))))
+  (query)
+  (undefine-all-test-predicates))
+
+(generate-integration-test simple-integration-test-06
+  (undefine-all-test-predicates)
+  (program '(x y zs)
+       '((member x (cons x zs))
+         (<- (member x (cons y zs))
+          (and (\\== x y) (member x zs)))
+         (<- (query)
+          (member x (cons a (cons b (cons c nil)))))))
+  (query)
+  (undefine-all-test-predicates))
+
+(generate-integration-test simple-integration-test-07
+  (undefine-all-test-predicates)
+  (program '(x y zs)
+       '((member x (cons x zs))
+         (<- (member x (cons y zs))
+          (and (\\== x y) (member x zs)))
+         (<- (query)
+          (search
+           (member x (cons a (cons b (cons c nil))))))))
+  (query)
+  (undefine-all-test-predicates))
+
+
+(generate-integration-test simple-integration-test-08
+  (undefine-all-test-predicates)
+  (program '(x y zs)
+       '((member x (cons x zs))
+         (<- (member x (cons y zs))
+          (member x zs))
+         (<- (query)
+          (search
+           (member x (cons a (cons b (cons c nil))))))))
+  (query)
+  (undefine-all-test-predicates))
+
+(generate-integration-test simple-integration-test-09
+  (undefine-all-test-predicates)
+  (program '(x y zs)
+       '((member x (cons x zs))
+         (<- (member x (cons y zs))
+          (member x zs))
+         (<- (query)
+          (search (member x y)
+           5))))
+  (query)
+  (undefine-all-test-predicates))
+
+(generate-integration-test simple-integration-test-09a
+  (undefine-all-test-predicates)
+  (program '(x y zs)
+       '((member x (cons x zs))
+         (<- (member x (cons y zs))
+          (member x zs))
+         (<- (query)
+          (search (member x y)
+           1000))))
+  (let ((*print-trail* nil))
+    (query))
+  (undefine-all-test-predicates))
+
+(generate-integration-test simple-integration-test-10
+  (undefine-all-test-predicates)
+  (program '(x y zs)
+       '((member x (cons x zs))
+         (<- (member x (cons y zs))
+          (and (\\== x y) (member x zs) !))
+         (<- (query)
+          (member x (cons a (cons b (cons c nil)))))))
+  (query)
+  (undefine-all-test-predicates))
+
+
+(generate-integration-test simple-integration-test-10a
+  (undefine-all-test-predicates)
+  (program '(x y zs)
+       '((member x (cons x zs))
+         (<- (member x (cons y zs))
+          (and (\\== x y) (member x zs) !))
+         (<- (query)
+           (search
+         (member x (cons a (cons b (cons c nil))))))))
+  (query)
+  (undefine-all-test-predicates))
+
+(generate-integration-test simple-integration-test-11
+  (undefine-all-test-predicates)
+  (program '(x y)
+       '((<- (query)
+          (and (= x a) (\\= x b)))))
+  (query)
+  (undefine-all-test-predicates))
+
+(generate-integration-test simple-integration-test-12
+  (undefine-all-test-predicates)
+  (program '(x y z)
+       '((<- (f x y) (~g x y))
+         (<- (g x y) (~f x y))
+         (<- (~g x y) (g y x))
+         (g a b)
+         (<- (query) (f x y))))
+  (query)
+  (undefine-all-test-predicates))
+
+(generate-integration-test simple-integration-test-13
+  (undefine-all-test-predicates)
+  (program '(x y z)
+       '((<- (f x y) (~g x y))
+             (<- (g x y) (~f x y))
+         (<- (g x y) (~g y x))
+         (g a b)
+         (<- (query) (f x y)))
+       :traceable nil)
+  (query)
+  (undefine-all-test-predicates))
+
+(generate-integration-test simple-integration-test-14
+  (undefine-all-test-predicates)
+  (program '(x y z)
+       '((<- (f x y) (~g x y))
+         (<- (g x y) (~f x y) )
+         (<- (~g x y) (and (\\= x y) (g y x)))
+         ;; (<- (= x y) (and (g x y) (g y x)))
+         (g a b)
+         (<- (query) (f x y)))
+       :traceable nil)
+  (query)
+  (undefine-all-test-predicates))
+
+(generate-integration-test simple-integration-test-14a
+  (undefine-all-test-predicates)
+  (program '(x y z)
+       '((<- (f x y) (~g x y))
+         (<- (g x y) (~f x y))
+         (<- (~g x y) (and (\\= x y) (g y x)))
+         ;; (<- (= x y) (and (g x y) (g y x)))
+         (g a b)
+         (<- (query) (~g x y)))
+       :traceable nil)
+  (query)
+  (undefine-all-test-predicates))
+
+(generate-integration-test simple-integration-test-14b
+  (undefine-all-test-predicates)
+  (program '(x y z)
+       '((<- (f x y) (~g x y))
+             ;; (<- (g x y) (~f x y))
+         (<- (~g x y) (and (g y x) (\\= x y)))
+         ;; (<- (= x y) (and (g x y) (g y x)))
+         (g a b)
+         (<- (query) (f x y)))
+       :traceable nil)
+  (query)
+  (undefine-all-test-predicates))
+
+(generate-integration-test simple-integration-test-14c
+  (undefine-all-test-predicates)
+  (program '(x y z)
+       '((<- (f x y) (~g x y))
+         ;; (<- (g x y) (~f x y))
+         (<- (g x y) (and (~g y x) (\\= x y)))
+         ;; (<- (= x y) (and (g x y) (g y x)))
+         (g a b)
+         (<- (query) (f x y)))
+       :traceable nil)
+  (query)
+  (undefine-all-test-predicates))
+
+(generate-integration-test simple-integration-test-15
+  (undefine-all-test-predicates)
+  (program '()
+           '((f a b)
+             (<- (query) (f a c))))
+  (query)
+  (undefine-all-test-predicates))
+
+(generate-integration-test simple-integration-test-16
+  (undefine-all-test-predicates)
+  (program '()
+           '((f a c)
+             (f b c)
+             (<- (query) (f a b))))
+  (query)
+  (undefine-all-test-predicates))
+
+(generate-integration-test simple-integration-test-17
+  (undefine-all-test-predicates)
+  (program '(x)
+           '((~some-pred a b)
+             (some-pred (f x) (g x))
+             (<- (query) (some-pred a b))))
+  (query)
+  (undefine-all-test-predicates))
+
+(generate-integration-test simple-integration-test-18
+  (undefine-all-test-predicates)
+  (program '(x y)
+           '((~f a b)
+             (-> (~f x y) (f y x))
+             (-> (f x y) (~f x y))
+             (<- (query) (f x y))))
+  (query)
+  (undefine-all-test-predicates))
+
+(generate-integration-test simple-integration-test-19
+  (undefine-all-test-predicates)
+  (program '(x y)
+           '((f a b)
+             (-> (~f x y) (~f y x))
+             (-> (f x y) (f y x))
+             (<- (query) (f x y))))
+  (query)
+  (undefine-all-test-predicates))
+
+(generate-integration-test simple-integration-test-20
+  (undefine-all-test-predicates)
+  (program '(x y)
+           '((~f a b)
+             (-> (~f x y) (~f y x))
+             (-> (f x y) (f y x))
+             (<- (query) (~f x y))))
+  (query)
+  (undefine-all-test-predicates))
+
+(generate-integration-test simple-integration-test-21
+  (undefine-all-test-predicates)
+  (program '(x y)
+           '((f a b)
+             (-> (f x y) (~f y x))
+             (<- (query) (~f x y))))
+  (query)
+  (undefine-all-test-predicates))
+
+(generate-integration-test simple-integration-test-22
+  (undefine-all-test-predicates)
+  (program '(x y)
+           '((f a b)
+             (-> (f x y) (~f y x))
+             (-> (~f x y) (f y x))
+             (<- (query) (~f x y))))
+  (query)
+  (undefine-all-test-predicates))
+
+(generate-integration-test simple-integration-test-23
+  (undefine-all-test-predicates)
+  (program '(x y)
+           '((f a b)
+             (-> (f x y) (~f y x))
+             (-> (~f x y) (f y x))
+             (<- (query) (f x y))))
+  (query)
+  (undefine-all-test-predicates))
+
+(generate-integration-test chang&lee-test-1
+  (undefine-all-test-predicates)
+  (program '(u v w x y z)
+       '((p (g x y) x y)
+         (p x (h x y) y)
+         (-> (and (p x y u) (p y z v) (p x v w)) (p u z w))
+         (-> (and (p x y u) (p y z v) (p u z w)) (p x v w))
+         (<- (query) (and (search (p (k x) x (k x))) !)))
+       :incomplete-inference t)
+  (query)
+  (undefine-all-test-predicates))
+
+(generate-integration-test chang&lee-test-2
+  (undefine-all-test-predicates)
+  (program '(u v w x y z)
+       '((p e x x)
+         (p x e x)
+         (p x x e)
+         (p a b c)
+         (-> (and (p x y u) (p y z v) (p x v w)) (p u z w))
+         (-> (and (p x y u) (p y z v) (p u z w)) (p x v w))
+         (<- (query) (and (search (p b a c)) !)))
+       :incomplete-inference t)
+  (query)
+  (undefine-all-test-predicates))
+
+(generate-integration-test chang&lee-test-3
+  (undefine-all-test-predicates)
+  (program '(u v w x y z)
+       '((p e x x)
+         (p (i x) x e)
+         (-> (and (p x y u) (p y z v) (p x v w)) (p u z w))
+         (-> (and (p x y u) (p y z v) (p u z w)) (p x v w))
+         (<- (query) (and (search (p a e a)) !)))
+       :incomplete-inference t)
+  (query)
+  (undefine-all-test-predicates))
+
+(generate-integration-test chang&lee-test-4
+  (undefine-all-test-predicates)
+  (program '(u v w x y z)
+       '((p e x x)
+         (p (i x) x e)
+         (-> (and (p x y u) (p y z v) (p x v w)) (p u z w))
+         (-> (and (p x y u) (p y z v) (p u z w)) (p x v w))
+         (<- (query) (and (search (p a x e)) !)))
+       :incomplete-inference t)
+  (query)
+  (undefine-all-test-predicates))
+
+(generate-integration-test chang&lee-test-5
+  (undefine-all-test-predicates)
+  (program '(u v w x y z)
+       '((p e x x)
+         (p x e x)
+         (p x (i x) e)
+         (p (i x) x e)
+         (s a)
+         (-> (and (s x) (s y) (p x (i y) z)) (s z))
+         (-> (and (p x y u) (p y z v) (p x v w)) (p u z w))
+         (-> (and (p x y u) (p y z v) (p u z w)) (p x v w))
+         (<- (query) (and (search (s e)) !)))
+       :incomplete-inference t)
+  (query)
+  (undefine-all-test-predicates))
+
+(generate-integration-test chang&lee-test-6
+  (undefine-all-test-predicates)
+  (program '(u v w x y z)
+       '((p e x x)
+         (p x e x)
+         (p x (i x) e)
+         (p (i x) x e)
+         (s a)
+         (-> (and (s x) (s y) (p x (i y) z)) (s z))
+         (-> (and (p x y u) (p y z v) (p x v w)) (p u z w))
+         (-> (and (p x y u) (p y z v) (p u z w)) (p x v w))
+         (<- (query) (and (search (s (i a))) !)))
+       :incomplete-inference t)
+  (query)
+  (undefine-all-test-predicates))
+
+(generate-integration-test chang&lee-test-7
+  (undefine-all-test-predicates)
+  (program '(u x y z)
+       '((p a)
+         (m a (s c) (s b))
+         (m x x (s x))
+         (or (~m x y z) (m y x z))
+         (or (~m x y z) (d x z))
+         (or (~p x) (~m y z u) (~d x u) (d x y) (d x z))
+         (<- (query) (and (search (d a b)) !))))
+  (query)
+  (undefine-all-test-predicates))
+
+(generate-integration-test chang&lee-test-8
+  (undefine-all-test-predicates)
+  (program '(x y z)
+       '((l 1 a)
+         (d x x)
+         (or (p x) (d (g x) x))
+         (or (p x) (l 1 (g x)))
+         (or (p x) (l (g x) x))
+         (or (~p x) (~d x a))		; negation of theorem
+         (or (~d x y) (~d y z) (d x z))
+         (or (~l 1 x) (~l x a) (p (f x)))
+         (or (~l 1 x) (~l x a) (d (f x) x))
+         (<- (query) (and (search (and (p x) (d x a))) !))))
+  (query)
+  (undefine-all-test-predicates))
+
+(generate-integration-test chang&lee-test-9
+  (undefine-all-test-predicates)
+  (program '(x y)
+       '((l x (f x))
+         (~l x x)
+         (or (~l x y) (~l y x))
+         (or (~d x (f y)) (l y x))
+         (or (p x) (d (h x) x))
+         (or (p x) (p (h x)))
+         (or (p x) (l (h x) x))
+         (or (~p x) (~l a x) (l (f a) x))	; negation of theorem
+         (<- (query) (and (search (and (p x) (l a x) (~l (f a) x))) !))))
+  (query)
+  (undefine-all-test-predicates))
+
+;;;; Copyright (c) 2011-2015 Henry Harrington <henry.harrington@gmail.com>
+;;;; This code is licensed under the MIT license.
+
+;;;; Basic cons-related functions.
+;;;; This file is loaded at bootstrap time and once more after the compiler
+;;;; is loaded, so it should only contain final versions of the functions.
+
+(in-package :sys.int)
+
+(declaim (inline caar cadr cdar cddr
+         (setf caar) (setf cadr)
+         (setf cdar) (setf cddr)))
+(defun caar (x)
+  (car (car x)))
+(defun cadr (x)
+  (car (cdr x)))
+(defun cdar (x)
+  (cdr (car x)))
+(defun cddr (x)
+  (cdr (cdr x)))
+(defun (setf caar) (value x)
+  (setf (car (car x)) value))
+(defun (setf cadr) (value x)
+  (setf (car (cdr x)) value))
+(defun (setf cdar) (value x)
+  (setf (cdr (car x)) value))
+(defun (setf cddr) (value x)
+  (setf (cdr (cdr x)) value))
+
+(defun caaar (x)
+  (car (car (car x))))
+(defun caadr (x)
+  (car (car (cdr x))))
+(defun cadar (x)
+  (car (cdr (car x))))
+(defun caddr (x)
+  (car (cdr (cdr x))))
+(defun cdaar (x)
+  (cdr (car (car x))))
+(defun cdadr (x)
+  (cdr (car (cdr x))))
+(defun cddar (x)
+  (cdr (cdr (car x))))
+(defun cdddr (x)
+  (cdr (cdr (cdr x))))
+(defun (setf caaar) (value x)
+  (setf (car (car (car x))) value))
+(defun (setf caadr) (value x)
+  (setf (car (car (cdr x))) value))
+(defun (setf cadar) (value x)
+  (setf (car (cdr (car x))) value))
+(defun (setf caddr) (value x)
+  (setf (car (cdr (cdr x))) value))
+(defun (setf cdaar) (value x)
+  (setf (cdr (car (car x))) value))
+(defun (setf cdadr) (value x)
+  (setf (cdr (car (cdr x))) value))
+(defun (setf cddar) (value x)
+  (setf (cdr (cdr (car x))) value))
+(defun (setf cdddr) (value x)
+  (setf (cdr (cdr (cdr x))) value))
+
+(defun caaaar (x)
+  (car (car (car (car x)))))
+(defun caaadr (x)
+  (car (car (car (cdr x)))))
+(defun caadar (x)
+  (car (car (cdr (car x)))))
+(defun caaddr (x)
+  (car (car (cdr (cdr x)))))
+(defun cadaar (x)
+  (car (cdr (car (car x)))))
+(defun cadadr (x)
+  (car (cdr (car (cdr x)))))
+(defun caddar (x)
+  (car (cdr (cdr (car x)))))
+(defun cadddr (x)
+  (car (cdr (cdr (cdr x)))))
+(defun cdaaar (x)
+  (cdr (car (car (car x)))))
+(defun cdaadr (x)
+  (cdr (car (car (cdr x)))))
+(defun cdadar (x)
+  (cdr (car (cdr (car x)))))
+(defun cdaddr (x)
+  (cdr (car (cdr (cdr x)))))
+(defun cddaar (x)
+  (cdr (cdr (car (car x)))))
+(defun cddadr (x)
+  (cdr (cdr (car (cdr x)))))
+(defun cdddar (x)
+  (cdr (cdr (cdr (car x)))))
+(defun cddddr (x)
+  (cdr (cdr (cdr (cdr x)))))
+(defun (setf caaaar) (value x)
+  (setf (car (car (car (car x)))) value))
+(defun (setf caaadr) (value x)
+  (setf (car (car (car (cdr x)))) value))
+(defun (setf caadar) (value x)
+  (setf (car (car (cdr (car x)))) value))
+(defun (setf caaddr) (value x)
+  (setf (car (car (cdr (cdr x)))) value))
+(defun (setf cadaar) (value x)
+  (setf (car (cdr (car (car x)))) value))
+(defun (setf cadadr) (value x)
+  (setf (car (cdr (car (cdr x)))) value))
+(defun (setf caddar) (value x)
+  (setf (car (cdr (cdr (car x)))) value))
+(defun (setf cadddr) (value x)
+  (setf (car (cdr (cdr (cdr x)))) value))
+(defun (setf cdaaar) (value x)
+  (setf (cdr (car (car (car x)))) value))
+(defun (setf cdaadr) (value x)
+  (setf (cdr (car (car (cdr x)))) value))
+(defun (setf cdadar) (value x)
+  (setf (cdr (car (cdr (car x)))) value))
+(defun (setf cdaddr) (value x)
+  (setf (cdr (car (cdr (cdr x)))) value))
+(defun (setf cddaar) (value x)
+  (setf (cdr (cdr (car (car x)))) value))
+(defun (setf cddadr) (value x)
+  (setf (cdr (cdr (car (cdr x)))) value))
+(defun (setf cdddar) (value x)
+  (setf (cdr (cdr (cdr (car x)))) value))
+(defun (setf cddddr) (value x)
+  (setf (cdr (cdr (cdr (cdr x)))) value))
+
+(declaim (inline first second
+         (setf first)
+         (setf second)))
+(defun first (x)
+  (car x))
+(defun second (x)
+  (car (cdr x)))
+(defun third (x)
+  (car (cdr (cdr x))))
+(defun fourth (x)
+  (car (cdr (cdr (cdr x)))))
+(defun fifth (x)
+  (car (cdr (cdr (cdr (cdr x))))))
+(defun sixth (x)
+  (car (cdr (cdr (cdr (cdr (cdr x)))))))
+(defun seventh (x)
+  (car (cdr (cdr (cdr (cdr (cdr (cdr x))))))))
+(defun eighth (x)
+  (car (cdr (cdr (cdr (cdr (cdr (cdr (cdr x)))))))))
+(defun ninth (x)
+  (car (cdr (cdr (cdr (cdr (cdr (cdr (cdr (cdr x))))))))))
+(defun tenth (x)
+  (car (cdr (cdr (cdr (cdr (cdr (cdr (cdr (cdr (cdr x)))))))))))
+(defun (setf first) (value x)
+  (setf (car x) value))
+(defun (setf second) (value x)
+  (setf (car (cdr x)) value))
+(defun (setf third) (value x)
+  (setf (car (cdr (cdr x))) value))
+(defun (setf fourth) (value x)
+  (setf (car (cdr (cdr (cdr x)))) value))
+(defun (setf fifth) (value x)
+  (setf (car (cdr (cdr (cdr (cdr x))))) value))
+(defun (setf sixth) (value x)
+  (setf (car (cdr (cdr (cdr (cdr (cdr x)))))) value))
+(defun (setf seventh) (value x)
+  (setf (car (cdr (cdr (cdr (cdr (cdr (cdr x))))))) value))
+(defun (setf eighth) (value x)
+  (setf (car (cdr (cdr (cdr (cdr (cdr (cdr (cdr x)))))))) value))
+(defun (setf ninth) (value x)
+  (setf (car (cdr (cdr (cdr (cdr (cdr (cdr (cdr (cdr x))))))))) value))
+(defun (setf tenth) (value x)
+  (setf (car (cdr (cdr (cdr (cdr (cdr (cdr (cdr (cdr (cdr x)))))))))) value))
+
+(declaim (inline rest (setf rest)))
+(defun rest (list)
+  (cdr list))
+(defun (setf rest) (value list)
+  (setf (cdr list) value))
+
+(declaim (inline rplaca rplacd))
+(defun rplaca (cons object)
+  "Replace the car of CONS with OBJECT, returning CONS."
+  (setf (car cons) object)
+  cons)
+(defun rplacd (cons object)
+  "Replace the cdr of CONS with OBJECT, returning CONS."
+  (setf (cdr cons) object)
+  cons)
+
+(declaim (inline atom))
+(defun atom (object)
+  "Returns true if OBJECT is of type atom; otherwise, returns false."
+  (not (consp object)))
+
+(declaim (inline listp))
+(defun listp (object)
+  "Returns true if OBJECT is of type (OR NULL CONS); otherwise, returns false."
+  (or (null object) (consp object)))
+
+(defun list-length (list)
+  "Returns the length of LIST if list is a proper list. Returns NIL if LIST is a circular list."
+  ;; Implementation from the HyperSpec
+  (do ((n 0 (+ n 2))             ; Counter.
+       (fast list (cddr fast))   ; Fast pointer: leaps by 2.
+       (slow list (cdr slow)))   ; Slow pointer: leaps by 1.
+      (nil)
+    ;; If fast pointer hits the end, return the count.
+    (when (endp fast) (return n))
+    (when (endp (cdr fast)) (return (1+ n)))
+    ;; If fast pointer eventually equals slow pointer,
+    ;;  then we must be stuck in a circular list.
+    (when (and (eq fast slow) (> n 0)) (return nil))))
+
+(defun dotted-list-length (list)
+  "Returns the length of LIST if list is a proper list. Returns NIL if LIST is a circular list."
+  ;; Implementation from the HyperSpec
+  (do ((n 0 (+ n 2))             ; Counter.
+       (fast list (cddr fast))   ; Fast pointer: leaps by 2.
+       (slow list (cdr slow)))   ; Slow pointer: leaps by 1.
+      (nil)
+    ;; If fast pointer hits the end, return the count.
+    (when (atom fast) (return n))
+    (when (atom (cdr fast)) (return (1+ n)))
+    ;; If fast pointer eventually equals slow pointer,
+    ;;  then we must be stuck in a circular list.
+    (when (and (eq fast slow) (> n 0)) (return nil))))
+
+(defun last (list &optional (n 1))
+  (check-type n (integer 0))
+  (do ((l list (cdr l))
+       (r list)
+       (i 0 (+ i 1)))
+      ((atom l)
+       r)
+    (if (>= i n)
+        (pop r))))
+
+(defun butlast (list &optional (n 1))
+  (do* ((result (cons nil nil))
+    (tail result (cdr tail))
+    (itr list (cdr itr)))
+       ((<= (length itr) n)
+    (cdr result))
+    (setf (cdr tail) (cons (car itr) nil))))
+
+(defun nthcdr (n list)
+  (dotimes (i n list)
+    (setf list (cdr list))))
+
+(defun nth (n list)
+  (car (nthcdr n list)))
+
+(defun (setf nth) (value n list)
+  (setf (car (nthcdr n list)) value))
+
+(defun append (&rest lists)
+  (do* ((head (cons nil nil))
+    (tail head)
+    (i lists (cdr i)))
+       ((null (cdr i))
+        (setf (cdr tail) (car i))
+    (cdr head))
+    (dolist (elt (car i))
+      (setf (cdr tail) (cons elt nil)
+            tail (cdr tail)))))
+
+(defun nconc (&rest lists)
+  (let ((start (do ((x lists (cdr x)))
+           ((or (null x) (car x)) x))))
+    (when start
+      (do ((list (last (car start)) (last list))
+       (i (cdr start) (cdr i)))
+      ((null (cdr i))
+       (setf (cdr list) (car i))
+       (car start))
+    (setf (cdr list) (car i))))))
+
+(defun reverse (sequence)
+  (if (listp sequence)
+      (let ((result '()))
+        (dolist (elt sequence result)
+          (setf result (cons elt result))))
+      (nreverse (make-array (length sequence)
+                            :element-type (array-element-type sequence)
+                            :initial-contents sequence))))
+
+(defun nreverse (sequence)
+  (if (vectorp sequence)
+      (dotimes (i (truncate (length sequence) 2) sequence)
+             (rotatef (aref sequence i) (aref sequence (- (length sequence) 1 i))))
+      (reverse sequence)))
+
+;; The following functional equivalences are true, although good implementations
+;; will typically use a faster algorithm for achieving the same effect:
+(defun revappend (list tail)
+  (nconc (reverse list) tail))
+(defun nreconc (list tail)
+  (nconc (nreverse list) tail))
+
+(defun single-mapcar (function list)
+  (do* ((result (cons nil nil))
+    (tail result (cdr tail))
+    (itr list (cdr itr)))
+       ((null itr)
+    (cdr result))
+    (setf (cdr tail) (cons (funcall function (car itr)) nil))))
+
+(defun mapcar (function list &rest more-lists)
+  (if more-lists
+      (do* ((lists (cons list more-lists))
+        (result (cons nil nil))
+        (tail result (cdr tail)))
+       (nil)
+    (do* ((call-list (cons nil nil))
+          (call-tail call-list (cdr call-tail))
+          (itr lists (cdr itr)))
+         ((null itr)
+              (setf (cdr tail) (cons (apply function (cdr call-list)) nil)))
+      (when (null (car itr))
+        (return-from mapcar (cdr result)))
+          (setf (cdr call-tail) (cons (caar itr) nil)
+                (car itr) (cdar itr))))
+      (single-mapcar function list)))
+
+(defun mapc (function list &rest more-lists)
+  (apply 'mapcar function list more-lists)
+  list)
+
+(defun maplist (function list &rest more-lists)
+  (when (null list)
+    (return-from maplist nil))
+  (dolist (l more-lists)
+    (when (null l)
+      (return-from maplist nil)))
+  (do* ((lists (cons list more-lists))
+    (result (cons nil nil))
+    (tail result (cdr tail)))
+       (nil)
+    (setf (cdr tail) (cons (apply function lists) nil))
+    (do ((itr lists (cdr itr)))
+    ((null itr))
+      (setf (car itr) (cdar itr))
+      (when (null (car itr))
+    (return-from maplist (cdr result))))))
+
+(defun mapcan (function list &rest more-lists)
+  (do* ((lists (cons list more-lists))
+    (result (cons nil nil))
+    (tail result (last tail)))
+       (nil)
+    (do* ((call-list (cons nil nil))
+      (call-tail call-list (cdr call-tail))
+      (itr lists (cdr itr)))
+     ((null itr)
+      (setf (cdr tail) (apply function (cdr call-list))))
+      (when (null (car itr))
+    (return-from mapcan (cdr result)))
+      (setf (cdr call-tail) (cons (caar itr) nil))
+      (setf (car itr) (cdar itr)))))
+
+(defun getf (plist indicator &optional default)
+  (do ((i plist (cddr i)))
+      ((null i) default)
+    (when (eq (car i) indicator)
+      (return (cadr i)))))
+
+(defun %putf (plist indicator value)
+  (do ((i plist (cddr i)))
+      ((null i)
+       (list* indicator value plist))
+    (when (eql (car i) indicator)
+      (setf (cadr i) value)
+      (return plist))))
+
+(define-setf-expander getf (place indicator &optional default &environment env)
+  (multiple-value-bind (temps vals stores
+                              store-form access-form)
+      (get-setf-expansion place env);Get setf expansion for place.
+    (let ((indicator-temp (gensym))
+          (store (gensym))     ;Temp var for byte to store.
+          (stemp (first stores))) ;Temp var for int to store.
+      (when (cdr stores) (error "Can't expand this."))
+      ;; Return the setf expansion for LDB as five values.
+      (values (list* indicator-temp temps)       ;Temporary variables.
+              (list* indicator vals)     ;Value forms.
+              (list store)             ;Store variables.
+              `(let ((,stemp (%putf ,access-form ,indicator-temp ,store)))
+                 ,default
+                 ,store-form
+                 ,store)               ;Storing form.
+              `(getf ,access-form ,indicator-temp ,default))))) ;Accessing form.
+
+(defun get (symbol indicator &optional default)
+  (getf (symbol-plist symbol) indicator default))
+
+(defun (setf get) (value symbol indicator &optional default)
+  (declare (ignore default))
+  (setf (getf (symbol-plist symbol) indicator) value))
+
+(declaim (inline assoc))
+(defun assoc (item alist &key key test test-not)
+  (when (and test test-not)
+    (error "TEST and TEST-NOT specified."))
+  (when test-not
+    (setf test (complement test-not)))
+  (unless test
+    (setf test 'eql))
+  (unless key
+    (setf key 'identity))
+  (dolist (i alist)
+    (when (and i
+               (funcall test item (funcall key (car i))))
+      (return i))))
+
+(declaim (inline member))
+(defun member (item list &key key test test-not)
+  (when (and test test-not)
+    (error "TEST and TEST-NOT specified."))
+  (when test-not
+    (setf test (complement test-not)))
+  (unless test
+    (setf test 'eql))
+  (unless key
+    (setf key 'identity))
+  (do ((i list (cdr i)))
+      ((endp i))
+    (when (funcall test item (funcall key (car i)))
+      (return i))))
+
+(defun member-if (predicate list)
+  (when list
+    (if (funcall predicate (first list))
+        list
+        (member-if predicate (rest list)))))
+
+(defun get-properties (plist indicator-list)
+  (do ((i plist (cddr i)))
+      ((null i)
+       (values nil nil nil))
+    (when (member (car i) indicator-list)
+      (return (values (first i) (second i) i)))))
+
+(defun list* (object &rest objects)
+  (declare (dynamic-extent object))
+  (if objects
+      (do* ((i objects (cdr i))
+        (result (cons object nil))
+        (tail result))
+       ((null (cdr i))
+        (setf (cdr tail) (car i))
+        result)
+    (setf (cdr tail) (cons (car i) nil)
+          tail (cdr tail)))
+      object))
+
+(defun make-list (size &key initial-element)
+  (check-type size (integer 0))
+  (let ((result '()))
+    (dotimes (i size)
+      (push initial-element result))
+    result))
+
+(defun acons (key datum alist)
+  (cons (cons key datum) alist))
+
+(defun sublis (alist tree &key) ; key test test-not
+  (flet ((sublis-one (thing)
+           (if (consp thing)
+               (sublis alist thing)
+               (let ((x (assoc thing alist)))
+                 (if x (cdr x) thing)))))
+    (cons (sublis-one (car tree))
+          (sublis-one (cdr tree)))))
+
+(defun pairlis (keys data &optional alist)
+  (assert (or (and keys data)
+              (and (not keys) (not data))))
+  (if keys
+      (cons (cons (car keys) (car data))
+            (pairlis (cdr keys) (cdr data) alist))
+      alist))
+
+(defun ldiff (list object)
+  (do ((list list (cdr list))
+       (r '() (cons (car list) r)))
+      ((atom list)
+       (if (eql list object) (nreverse r) (nreconc r list)))
+    (when (eql object list)
+      (return (nreverse r)))))
+
+(defun tailp (object list)
+   (do ((list list (cdr list)))
+       ((atom list) (eql list object))
+      (if (eql object list)
+          (return t))))
+
+(defun adjoin (item list &key key test test-not)
+  (if (member item list :key key :test test :test-not test-not)
+      list
+      (cons item list)))
+
+(defun subst (new old tree &key test)
+  (setf test (or test #'eql))
+  (cond ((funcall test old tree)
+         new)
+        ((atom tree) tree)
+        (t (let ((a (subst new old (car tree) :test test))
+                 (d (subst new old (cdr tree) :test test)))
+             (if (and (funcall test a (car tree))
+                      (funcall test d (cdr tree)))
+                 tree
+                 (cons a d))))))
+
+(declaim (inline endp))
+(defun endp (list)
+  (cond ((null list) t)
+        ((consp list) nil)
+        (t (error 'type-error
+                  :datum list
+                  :expected-type 'list))))
+
+(defun copy-tree (tree)
+  (if (consp tree)
+      (cons (copy-tree (car tree))
+            (copy-tree (cdr tree)))
+      tree))
+
+(defun rassoc-if (predicate alist &key key)
+  (unless key
+    (setf key 'identity))
+  (dolist (i alist)
+    (when (and i
+               (funcall predicate (funcall key (cdr i))))
+      (return i))))
+
+(defun rassoc-if-not (predicate alist &key key)
+  (rassoc-if (complement predicate) alist
+             :key key))
+
+(defun rassoc (item alist &key key test test-not)
+  (when (and test test-not)
+    (error "TEST and TEST-NOT specified."))
+  (when test-not
+    (setf test (complement test-not)))
+  (unless test
+    (setf test 'eql))
+  (rassoc-if (lambda (x) (funcall test item x))
+             alist
+             :key key))
+
+;;;; Copyright (c) 2011-2015 Henry Harrington <henry.harrington@gmail.com>
+;;;; This code is licensed under the MIT license.
+
+;;; High-level interrupt management.
+
+(in-package :mezzano.supervisor)
+
+(sys.int::define-lap-function ensure-on-wired-stack ()
+  (sys.lap-x86:push :rbp)
+  (:gc :no-frame :layout #*0)
+  (sys.lap-x86:mov64 :rbp :rsp)
+  (:gc :frame)
+  (sys.lap-x86:mov64 :rax :rsp)
+  (sys.lap-x86:mov64 :rcx #x200000000000)
+  (sys.lap-x86:sub64 :rax :rcx)
+  (sys.lap-x86:mov64 :rcx #x8000000000)
+  (sys.lap-x86:cmp64 :rax :rcx)
+  (sys.lap-x86:jae BAD)
+  (sys.lap-x86:xor32 :ecx :ecx)
+  (sys.lap-x86:leave)
+  (:gc :no-frame)
+  (sys.lap-x86:ret)
+  BAD
+  (sys.lap-x86:mov64 :r8 (:constant "Not on wired stack."))
+  (sys.lap-x86:mov64 :r13 (:function panic))
+  (sys.lap-x86:mov32 :ecx #.(ash 1 sys.int::+n-fixnum-bits+))
+  (sys.lap-x86:call (:object :r13 #.sys.int::+fref-entry-point+))
+  (sys.lap-x86:ud2))
+
+(declaim (inline ensure-interrupts-enabled ensure-interrupts-disabled))
+(defun ensure-interrupts-enabled ()
+  (when (not (sys.int::%interrupt-state))
+    (panic "Interrupts disabled when they shouldn't be.")))
+
+(defun ensure-interrupts-disabled ()
+  (when (sys.int::%interrupt-state)
+    (panic "Interrupts enabled when they shouldn't be.")))
+
+(defmacro without-interrupts (&body body)
+  "Execute body with local IRQs inhibited."
+  (let ((irq-state (gensym)))
+    `(let ((,irq-state (sys.int::%save-irq-state)))
+       (ensure-on-wired-stack)
+       (sys.int::%cli)
+       (unwind-protect
+            (progn ,@body)
+         (sys.int::%restore-irq-state ,irq-state)))))
+
+(defmacro safe-without-interrupts ((&rest captures) &body body)
+  "Execute body with local IRQs inhibited.
+This can be used when executing on any stack.
+RETURN-FROM/GO must not be used to leave this form."
+  (let ((sp (gensym))
+        (fp (gensym)))
+    (assert (<= (length captures) 3))
+    `(%call-on-wired-stack-without-interrupts
+      (lambda (,sp ,fp ,@captures)
+        (declare (ignore ,sp ,fp))
+        ,@body)
+      nil ,@captures)))
+
+;; (function unused &optional arg1 arg2 arg3)
+;; Call FUNCTION on the wired stack with interrupts disabled.
+;; FUNCTION must be a function, not a function designator.
+;; UNUSED should be NIL.
+;; FUNCTION will be called with the old stack pointer & frame pointer and
+;; any additional arguments.
+;; If %C-O-W-S-W-I is called with interrupts enabled, then it will switch over
+;; to the CPU's wired stack for the duration of the call.
+;; %C-O-W-S-W-I must not be exited using a non-local exit.
+;; %RESCHEDULE and similar functions must not be called.
+(sys.int::define-lap-function %call-on-wired-stack-without-interrupts ()
+  ;; Argument setup.
+  (sys.lap-x86:mov64 :rbx :r8) ; function
+  (sys.lap-x86:mov64 :r8 :rsp) ; sp
+  (sys.lap-x86:mov64 :r9 :rbp) ; fp
+  ;; Test if interrupts are enabled.
+  (sys.lap-x86:pushf)
+  (:gc :no-frame :layout #*0)
+  (sys.lap-x86:test64 (:rsp) #x200)
+  (sys.lap-x86:jnz INTERRUPTS-ENABLED)
+  ;; Interrupts are already disabled, tail-call to the function.
+  (sys.lap-x86:add64 :rsp 8) ; drop pushed flags.
+  (sys.lap-x86:jmp (:object :rbx 0))
+  INTERRUPTS-ENABLED
+  ;; Save the old stack pointer.
+  (sys.lap-x86:mov64 (:rsp) :rbp) ; overwrite the saved interrupt state.
+  (sys.lap-x86:mov64 :rbp :rsp)
+  (:gc :frame)
+  ;; Disable interrupts after setting up the frame, not before.
+  ;; Modifying the normal stack may cause page-faults which can't
+  ;; occur with interrupts disabled.
+  (sys.lap-x86:cli)
+  ;; Switch over to the wired stack.
+  (sys.lap-x86:fs)
+  (sys.lap-x86:mov64 :rsp (#.+cpu-info-wired-stack-offset+))
+  ;; Call function, argument were setup above.
+  (sys.lap-x86:call (:object :rbx 0))
+  (:gc :frame :multiple-values 0)
+  ;; Switch back to the old stack.
+  ;; Do not restore :RBP here, that would touch the old stack with
+  ;; interrupts disabled.
+  (sys.lap-x86:mov64 :rsp :rbp)
+  (:gc :no-frame :multiple-values 0)
+  ;; Reenable interrupts, must not be done when on the wired stack.
+  (sys.lap-x86:sti)
+  ;; Now safe to restore :RBP.
+  (sys.lap-x86:pop :rbp)
+  ;; Done, return.
+  (sys.lap-x86:ret))
+
+(defun place-spinlock-initializer ()
+  :unlocked)
+
+(defmacro initialize-place-spinlock (place)
+  `(setf ,place (place-spinlock-initializer)))
+
+(defmacro acquire-place-spinlock (place)
+  (let ((self (gensym)))
+    `(let ((,self (current-thread)))
+       (ensure-interrupts-disabled)
+       ;; TODO... Need generic CAS, but this can wait until SMP support.
+       (when (not (eql ,place :unlocked))
+         (panic "Place spinlock " ',place " held by " ,place))
+       (setf ,place ,self))))
+
+(defmacro release-place-spinlock (place)
+  `(setf ,place :unlocked))
+
+(defmacro with-place-spinlock ((place) &body body)
+  `(progn
+     (acquire-place-spinlock ,place)
+     (unwind-protect
+          (progn ,@body)
+       (release-place-spinlock ,place))))
+
+(defmacro with-symbol-spinlock ((lock) &body body)
+  (check-type lock symbol)
+  `(with-place-spinlock ((sys.int::symbol-global-value ',lock))
+     ,@body))
+
+;;; Low-level interrupt support.
+
+(defvar *user-interrupt-handlers*)
+
+(defun initialize-interrupts ()
+  "Called when the system is booted to reset all user interrupt handlers."
+  ;; Avoid high-level array/seq functions.
+  ;; fixme: allocation should be done once (by the cold-gen?)
+  ;; but the reset should be done every boot.
+  (when (not (boundp '*user-interrupt-handlers*))
+    (setf *user-interrupt-handlers* (sys.int::make-simple-vector 256 :wired)))
+  (dotimes (i 256)
+    (setf (svref *user-interrupt-handlers* i) nil)))
+
+(defun hook-user-interrupt (interrupt handler)
+  (check-type handler (or null function symbol))
+  (setf (svref *user-interrupt-handlers* interrupt) handler))
+
+(defun unhandled-interrupt (interrupt-frame info name)
+  (declare (ignore interrupt-frame info))
+  (panic "Unhandled " name " interrupt."))
+
+;;; Mid-level interrupt handlers, called by the low-level assembly code.
+
+(defun sys.int::%divide-error-handler (interrupt-frame info)
+  (unhandled-interrupt interrupt-frame info "divide error"))
+
+(defun sys.int::%debug-exception-handler (interrupt-frame info)
+  (unhandled-interrupt interrupt-frame info "debug exception"))
+
+(defun sys.int::%nonmaskable-interrupt-handler (interrupt-frame info)
+  (unhandled-interrupt interrupt-frame info "nonmaskable"))
+
+(defun sys.int::%breakpoint-handler (interrupt-frame info)
+  (unhandled-interrupt interrupt-frame info "breakpoint"))
+
+(defun sys.int::%overflow-handler (interrupt-frame info)
+  (unhandled-interrupt interrupt-frame info "overflow"))
+
+(defun sys.int::%bound-exception-handler (interrupt-frame info)
+  (unhandled-interrupt interrupt-frame info "bound exception"))
+
+(defun sys.int::%invalid-opcode-handler (interrupt-frame info)
+  (unhandled-interrupt interrupt-frame info "invalid opcode"))
+
+(defun sys.int::%device-not-available-handler (interrupt-frame info)
+  (unhandled-interrupt interrupt-frame info "device not available"))
+
+(defun sys.int::%double-fault-handler (interrupt-frame info)
+  (unhandled-interrupt interrupt-frame info "double fault"))
+
+(defun sys.int::%invalid-tss-handler (interrupt-frame info)
+  (unhandled-interrupt interrupt-frame info "invalid tss"))
+
+(defun sys.int::%segment-not-present-handler (interrupt-frame info)
+  (unhandled-interrupt interrupt-frame info "segment not present"))
+
+(defun sys.int::%stack-segment-fault-handler (interrupt-frame info)
+  (unhandled-interrupt interrupt-frame info "stack segment fault"))
+
+(defun sys.int::%general-protection-fault-handler (interrupt-frame info)
+  (unhandled-interrupt interrupt-frame info "general protection fault"))
+
+;;; Bits in the page-fault error code.
+(defconstant +page-fault-error-present+ 0
+  "If set, the fault was caused by a page-level protection violation.
+If clear, the fault was caused by a non-present page.")
+(defconstant +page-fault-error-write+ 1
+  "If set, the fault was caused by a write.
+If clear, the fault was caused by a read.")
+(defconstant +page-fault-error-user+ 2
+  "If set, the fault occured in user mode.
+If clear, the fault occured in supervisor mode.")
+(defconstant +page-fault-error-reserved-violation+ 3
+  "If set, the fault was caused by a reserved bit violation in a page directory.")
+(defconstant +page-fault-error-instruction+ 4
+  "If set, the fault was caused by an instruction fetch.")
+
+(defvar *pagefault-hook* nil)
+
+(defun fatal-page-fault (interrupt-frame info reason address)
+  (declare (ignore interrupt-frame info))
+  (panic reason " on address " address))
+
+(defun sys.int::%page-fault-handler (interrupt-frame info)
+  (let* ((fault-addr (sys.int::%cr2)))
+    (when (and (boundp '*pagefault-hook*)
+               *pagefault-hook*)
+      (funcall *pagefault-hook* interrupt-frame info fault-addr))
+    (cond ((not *paging-disk*)
+           (fatal-page-fault interrupt-frame info "Early page fault" fault-addr))
+          ((not (logtest #x200 (interrupt-frame-raw-register interrupt-frame :rflags)))
+           ;; IRQs must be enabled when a page fault occurs.
+           (fatal-page-fault interrupt-frame info "Page fault with interrupts disabled" fault-addr))
+          ((or (<= 0 fault-addr (1- (* 2 1024 1024 1024)))
+               (<= (ash sys.int::+address-tag-stack+ sys.int::+address-tag-shift+)
+                   fault-addr
+                   (+ (ash sys.int::+address-tag-stack+ sys.int::+address-tag-shift+)
+                      (* 512 1024 1024 1024))))
+           ;; Pages below 2G are wired and should never be unmapped or protected.
+           ;; Same for pages in the wired stack area.
+           (fatal-page-fault interrupt-frame info "Page fault in wired area" fault-addr))
+          ((and (logbitp +page-fault-error-present+ info)
+                (logbitp +page-fault-error-write+ info))
+           ;; Copy on write page, might not return.
+           (snapshot-clone-cow-page-via-page-fault interrupt-frame fault-addr))
+          ;; All impossible.
+          ((or (logbitp +page-fault-error-present+ info)
+               (logbitp +page-fault-error-user+ info)
+               (logbitp +page-fault-error-reserved-violation+ info))
+           (fatal-page-fault interrupt-frame info "Page fault" fault-addr))
+          (t ;; Non-present page. Try to load it from the store.
+           ;; Might not return.
+           (wait-for-page-via-interrupt interrupt-frame fault-addr)))))
+
+(defun sys.int::%math-fault-handler (interrupt-frame info)
+  (unhandled-interrupt interrupt-frame info "math fault"))
+
+(defun sys.int::%alignment-check-handler (interrupt-frame info)
+  (unhandled-interrupt interrupt-frame info "alignment check"))
+
+(defun sys.int::%machine-check-handler (interrupt-frame info)
+  (unhandled-interrupt interrupt-frame info "machine check"))
+
+(defun sys.int::%simd-exception-handler (interrupt-frame info)
+  (unhandled-interrupt interrupt-frame info "simd exception"))
+
+(defun sys.int::%user-interrupt-handler (interrupt-frame info)
+  (let ((handler (svref *user-interrupt-handlers* info)))
+    (if handler
+        (funcall handler interrupt-frame info)
+        (unhandled-interrupt interrupt-frame info "user"))))
+
+;;; i8259 PIC support.
+
+(defconstant +i8259-base-interrupt+ 32)
+
+;; These are all initialized during early boot,
+;; The defvars will be run during cold load, but never see the symbols as unbound.
+(defvar *i8259-shadow-mask* nil
+  "Caches the current IRQ mask, so it doesn't need to be read from the PIC when being modified.")
+(defvar *i8259-spinlock* nil ; should be defglobal or something. defspinlock.
+  "Lock serializing access to i8259 and associated variables.")
+(defvar *i8259-handlers* nil)
+
+(defun i8259-interrupt-handler (interrupt-frame info)
+  (declare (ignore interrupt-frame))
+  (let ((irq (- info +i8259-base-interrupt+)))
+    (dolist (handler (svref *i8259-handlers* irq))
+      (funcall handler interrupt-frame irq))
+    ;; Send EOI.
+    (with-symbol-spinlock (*i8259-spinlock*)
+      (setf (sys.int::io-port/8 #x20) #x20)
+      (when (>= irq 8)
+        (setf (sys.int::io-port/8 #xA0) #x20)))))
+
+(defun i8259-mask-irq (irq)
+  (check-type irq (integer 0 15))
+  (without-interrupts
+    (with-symbol-spinlock (*i8259-spinlock*)
+      (when (not (logbitp irq *i8259-shadow-mask*))
+        ;; Currently unmasked, mask it.
+        (setf (ldb (byte 1 irq) *i8259-shadow-mask*) 1)
+        (if (< irq 8)
+            (setf (sys.int::io-port/8 #x21) (ldb (byte 8 0) *i8259-shadow-mask*))
+            (setf (sys.int::io-port/8 #xA1) (ldb (byte 8 8) *i8259-shadow-mask*)))))))
+
+(defun i8259-unmask-irq (irq)
+  (check-type irq (integer 0 15))
+  (without-interrupts
+    (with-symbol-spinlock (*i8259-spinlock*)
+      (when (logbitp irq *i8259-shadow-mask*)
+        ;; Currently masked, unmask it.
+        (setf (ldb (byte 1 irq) *i8259-shadow-mask*) 0)
+        (if (< irq 8)
+            (setf (sys.int::io-port/8 #x21) (ldb (byte 8 0) *i8259-shadow-mask*))
+            (setf (sys.int::io-port/8 #xA1) (ldb (byte 8 8) *i8259-shadow-mask*)))))))
+
+(defun i8259-hook-irq (irq handler)
+  (check-type handler (or null function symbol))
+  (push-wired handler (svref *i8259-handlers* irq)))
+
+(defun initialize-i8259 ()
+  ;; TODO: do the APIC & IO-APIC as well.
+  (when (not (boundp '*i8259-handlers*))
+    (setf *i8259-handlers* (sys.int::make-simple-vector 16 :wired)
+          ;; fixme: do at cold-gen time.
+          *i8259-spinlock* :unlocked))
+  (dotimes (i 16)
+    (setf (svref *i8259-handlers* i) nil))
+  ;; Hook interrupts.
+  (dotimes (i 16)
+    (hook-user-interrupt (+ +i8259-base-interrupt+ i)
+                         'i8259-interrupt-handler))
+  ;; Initialize both i8259 chips.
+  (setf (sys.int::io-port/8 #x20) #x11
+        (sys.int::io-port/8 #xA0) #x11
+        (sys.int::io-port/8 #x21) +i8259-base-interrupt+
+        (sys.int::io-port/8 #xA1) (+ +i8259-base-interrupt+ 8)
+        (sys.int::io-port/8 #x21) #x04
+        (sys.int::io-port/8 #xA1) #x02
+        (sys.int::io-port/8 #x21) #x01
+        (sys.int::io-port/8 #xA1) #x01
+        ;; Mask all IRQs.
+        (sys.int::io-port/8 #x21) #xFF
+        (sys.int::io-port/8 #xA1) #xFF)
+  (setf *i8259-shadow-mask* #xFFFF)
+  ;; Unmask the cascade IRQ, required for the 2nd chip to function.
+  (i8259-unmask-irq 2))
+
+;;; Introspection.
+
+(eval-when (:compile-toplevel :load-toplevel :execute)
+(defun interrupt-frame-register-offset (register)
+  (ecase register
+    (:ss   5)
+    (:rsp  4)
+    (:rflags 3)
+    (:cs   2)
+    (:rip  1)
+    (:rbp  0)
+    (:rax -1)
+    (:rcx -2)
+    (:rdx -3)
+    (:rbx -4)
+    (:rsi -5)
+    (:rdi -6)
+    (:r8  -7)
+    (:r9  -8)
+    (:r10 -9)
+    (:r11 -10)
+    (:r12 -11)
+    (:r13 -12)
+    (:r14 -13)
+    (:r15 -14)))
+)
+
+(define-compiler-macro interrupt-frame-raw-register (&whole whole frame register)
+  (let ((offset (ignore-errors (interrupt-frame-register-offset register))))
+    (if offset
+        `(sys.int::memref-signed-byte-64 (interrupt-frame-pointer ,frame)
+                                         ,offset)
+        whole)))
+
+(define-compiler-macro (setf interrupt-frame-raw-register) (&whole whole value frame register)
+  (let ((offset (ignore-errors (interrupt-frame-register-offset register))))
+    (if offset
+        `(setf (sys.int::memref-signed-byte-64 (interrupt-frame-pointer ,frame)
+                                               ,offset)
+               ,value)
+        whole)))
+
+(define-compiler-macro interrupt-frame-value-register (&whole whole frame register)
+  (let ((offset (ignore-errors (interrupt-frame-register-offset register))))
+    (if offset
+        `(sys.int::memref-t (interrupt-frame-pointer ,frame) ,offset)
+        whole)))
+
+(define-compiler-macro (setf interrupt-frame-value-register) (&whole whole value frame register)
+  (let ((offset (ignore-errors (interrupt-frame-register-offset register))))
+    (if offset
+        `(setf (sys.int::memref-t (interrupt-frame-pointer ,frame) ,offset)
+               ,value)
+        whole)))
+
+(defun interrupt-frame-pointer (frame)
+  (sys.int::%object-ref-t frame 0))
+
+(defun interrupt-frame-raw-register (frame register)
+  (sys.int::memref-unsigned-byte-64 (interrupt-frame-pointer frame)
+                                    (interrupt-frame-register-offset register)))
+
+(defun (setf interrupt-frame-raw-register) (value frame register)
+  (setf (sys.int::memref-unsigned-byte-64 (interrupt-frame-pointer frame)
+                                          (interrupt-frame-register-offset register))
+        value))
+
+(defun interrupt-frame-value-register (frame register)
+  (sys.int::memref-t (interrupt-frame-pointer frame)
+                     (interrupt-frame-register-offset register)))
+
+(defun (setf interrupt-frame-value-register) (value frame register)
+  (setf (sys.int::memref-t (interrupt-frame-pointer frame)
+                           (interrupt-frame-register-offset register))
+        value))

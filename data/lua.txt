@@ -1,0 +1,1285 @@
+-------------------------------------------------------------------
+-- This software is released under the terms of the MIT License
+--
+-- Permission is hereby granted, free of charge, to any person obtaining a copy
+-- of this software and associated documentation files (the "Software"), to deal
+-- in the Software without restriction, including without limitation the rights
+-- to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+-- copies of the Software, and to permit persons to whom the Software is
+-- furnished to do so, subject to the following conditions:
+--
+-- The above copyright notice and this permission notice shall be included in
+-- all copies or substantial portions of the Software.
+--
+-- THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+-- IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+-- FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+-- AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+-- LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+-- OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+-- THE SOFTWARE.
+--
+-- @copyright  2009-2012 Roberto Perpuly
+-- @license    http://www.opensource.org/licenses/mit-license.php The MIT License
+-------------------------------------------------------------------
+
+dofile "premake_functions.lua"
+dofile "premake_action_generate.lua"
+
+newoption {
+    trigger = "icu-include",
+    value = "path",
+    description = "Directory Location of the ICU header files. " ..
+    "This option should only be used on Win32 systems"
+}
+
+newoption {
+    trigger = "icu-lib",
+    value = "path",
+    description = "Directory Location of the ICU library shared object files. " ..
+    "This option should only be used on Win32 systems"
+}
+
+newoption {
+    trigger = "icu-config",
+    value = "path",
+    description = "File location of the icu-config binary. If given, " ..
+        "it will be used to get the appropriate compiler and linker flags. " ..
+        "This option should only be used on linux systems"
+}
+
+-- these are the ICU unicode string libraries (in Win32)
+ICU_LIBS_RELEASE = {
+       "icudt", "icuin", "icuio", "icule",
+       "iculx", "icutu", "icuuc"
+}
+
+-- these are the ICU unicode string libraries (in Win32)
+ICU_LIBS_DEBUG = {
+       "icudt", "icuind", "icuiod", "iculed",
+       "iculxd", "icutud", "icuucd"
+}
+
+-- this configuration uses the command line options to get the ICU header & library locations
+function icuconfiguration(config, action)
+    if config == "Debug" and _OPTIONS['icu-include'] then
+        includedirs { _OPTIONS['icu-include'] }
+        libdirs { _OPTIONS['icu-lib'] }
+        links { ICU_LIBS_DEBUG }
+    elseif config == "Release" and _OPTIONS['icu-include'] then
+        includedirs { _OPTIONS['icu-include'] }
+        libdirs { _OPTIONS['icu-lib'] }
+        links { ICU_LIBS_RELEASE }
+    elseif _OPTIONS['icu-config'] then
+
+        -- use the execution operator '``' because the icu-config program
+        -- will be used to generate the correct compile and linker flags
+        buildoptions { "`" .. _OPTIONS['icu-config'] .. " --cppflags`" }
+        linkoptions { "`" .. _OPTIONS['icu-config'] .. " --ldflags --ldflags-icuio`" }
+    end
+end
+
+function pickywarnings(action)
+    if action == "vs2008" then
+        flags { "FatalWarnings" }
+    elseif action == "gmake" or action == "codelite" then
+
+        -- when compiling strict warning checks; also check against variable length arrays
+        -- since Visual Studio is not C99 compliant
+        buildoptions { "-Wall", "-Wvla"  }
+    end
+end
+
+if ((not _OPTIONS.help) and (_ACTION ~= 'clean') and (_ACTION ~= 'generate')) then
+    if ((not _OPTIONS['icu-include']) and (not _OPTIONS['icu-config'])) then
+        error("Missing one of --icu-include or --icu-config. See --help for details")
+    end
+end
+
+-- solution directory structure
+-- the toolset files will be deposited in the build/ directory
+-- each toolset will have its own directory
+-- the executable files will be placed in the configuration directory (Debug/ or Release/)
+-- compile flags will be set to be stricter than normal
+solution "pelet"
+    if _ACTION then
+        location ("build/" .. _ACTION)
+    end
+    configurations { "Debug", "Release"}
+    configuration "Debug"
+        objdir "Debug"
+        targetdir "Debug"
+        flags { "Symbols" }
+    configuration "Release"
+        objdir "Release"
+        targetdir "Release"
+    configuration { "Debug", "vs2008" }
+
+        -- prevent "warning LNK4098: defaultlib 'MSVCRTD' conflicts with use of other libs; use /NODEFAULTLIB:library"
+        buildoptions { "/MDd" }
+
+    project "sample"
+        language "C++"
+        kind "ConsoleApp"
+        files { "sample/sample.cpp" }
+        includedirs { "include" }
+        links { "pelet", "tests" }
+        defines { "PELET_USE_DLL" }
+
+        configuration "Release"
+            pickywarnings(_ACTION)
+            icuconfiguration("Release", _ACTION)
+        configuration { "Debug", "vs2008" }
+            icuconfiguration("Debug", _ACTION)
+            postbuildcommands { "cd " .. normalizepath("Debug") .. " && tests.exe" }
+        configuration { "Debug", "gmake or codelite" }
+            icuconfiguration("Debug", _ACTION)
+            postbuildcommands { "cd " .. normalizepath("Debug") .. " && ./tests" }
+        configuration { "Release", "vs2008" }
+            icuconfiguration("Debug", _ACTION)
+            postbuildcommands { "cd " .. normalizepath("Release") .. " && tests.exe"  }
+        configuration { "Release", "gmake or codelite" }
+            icuconfiguration("Debug", _ACTION)
+            postbuildcommands { "cd " .. normalizepath("Release") .. " && ./tests" }
+
+    project "pelet"
+        language "C++"
+        kind "SharedLib"
+        files { "src/*", "include/**", "*.lua", "src/**.re", "src/**.y", "README.md", "ChangeLog" }
+        includedirs { "include" }
+        defines { "PELET_MAKING_DLL" }
+        pickywarnings(_ACTION)
+        configuration "Release"
+            icuconfiguration("Release", _ACTION)
+        configuration { "Debug" }
+            icuconfiguration("Debug", _ACTION)
+
+    project "tests"
+        language "C++"
+        kind "ConsoleApp"
+        files {
+            "tests/**.cpp",
+            "tests/**.h"
+        }
+        includedirs { "include/", "lib/UnitTest++/src/", "tests/" }
+        links { "pelet", "unit_test++" }
+        defines { "PELET_USE_DLL" }
+
+        -- dont bother with warnings  with using 'unsafe' fopen
+        configuration { "vs2008" }
+            defines { "_CRT_SECURE_NO_WARNINGS" }
+
+        configuration { "gmake or codelite" }
+
+            -- make it so that the test executable can find the pelet shared lib
+            linkoptions { "-Wl,-rpath=./" }
+
+        configuration "Debug"
+            pickywarnings(_ACTION)
+            icuconfiguration("Debug", _ACTION)
+        configuration "Release"
+            pickywarnings(_ACTION)
+            icuconfiguration("Release", _ACTION)
+
+
+    project "unit_test++"
+        language "C++"
+        kind "StaticLib"
+        files { "lib/UnitTest++/src/*.cpp" }
+
+        -- enable the "Use Unicode Character Set" option under General .. Character Set
+        -- enable Stuctured Exception Handling needed by UnitTest++
+        flags { "Unicode", "SEH" }
+
+        -- For this project, no need to differentiate between Debug or Release
+        configuration { "vs2008" }
+            files { "lib/UnitTest++/src/Win32/*.cpp" }
+
+            -- dont bother with warnings  with using 'unsafe' strcopy
+            defines { "_CRT_SECURE_NO_WARNINGS", "_LIB" }
+
+        configuration { "gmake or codelite" }
+            files { "lib/UnitTest++/src/Posix/*.cpp" }
+
+    project "unit_test++_test"
+        language "C++"
+        kind "ConsoleApp"
+        links { "unit_test++" }
+        files { "lib/UnitTest++/src/tests/*.cpp" }
+
+        -- enable Stuctured Exception Handling needed by UnitTest++
+        flags { "SEH" }
+
+        -- enable the "Use Unicode Character Set" option under General .. Character Set
+        flags { "Unicode" }
+        configuration { "vs2008" }
+
+            -- dont bother with warnings  with using 'unsafe' strcopy
+            defines { "_CRT_SECURE_NO_WARNINGS" }
+            flags { "WinMain" }
+
+        -- For this project, no need to differentiate between Debug or Release
+
+-- `expect` expansion and execution.
+-- Written by Gary V. Vaughan, 2015
+--
+-- Copyright (c) 2015 Gary V. Vaughan
+--
+-- Specl is free software distributed under the terms of the MIT license;
+-- it may be used for any purpose, including commercial purposes, at
+-- absolutely no cost without having to ask permission.
+--
+-- The only requirement is that if you do use Specl, then you should give
+-- credit by including the appropriate copyright notice somewhere in your
+-- product or its documentation.
+--
+-- You should have received a copy of the MIT license along with this
+-- program; see the file LICENSE.  If not, a copy can be downloaded from
+-- <http://www.opensource.org/licenses/mit-license.html>.
+
+
+local macro    = require "macro"
+local matchers = require "specl.matchers"
+local std      = require "specl.std"
+
+local getmatcher = matchers.getmatcher
+
+
+
+--[[ =============================================================== ]]--
+--[[ @({'_'})@ patches for LuaMacro until next release is available. ]]--
+--[[ =============================================================== ]]--
+
+local TokenList = require "macro.TokenList"
+local lexer = require "macro.lexer"
+
+--- Get a list of consecutive matching tokens.
+-- @param get token fetching function
+-- @param[opt={space=true,comment=true}] accept set of token types
+local function matching (get, accept)
+  accept = accept or {space = true, comment = true}
+  local tl = TokenList.new ()
+  local t, v = get:peek (1, true)
+  while accept[t] do
+    t,v = get ()
+    table.insert (tl, {t, v})
+    t,v = get:peek (1, true)
+  end
+  return tl
+end
+
+
+--- Copy non-semantic tokens from *get* to *put*.
+-- @param get token fetching function
+-- @param put token writing function
+local function spacing (get, put)
+  return put:tokens (get:matching ())
+end
+
+
+-- Raise a syntax error().
+-- @string msg error message
+-- @param[opt] ... arguments for msg format
+local function syntax_error (msg, ...)
+  msg = string.format ("%s: %d: syntax error ", macro.filename, lexer.line) .. msg
+  if select ("#", ...) == 0 then
+    error (msg, 0)
+  else
+    error (string.format (msg, ...), 0)
+  end
+end
+
+
+
+--[[ ============== ]]--
+--[[ Reader Macros. ]]--
+--[[ ============== ]]--
+
+
+macro.define ("expect", function (get)
+  local expr
+  local tk, v = get:peek (1)
+  if v == "(" then
+    get:next ()
+    expr = tostring (get:upto ")")
+  elseif v == "{" then
+    get:next ()
+    expr = "{" .. tostring (get:upto "}") .. "}"
+  elseif tk == "string" then
+    tk, expr = get:next ()
+  end
+  if expr == nil then -- pass through 'expect' token
+    return nil, true
+  end
+  return " (pcall (function () return " .. expr .. " end))", true
+end)
+
+
+-- Transform between decorators.
+macro.define ("between", function (get)
+  local expr
+  local tk, v = get:peek (1)
+  if v == "(" then
+    get:next ()
+    expr = "(" .. tostring (get:upto ")") .. ")"
+  elseif v == "{" then
+    get:next ()
+    expr = "{" .. tostring (get:upto "}") .. "}"
+  elseif tk == "string" then
+    tk, expr = get:next ()
+  end
+  if expr == nil then -- pass through 'between' token
+    return nil, true
+  end
+  tk, v = get:peek (1)
+  if v ~= "." then return " " .. expr, true end
+  get:next () -- consume '.'
+  tk, v = get:next ()
+  if tk ~= "iden" then return " " .. expr .. ".", true end
+  return "between_" .. v .. " " .. expr
+end)
+
+
+
+--[[ ============= ]]--
+--[[ Expectations. ]]--
+--[[ ============= ]]--
+
+
+--- Called at the start of each example block.
+-- @tparam table state reinitialise status table for next example
+-- @int line line number from the spec file definition
+local function init (state, line)
+  state.stats.status = {
+    expectations = {},
+    filename     = state.spec.filename,
+    ispending    = nil,  -- we care about this key's value!
+    line         = line,
+  }
+end
+
+
+--- Return status since last init.
+-- @tparam table state shared with formatters
+-- @treturn table count of completed and pending expectations
+local function status (state)
+  return state.stats.status
+end
+
+
+--- Save results from an expectation into formatter state.
+-- @tparam table state shared with formatters
+-- @bool inverse whether this is the result from a "not" match
+-- @bool success whether this expectation succeeded
+-- @string message failure message for this expectation
+local function score (state, inverse, success, message)
+  local pending
+
+  if inverse then
+    success = not success
+    message = message and ("not " .. message)
+  end
+
+  local stats  = state.stats
+  local status = stats.status
+  local expectations, ispending = status.expectations, status.ispending
+
+  if ispending ~= nil then
+    -- stats.pend is updated by pending ()
+    -- +1 per pending example, not per expectation in pending examples
+    pending = ispending
+  elseif success ~= true then
+    stats.fail = stats.fail + 1
+  else
+    stats.pass = stats.pass + 1
+  end
+  table.insert (expectations, {
+    message = message,
+    status  = success,
+    pending = pending,
+  })
+end
+
+
+-- Wrap *actual* in metatable for matcher lookups.
+-- Dynamically look up an appropriate matcher from @{Matcher} for comparison
+-- with the following parameter. Matcher names containing '_not_' invert
+-- their results before returning.
+--
+-- Note this function called from the expansion of the `expect` loader
+-- macro, which injects a pcall for capturing errors.
+-- @tparam table state filled by formatters as expectations are run
+-- @bool ok whether an error occurred
+-- @param actual result of running expectation
+-- @treturn table dynamic matcher lookup table for this result
+-- @usage expect ({}).not_to_be {}
+local function expect (state, ok, actual, ...)
+  if select ("#", ...) > 0 then actual = {actual, ...} end
+
+  return setmetatable ({}, {
+    __index = function (_, verb)
+      local matcher, inverse = getmatcher (verb)
+
+      local vtable = {
+         score = function (success, msg)
+           return score (state, inverse, success, msg)
+         end,
+      }
+
+      -- Returns a functable...
+      return setmetatable ({}, {
+        -- `expect (actual).to_be (expected)`
+        __call = function (self, expected, ...)
+      if select ("#", ...) > 0 then expected = {expected, ...} end
+      local success, msg = matcher:match (actual, expected, ok)
+      if type (success) == "boolean" then
+             vtable.score (success, msg)
+      end
+      return success
+        end,
+
+    -- `expect (actual).to_be.adaptor (expected)`
+        __index = function (self, adaptor)
+      local fn = matcher[adaptor .. "?"]
+          if fn then
+        return function (expected, ...)
+          if select ("#", ...) > 0 then expected = {expected, ...} end
+              local success, msg = fn (matcher, actual, expected, ok, vtable)
+          if type (success) == "boolean" then
+                vtable.score (success, msg)
+          end
+          return success
+        end
+          else
+            error ("unknown '" .. adaptor .. "' adaptor with '" .. verb .. "'")
+          end
+        end,
+      })
+    end
+  })
+end
+
+
+--- Mark an example as pending.
+-- @function pending
+-- @tparam table state shared with formatters
+-- @string[opt="not yet implemented"] s reason for pending example
+local function pending (state, s)
+  local stats = state.stats
+  stats.pend = stats.pend + 1
+  stats.status.ispending  = s or "not yet implemented"
+end
+
+
+
+--[[ ================= ]]--
+--[[ Public Interface. ]]--
+--[[ ================= ]]--
+
+
+return {
+  expandmacros = expandmacros,
+  expect       = expect,
+  init         = init,
+  pending      = pending,
+  status       = status,
+}
+
+-- Long report style expectation formatter.
+-- Written by Gary V. Vaughan, 2013
+--
+-- Copyright (c) 2013-2015 Gary V. Vaughan
+--
+-- Specl is free software distributed under the terms of the MIT license;
+-- it may be used for any purpose, including commercial purposes, at
+-- absolutely no cost without having to ask permission.
+--
+-- The only requirement is that if you do use Specl, then you should give
+-- credit by including the appropriate copyright notice somewhere in your
+-- product or its documentation.
+--
+-- You should have received a copy of the MIT license along with this
+-- program; see the file LICENSE.  If not, a copy can be downloaded from
+-- <http://www.opensource.org/licenses/mit-license.html>.
+
+
+local color = require "specl.color"
+local std   = require "specl.std"
+local util  = require "specl.util"
+
+local examplename, indent, nop, strip1st, timesince =
+  util.examplename, util.indent, util.nop, util.strip1st, util.timesince
+local empty = std.table.empty
+
+
+-- Color printing.
+local function princ (want_color, ...)
+  return print (color (want_color, ...))
+end
+
+
+local function tabulate (descriptions)
+  local t   = {}
+  local s   = descriptions[#descriptions]
+  local key = s:gsub ("%s*(.-)%s+.*$", "%1")
+
+  if color[key] then
+    table.insert (t, color[key])
+  end
+  s = strip1st (s)
+  table.insert (t, s)
+  if color[key] then
+    table.insert (t, color.reset)
+  end
+  return table.concat (t)
+end
+
+
+-- Show undisplayed context headers.
+local function show_contexts (descriptions, opts)
+  local previous, current = opts.previous or {}, {}
+  for i = 1, #descriptions - 1 do
+    current[i] = descriptions[i]
+    if i > #previous or current[i] ~= previous[i] then
+      princ (opts.color, indent (current) .. tabulate (current))
+      previous = {}
+    end
+  end
+  opts.previous = current
+end
+
+
+local function format_failing_expectation (status, i, exp, verbose)
+  if verbose then
+    return "  " ..
+      color.strong .. status.filename .. ":" .. status.line .. ":"  ..
+      i .. ": " .. color.reset .. color.fail .. "FAILED expectation " ..
+      i .. color.reset .. ":\n" .. exp.message
+  end
+
+  return "  " ..
+    color.fail .. "FAILED expectation " .. i .. color.reset .. ": " ..
+    exp.message
+end
+
+
+local function format_pending_expectation (status, i, exp, verbose)
+  local pend = "  "
+  if verbose then
+    pend = pend ..
+      color.strong .. status.filename .. ":" .. status.line .. ":" ..
+      i .. ": " .. color.reset
+  end
+  pend = pend ..
+    color.pend .. "PENDING expectation " ..  i .. color.reset .. ": " ..
+    color.warn .. exp.pending .. color.reset
+
+  if exp.status == true then
+    pend = "\n" .. pend .. color.warn .. " passed unexpectedly!" ..
+      color.reset .. "\n  " .. color.strong ..
+      "You can safely remove the 'pending ()' call from this example." ..
+      color.reset
+  else
+    pend = "\n" .. pend
+  end
+
+  return pend
+end
+
+
+local function format_pending_example (message)
+  return " (" .. color.pend .. "PENDING example" .. color.reset ..
+    ": " .. message .. ")"
+end
+
+
+-- Diagnose any failed expectations in situ, and return failure messages
+-- for display at the end.
+local function format_example (status, descriptions, opts)
+  local spaces  = indent (descriptions)
+  local reports = { fail = "", pend = "" }
+  local counts  = { fail = 0, pend = 0, unexpected = 0 }
+
+  -- Only show context lines for unfiltered examples.
+  show_contexts (descriptions, opts)
+
+  if empty (status.expectations) then
+    if status.ispending then
+      local pend = format_pending_example (status.ispending)
+      princ (opts.color, spaces ..  tabulate (descriptions) ..  pend)
+      reports.pend = reports.pend .. pend
+    end
+  else
+    local details = ""
+
+    -- If we have expectations, display the result of each.
+    for i, exp in ipairs (status.expectations) do
+      if exp.pending ~= nil then
+    local pend = format_pending_expectation (status, i, exp, opts.verbose)
+        if exp.status == true then
+          counts.unexpected = counts.unexpected + 1
+    else
+          counts.pend = counts.pend + 1
+        end
+    reports.pend = reports.pend .. pend
+        if opts.verbose then
+          details = details .. pend:gsub ("^\n", "%0  ")
+        end
+
+      elseif exp.status == false then
+        counts.fail = counts.fail + 1
+        local fail = format_failing_expectation (status, i, exp, opts.verbose)
+        reports.fail = reports.fail .. "\n" .. fail:gsub ("\n", "%0  ")
+        if opts.verbose then
+          details = details .. "\n" .. spaces .. fail:gsub ("\n", "%0  " .. spaces)
+        end
+      end
+    end
+
+    -- One line summary of abnormal expectations, for non-verbose report format.
+    if not opts.verbose then
+      details = {}
+      if counts.pend > 0 then
+        table.insert (details, color.pend .. tostring (counts.pend) .. " pending")
+      end
+      if counts.unexpected > 0 then
+        table.insert (details, color.warn .. tostring (counts.unexpected) .. " unexpectedly passing")
+      end
+      if counts.fail > 0 then
+        table.insert (details, color.fail .. tostring (counts.fail) .. " failing")
+      end
+      if next (details) then
+        details = " (" .. table.concat (details, color.reset .. ", ") .. color.reset .. ")"
+      else
+        details = ""
+      end
+    end
+
+    princ (opts.color, spaces .. tabulate (descriptions) ..details)
+  end
+
+  -- Add description titles.
+  local title = examplename (descriptions)
+  title = color.listpre .. color.subhead .. title .. color.listpost
+  if reports.pend ~= "" then
+    reports.pend = title .. reports.pend .. "\n"
+  end
+  if reports.fail ~= "" then
+    reports.fail = title .. reports.fail .. "\n"
+  end
+
+  return reports
+end
+
+
+-- Report statistics.
+local function footer (stats, reports, opts)
+  local total   = stats.pass + stats.fail
+  local percent = string.format ("%.2f%%", 100 * stats.pass / total)
+
+  print ()
+  if reports and reports.pend ~= "" then
+    princ (opts.color, color.summary .. "Summary of pending expectations" ..
+           color.summarypost)
+    princ (opts.color, reports.pend)
+  end
+  if reports and reports.fail ~= "" then
+    princ (opts.color, color.summary .. "Summary of failed expectations" ..
+           color.summarypost)
+    princ (opts.color, reports.fail)
+  end
+
+  if total > 0 then
+    local statcolor = (percent == "100.00%") and color.allpass or color.notallpass
+    princ (opts.color, statcolor .. "Met " .. percent .. " of " .. tostring (total) ..
+           " expectations.")
+  else
+    princ (opts.color, color.notallpass .. "No expectations met.")
+  end
+
+  local passcolor = (stats.pass > 0) and color.good or color.bad
+  local failcolor = (stats.fail > 0) and color.bad or ""
+  local pendcolor = (stats.pend > 0) and color.bad or ""
+  princ (opts.color, passcolor   .. stats.pass .. " passed" .. color.reset .. ", " ..
+         pendcolor   .. stats.pend .. " pending" .. color.reset .. " and " ..
+         failcolor   .. stats.fail .. " failed%{reset} in " ..
+         color.clock .. tostring (timesince (stats.starttime)) ..
+         " seconds" .. color.reset .. ".")
+end
+
+
+
+--[[ ----------------- ]]--
+--[[ Public Interface. ]]--
+--[[ ----------------- ]]--
+
+
+local M = {
+  header       = nop,
+  spec         = nop,
+  expectations = format_example,
+  footer       = footer,
+}
+
+return M
+
+--- Some superseded filler code.
+
+--
+-- Permission is hereby granted, free of charge, to any person obtaining
+-- a copy of this software and associated documentation files (the
+-- "Software"), to deal in the Software without restriction, including
+-- without limitation the rights to use, copy, modify, merge, publish,
+-- distribute, sublicense, and/or sell copies of the Software, and to
+-- permit persons to whom the Software is furnished to do so, subject to
+-- the following conditions:
+--
+-- The above copyright notice and this permission notice shall be
+-- included in all copies or substantial portions of the Software.
+--
+-- THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+-- EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+-- MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
+-- IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY
+-- CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
+-- TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
+-- SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+--
+-- [ MIT license: http://www.opensource.org/licenses/mit-license.php ]
+--
+
+--- Various space-filling operations.
+--
+-- This module lays claim to the **"filler"** set, cf. @{s3_utils.effect.stash}.
+
+--
+-- Permission is hereby granted, free of charge, to any person obtaining
+-- a copy of this software and associated documentation files (the
+-- "Software"), to deal in the Software without restriction, including
+-- without limitation the rights to use, copy, modify, merge, publish,
+-- distribute, sublicense, and/or sell copies of the Software, and to
+-- permit persons to whom the Software is furnished to do so, subject to
+-- the following conditions:
+--
+-- The above copyright notice and this permission notice shall be
+-- included in all copies or substantial portions of the Software.
+--
+-- THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+-- EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+-- MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
+-- IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY
+-- CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
+-- TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
+-- SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+--
+-- [ MIT license: http://www.opensource.org/licenses/mit-license.php ]
+--
+
+-- Standard library imports --
+local assert = assert
+local ceil = math.ceil
+local format = string.format
+local max = math.max
+local min = math.min
+local pairs = pairs
+
+-- Modules --
+local audio = require("corona_utils.audio")
+local circle = require("s3_utils.fill.circle")
+local color = require("corona_ui.utils.color")
+local flood = require("s3_utils.fill.flood")
+local length = require("tektite_core.number.length")
+local sheet = require("corona_utils.sheet")
+local stash = require("s3_utils.effect.stash")
+local tile_maps = require("s3_utils.tile_maps")
+local timers = require("corona_utils.timers")
+
+-- Corona globals --
+local display = display
+local transition = transition
+
+-- Exports --
+local M = {}
+
+-- Tile dimensions --
+local TileW, TileH
+
+-- Image sheets, cached from fill images used on this level --
+local ImageCache
+
+-- Current fill color for non-images --
+local R, G, B = 1, 1, 1
+
+-- Name of fill image --
+local UsingImage
+
+-- Fade-in transition --
+local FadeInParams = {
+    time = 300, alpha = 1, transition = easing.inOutExpo,
+
+    onComplete = function(rect)
+        local rgroup = rect.parent
+
+        rgroup.m_unfilled = rgroup.m_unfilled - 1
+    end
+}
+
+-- Sound played when shape is filled --
+local Sounds = audio.NewSoundGroup{ _prefix = "SFX", shape_filled = { file = "ShapeFilled.mp3", wait = 1000 } }
+
+-- Fill transition --
+local FillParams = {
+    time = 1350, transition = easing.outBounce,
+
+    onComplete = function()
+        Sounds:PlaySound("shape_filled")
+    end
+}
+
+--
+local function StashPixels (event)
+    stash.PushRect("filler", event.m_object, "is_group")
+end
+
+do
+    -- Kernel --
+    local kernel = { category = "filter", group = "fill", name = "circle" }
+
+    kernel.vertexData = {
+        {
+            name = "dist",
+            default = 0, min = 0, max = math.sqrt(2),
+            index = 0
+        },
+        {
+            name = "upper",
+            default = 0, min = 0, max = 1,
+            index = 1
+        },
+    }
+
+    kernel.fragment = [[
+        P_COLOR vec4 FragmentKernel (P_UV vec2 uv)
+        {
+            P_UV float len = length(uv - .5);
+
+            return CoronaColorScale(texture2D(CoronaSampler0, uv) * smoothstep(-.017, CoronaVertexUserData.y, CoronaVertexUserData.x - len));
+        }
+    ]]
+
+    graphics.defineEffect(kernel)
+end
+
+--- Fills a rectangular region gradually over time, according to a fill process.
+--
+-- If an image has been assigned with @{SetImage}, it will be used to fill the region.
+-- Otherwise, the region is filled with a solid rectangle, tinted according to @{SetColor}.
+--
+-- Calling @{SetColor} or @{SetImage} will not affect a fill already in progress.
+-- @pgroup group Group into which fill graphics are loaded.
+-- @string[opt="circle"] how The fill process, which currently may be **"circle"**.
+-- @number ulx Upper-left x-coordinate...
+-- @number uly ...and y-coordinate.
+-- @number lrx Lower-right x-coordinate...
+-- @number lry ...and y-coordinate.
+-- @treturn DisplayObject "Final" result of fill. Changing its parameters during the fill
+-- may lead to strange results. It can be removed to cancel the fill.
+function M.Fill (group, how, ulx, uly, lrx, lry)
+    -- Lazily load sounds on first fill.
+    Sounds:Load()
+
+    -- Prepare the "final" object, that graphically matches the composite fill elements
+    -- and will be left behind in their place once the fill operation is complete. Kick
+    -- off the fill transition; as the object scales, the fill process will update to
+    -- track its dimensions.
+    local filler
+
+    if UsingImage then
+        filler = display.newImage(group, UsingImage)
+    else
+        filler = display.newRect(group, 0, 0, 1, 1)
+    end
+
+    local cx, w = (ulx + lrx) / 2, TileW / 2
+    local cy, h = (uly + lry) / 2, TileH / 2
+
+    filler.x, filler.width = cx, w
+    filler.y, filler.height = cy, h
+
+    FillParams.width = lrx - ulx
+    FillParams.height = lry - uly
+
+    transition.to(filler, FillParams)
+
+    -- Extract useful effect values from the fill dimensions.
+    local tilew, tileh = TileW / 2.5, TileH / 2.5
+    local halfx, halfy = ceil(FillParams.width / tilew - 1), ceil(FillParams.height / tileh - 1)
+    local nx, ny = halfx * 2 + 1, halfy * 2 + 1
+    local dw, dh = FillParams.width / nx, FillParams.height / ny
+
+    -- Save the current fill color or image. In the image case, tile it, then cache the
+    -- tiling, since it may be reused, e.g. on level reset; if a tiling already exists,
+    -- use that.
+    local r, g, b = R, G, B
+    local cur_image
+
+    if UsingImage then
+        local key = format("%s<%i,%i>", UsingImage, nx, ny)
+
+        cur_image = ImageCache[key]
+
+        if not cur_image then
+            cur_image = { mid = halfy * nx + halfx + 1 }
+
+            cur_image.isheet = sheet.TileImage(UsingImage, nx, ny)
+
+            ImageCache[key] = cur_image
+        end
+    else
+        filler:setFillColor(r, g, b)
+    end
+
+    -- Circle --
+    if how == "circle" then
+        local rgroup = display.newGroup()
+
+        group:insert(rgroup)
+
+        rgroup.m_unfilled = nx * ny
+
+        -- A circle, quantized into subrectangles, which are faded in as the radius grows.
+        -- In the image case, the rect will be an unanimated (??) sprite generated by the
+        -- image tiling; otherwise, we pull the rect from the stash, if available. On each
+        -- addition, a "spots remaining" counter is decremented.
+        local spread = circle.SpreadOut(halfx, halfy, function(x, y)
+            local rx, ry, rect = cx + (x - .5) * dw, cy + (y - .5) * dh
+
+            if cur_image then
+                local index = cur_image.mid + y * nx + x
+
+                rect = sheet.NewImageAtFrame(rgroup, cur_image.isheet, index, rx, ry, dw, dh)
+
+                rect.xScale = dw / rect.width
+                rect.yScale = dh / rect.height
+            else
+                rect = stash.PullRect("filler", rgroup)
+
+                rect.x, rect.width = rx + dw / 2, dw
+                rect.y, rect.height = ry + dh / 2, dh
+
+                rect:setFillColor(r, g, b)
+            end
+
+            rect.alpha = .05
+
+            transition.to(rect, FadeInParams)
+        end)
+
+        -- The final object begins hidden, since it will be built up visually from the fill
+        -- components. Over time, fit its current shape to a circle and act in that region.
+--[[
+        filler.isVisible = false
+
+        timers.RepeatEx(function()
+            if display.isValid(filler) then
+                local radius = length.ToBin_RoundUp(filler.width / dw, filler.height / dh, 1.15, .01)
+
+                spread(radius)
+
+                -- If there are still spots in the region to fill, quit. Otherwise, show the
+                -- final result and go on to the next steps.
+                if rgroup.m_unfilled ~= 0 then
+                    return
+                end
+
+                filler.isVisible = true
+            end
+
+            -- If the fill finished or was cancelled, we remove the intermediate components.
+            -- In the case of an image, it's too much work to salvage anything, so just remove
+            -- the group. Otherwise, stuff the components back into the stash.
+            timers.DeferIf(cur_image and "remove" or StashPixels, rgroup)
+
+            return "cancel"
+        end, 45)]]
+        filler.fill.effect = "filter.fill.circle"
+
+        transition.to(filler.fill.effect, { dist = math.sqrt(2), upper = .557, time = 1100 })
+
+    -- Other options: random fill, cross-fade, Hilbert...
+    else
+
+    end
+
+    return filler
+end
+
+--- Setter.
+-- @byte r Red component of fill color. If absent, old value is retained (by default, 1).
+-- @byte g ...green component, likewise...
+-- @byte b ...and blue component.
+function M.SetColor (r, g, b)
+    R, G, B = r or R, g or G, b or B
+end
+
+--- Setter.
+-- @string name Filename of fill image, or **nil** to clear the image.
+function M.SetImage (name)
+    UsingImage = name
+end
+
+-- Listen to events.
+for k, v in pairs{
+    -- Enter Level --
+    enter_level = function(level)
+        ImageCache = {}
+        TileW = level.w
+        TileH = level.h
+    end,
+
+    -- Leave Level --
+    leave_level = function()
+        ImageCache = nil
+    end,
+
+    -- Reset Level --
+    reset_level = function()
+        for k in pairs(ImageCache) do
+            ImageCache[k] = nil
+        end
+    end
+} do
+    Runtime:addEventListener(k, v)
+end
+
+-- Export the module.
+return M
+
+--- A library of special effects.
+
+--
+-- Permission is hereby granted, free of charge, to any person obtaining
+-- a copy of this software and associated documentation files (the
+-- "Software"), to deal in the Software without restriction, including
+-- without limitation the rights to use, copy, modify, merge, publish,
+-- distribute, sublicense, and/or sell copies of the Software, and to
+-- permit persons to whom the Software is furnished to do so, subject to
+-- the following conditions:
+--
+-- The above copyright notice and this permission notice shall be
+-- included in all copies or substantial portions of the Software.
+--
+-- THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+-- EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+-- MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
+-- IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY
+-- CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
+-- TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
+-- SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+--
+-- [ MIT license: http://www.opensource.org/licenses/mit-license.php ]
+--
+
+-- Standard library imports --
+local pi = math.pi
+local random = math.random
+
+-- Corona globals --
+local display = display
+local graphics = graphics
+local transition = transition
+
+-- Imports --
+local newImage = display.newImage
+
+-- Exports --
+local M = {}
+
+do -- Flag effect
+end
+
+do -- POOF! effect
+    -- Effect params --
+    local Params = { alpha = 1, transition = easing.inOutQuad, onComplete = display.remove }
+
+    -- Helper to size particles
+    local function Size ()
+        return 1 + random() * .2
+    end
+
+    --- A small poof! cloud.
+    -- @pgroup group Display group that will hold display objects produced by effect.
+    -- @number x Approximate x-coordinate of effect.
+    -- @number y Approximate y-coordinate of effect.
+    -- @treturn uint Death time of poof.
+    function M.Poof (group, x, y)
+        local poof = newImage(group, "FX_Assets/Poof.png", x, y)
+
+        poof.xScale = .2
+        poof.yScale = .2
+        poof.alpha = .4
+
+        Params.delay = random(0, 400)
+        Params.time = random(400, 700)
+        Params.rotation = pi * (-10 + random() * 20)
+        Params.xScale = 1 + math.random() * .2
+        Params.yScale = 1 + math.random() * .2
+
+        transition.to(poof, Params)
+
+        return Params.delay + Params.time
+    end
+end
+
+do -- POW! effect
+    -- Fade-out part of effect --
+    local Done = { time = 100, delay = 50, alpha = .25, transition = easing.outExpo, onComplete = display.remove }
+
+    -- Fade-in part of effect --
+    local Params = {
+        time = 350, alpha = 1, transition = easing.inOutExpo,
+
+        onComplete = function(object)
+            if object.parent then
+                transition.to(object, Done)
+            end
+        end
+    }
+
+    -- Helper for common effect logic
+    local function AuxPOW (object, xs, ys, rot)
+        object.alpha = .25
+
+        Params.xScale = xs
+        Params.yScale = ys
+        Params.rotation = rot
+
+        transition.to(object, Params)
+    end
+
+    --- A quick "POW!" effect.
+    -- @pgroup group Display group that will hold display objects produced by effect.
+    -- @number x Approximate x-coordinate of effect.
+    -- @number y Approximate y-coordinate of effect.
+    function M.Pow (group, x, y)
+        x = x + 32
+
+        local star = newImage(group, "FX_Assets/BonkStar.png", x, y)
+        local word = newImage(group, "FX_Assets/Pow.png", x, y)
+
+        AuxPOW(star, 2, 2, 180)
+        AuxPOW(word, 2, 2)
+    end
+end
+
+do -- Ripple effect
+end
+
+do -- Sparkles effect
+    -- Fade-out part of effect --
+    local Done = { time = 400, alpha = .25,	onComplete = display.remove }
+
+    -- Helper to displace particle paths
+    local function Offset ()
+        return (.5 - random()) * 2
+    end
+
+    -- Fade-in part of effect --
+    local Params = {
+        alpha = 1,
+
+        onComplete = function(object)
+            if object.x then
+                Done.x = object.x + Offset() * 2.5
+                Done.y = object.y - 8
+
+                transition.to(object, Done)
+            end
+        end
+    }
+
+    -- Helper to size particles
+    local function Size ()
+        return .2 + random() * .4
+    end
+
+    --- A small particle effect to indicate that the map has been tapped.
+    -- @pgroup group Display group that will hold display objects produced by effect.
+    -- @number x Approximate x-coordinate of effect.
+    -- @number y Approximate y-coordinate of effect.
+    function M.Sparkle (group, x, y)
+        for _ = 1, 3 do
+            local sparkle = newImage(group, "FX_Assets/Sparkle.png", 0, 0)
+
+            sparkle.x, sparkle.xScale = x, Size()
+            sparkle.y, sparkle.yScale = y, Size()
+            sparkle.alpha = .4
+
+            Params.x = x + Offset() * 32
+            Params.y = y - Offset() * 4 - 32
+            Params.time = random(250, 400)
+
+            transition.to(sparkle, Params)
+        end
+    end
+end
+
+do -- Warp effects
+    -- Mask clearing onComplete
+    local function ClearMask (object)
+        object:setMask(nil)
+    end
+
+    -- Scales an object's mask relative to its body to get a decent warp look
+    local function ScaleObject (body, object)
+        object = object or body
+
+        object.maskScaleX = body.width / 4
+        object.maskScaleY = body.height / 2
+    end
+
+    -- Mask-in transition --
+    local MaskIn = { time = 900, transition = easing.inQuad }
+
+    --- Performs a "warp in" effect on an object (using its mask, probably set by @{WarpOut}).
+    -- @pobject object Object to warp in.
+    -- @callable on_complete Optional **onComplete** handler for the transition. If absent,
+    -- a default clears the object's mask; otherwise, the handler should also do this.
+    -- @treturn TransitionHandle A handle for pausing or cancelling the transition.
+    function M.WarpIn (object, on_complete)
+        ScaleObject(object, MaskIn)
+
+        MaskIn.onComplete = on_complete or ClearMask
+
+        local handle = transition.to(object, MaskIn)
+
+        MaskIn.onComplete = nil
+
+        return handle
+    end
+
+    -- Mask-out transition --
+    local MaskOut = { maskScaleX = 0, maskScaleY = 0, time = 900, transition = easing.outQuad }
+
+    --- Performs a "warp out" effect on an object, via masking.
+    -- @pobject object Object to warp out.
+    -- @callable on_complete Optional **onComplete** handler for the transition.
+    -- @treturn TransitionHandle A handle for pausing or cancelling the transition.
+    -- @see WarpIn
+    function M.WarpOut (object, on_complete)
+        object:setMask(graphics.newMask("Dot_Assets/WarpMask.png"))
+
+        ScaleObject(object)
+
+        MaskOut.onComplete = on_complete
+
+        local handle = transition.to(object, MaskOut)
+
+        MaskOut.onComplete = nil
+
+        return handle
+    end
+end
+
+-- Export the module.
+return M

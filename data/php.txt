@@ -1,0 +1,1201 @@
+<?php
+namespace lighter\handlers;
+
+
+use lighter\handlers\Config;
+
+use \Exception;
+
+
+/**
+ * This class aims to messages.
+
+ * @name Logger
+ * @package lighter
+ * @subpackage handlers
+ * @since 0.1
+ * @version 0.1
+ * @author Michel Begoc
+ * @copyright (c) 2011 Michel Begoc
+ * @license MIT - see http://www.opensource.org/licenses/mit-license.php
+ *
+ */
+class Logger {
+    
+    const TRACE   = 'TraceLogger',
+          DUMP    = 'DumpLogger',
+          PROFILE = 'ProfileLogger',
+          DEBUG   = 'DebugLogger',
+          INFO    = 'InfoLogger',
+          WARNING = 'WarningLogger',
+          ERROR   = 'ErrorLogger',
+          FATAL   = 'FatalLogger',
+          NONE    = 'Logger';
+
+
+
+    private static $instances = array();
+
+    private $config;
+
+    private $section;
+
+    private $time = array();
+
+    private $file = null;
+
+
+
+    public function __construct($section) {
+        $this->section = $section;
+        $this->config = Config::getInstance();
+    }
+
+
+
+    public static function getInstance($section = "default", $level = null) {
+        if (!isset(self::$instances[$section])) {
+            if ($level == null) {
+                $levels = Config::getInstance()->getValue('log', 'levels', array());
+                if (isset($levels[$section])) {
+                    $level = $levels[$section];
+                } else {
+                    $level = Config::getInstance()->getValue('log', 'level', self::WARNING);
+                }
+            }
+            $class = __NAMESPACE__.'\\'.$level;
+            self::$instances[$section] = new $class($section);
+        }
+        return self::$instances[$section];
+    }
+
+
+
+    public function __destruct() {
+        fclose($this->file);
+    }
+
+
+
+    protected function addTimedMessage($level, $content) {
+        $this->addMessage('<'.date('Y-m-d h:m:s').'> '.$level.' : '.$content);
+    }
+
+
+
+    protected function addMessage($content) {
+        if ($this->file === null) {
+            if (!file_exists($this->config->getValue('log', 'path', './'))) {
+                mkdir($this->config->getValue('log', 'path', './'), 0755, true);
+            }
+            $path = $this->config->getValue('log', 'path', './').$this->section.'.log';
+            $this->file = fopen($path, 'a');
+        }
+        fwrite($this->file, $content."\n");
+    }
+
+
+
+    public function trace() {}
+
+
+
+    public function dump($variable) {}
+
+
+
+    public function debug($message) {}
+
+
+
+    public function startProfiling($label) {}
+
+
+
+    public function endProfiling($label) {}
+
+
+
+    public function info($message) {}
+
+
+
+    public function warning($message) {}
+
+
+
+    public function error($message) {}
+
+
+
+    public function fatal($message) {}
+
+}
+
+
+/**
+ * implements the fatal level
+ *
+ * @name FatalLogger
+ * @package lighter
+ * @subpackage handlers
+ * @since 0.1
+ * @version 0.1
+ * @author Michel Begoc
+ * @copyright (c) 2011 Michel Begoc
+ * @license MIT - see http://www.opensource.org/licenses/mit-license.php
+ *
+ */
+class FatalLogger extends Logger {
+
+
+    public function __construct($section) {
+        parent::__construct($section);
+    }
+
+
+
+    public function fatal($message) {
+        $this->addTimedMessage('Fatal error', $message);
+    }
+
+}
+
+
+/**
+ * implements the error level
+ *
+ * @name ErrorLogger
+ * @package lighter
+ * @subpackage handlers
+ * @since 0.1
+ * @version 0.1
+ * @author Michel Begoc
+ * @copyright (c) 2011 Michel Begoc
+ * @license MIT - see http://www.opensource.org/licenses/mit-license.php
+ *
+ */
+class ErrorLogger extends FatalLogger {
+
+
+    public function __construct($section) {
+        parent::__construct($section);
+    }
+
+
+
+    public function error($message) {
+        $this->addTimedMessage('Error', $message);
+    }
+
+}
+
+
+/**
+ * implements the warning level
+ *
+ * @name WarningLogger
+ * @package lighter
+ * @subpackage handlers
+ * @since 0.1
+ * @version 0.1
+ * @author Michel Begoc
+ * @copyright (c) 2011 Michel Begoc
+ * @license MIT - see http://www.opensource.org/licenses/mit-license.php
+ *
+ */
+class WarningLogger extends ErrorLogger {
+
+
+    public function __construct($section) {
+        parent::__construct($section);
+    }
+
+
+
+    public function warning($message) {
+        $this->addTimedMessage('Warning', $message);
+    }
+
+}
+
+
+/**
+ * implements the info level
+ *
+ * @name InfoLogger
+ * @package lighter
+ * @subpackage handlers
+ * @since 0.1
+ * @version 0.1
+ * @author Michel Begoc
+ * @copyright (c) 2011 Michel Begoc
+ * @license MIT - see http://www.opensource.org/licenses/mit-license.php
+ *
+ */
+class InfoLogger extends WarningLogger {
+
+
+    public function __construct($section) {
+        parent::__construct($section);
+    }
+
+
+
+    public function info($message) {
+        $this->addTimedMessage('Info', $message);
+    }
+
+}
+
+
+/**
+ * implements the profiling level
+ *
+ * @name ProfileLogger
+ * @package lighter
+ * @subpackage handlers
+ * @since 0.1
+ * @version 0.1
+ * @author Michel Begoc
+ * @copyright (c) 2011 Michel Begoc
+ * @license MIT - see http://www.opensource.org/licenses/mit-license.php
+ *
+ */
+class ProfileLogger extends WarningLogger {
+
+
+    public function __construct($section) {
+        parent::__construct($section);
+    }
+
+
+
+    public function startProfiling($label) {
+        $this->time[$label] = microtime(true);
+    }
+
+
+
+    public function endProfiling($label) {
+        $endTime = microtime(true);
+        if (isset($this->time[$label])) {
+            $time = $endTime - $this->time[$label];
+            $this->addTimedMessage('Profiling', $label.': '.$time.' s');
+        } else {
+            throw new UnexpectedValueException('This profiling operation doesn\'t exist.');
+        }
+    }
+
+}
+
+
+/**
+ * implements the debug level
+ *
+ * @name DebugLogger
+ * @package lighter
+ * @subpackage handlers
+ * @since 0.1
+ * @version 0.1
+ * @author Michel Begoc
+ * @copyright (c) 2011 Michel Begoc
+ * @license MIT - see http://www.opensource.org/licenses/mit-license.php
+ *
+ */
+class DebugLogger extends ProfileLogger {
+
+
+    public function __construct($section) {
+        parent::__construct($section);
+    }
+
+
+
+    public function debug($message) {
+        $this->addTimedMessage('Debug', $message);
+    }
+
+}
+
+
+/**
+ * implements the dump level
+ *
+ * @name DumpLogger
+ * @package lighter
+ * @subpackage handlers
+ * @since 0.1
+ * @version 0.1
+ * @author Michel Begoc
+ * @copyright (c) 2011 Michel Begoc
+ * @license MIT - see http://www.opensource.org/licenses/mit-license.php
+ *
+ */
+class DumpLogger extends DebugLogger {
+
+
+    public function __construct($section) {
+        parent::__construct($section);
+    }
+
+
+
+    public function dump($variable) {
+        $this->addTimedMessage('Dump', '');
+        $this->addMessage(print_r($variable, true));
+    }
+
+}
+
+
+/**
+ * implements the trace level
+ *
+ * @name TraceLogger
+ * @package lighter
+ * @subpackage handlers
+ * @since 0.1
+ * @version 0.1
+ * @author Michel Begoc
+ * @copyright (c) 2011 Michel Begoc
+ * @license MIT - see http://www.opensource.org/licenses/mit-license.php
+ *
+ */
+class TraceLogger extends DumpLogger {
+
+
+    public function __construct($section) {
+        parent::__construct($section);
+    }
+
+
+    public function trace($title = null) {
+        $backtrace = debug_backtrace();
+        $this->addTimedMessage('Trace', '');
+        foreach ($backtrace as $trace) {
+            $this->addMessage($trace["class"].$trace["type"].$trace["function"]);
+        }
+    }
+}
+
+
+/**
+ * The exception lauched by the profile level.
+ * Thrown when a nonexistent profiling operation is terminated.
+ *
+ * @name NonexistentProfilingOperation
+ * @package lighter
+ * @subpackage handlers
+ * @since 0.1
+ * @version 0.1
+ * @author Michel Begoc
+ * @copyright (c) 2011 Michel Begoc
+ * @license MIT - see http://www.opensource.org/licenses/mit-license.php
+ *
+ */
+class NonexistentProfilingOperation extends Exception {}
+
+<?php
+
+    /**
+     * Converts an input string to a camelCased string.
+     * @copyright (c) 2012 Codestruck, LLC.
+     * @license http://opensource.org/licenses/mit-license.php/
+     */
+    function camel_case($s, $initialCapital = false) {
+
+        $s = trim($s);
+        if (!defined('PREG_BAD_UTF8_OFFSET_ERROR')) {
+           $s = preg_replace('/([a-z\d])([A-Z])/', '$1_$2', $s);
+        } else {
+            $s = preg_replace('/([\p{Ll}\d])(\p{Lu})/', '$1_$2', $s);
+        }
+
+        $parts = preg_split('/[-_\s]+/', $s);
+
+        $result = '';
+        foreach($parts as $part) {
+            if ($result || $initialCapital) {
+                $result .= strtoupper(substr($part, 0, 1)) . strtolower(substr($part, 1));
+            } else {
+                $result .= strtolower($part);
+            }
+        }
+
+        return $result;
+    }
+
+    /**
+     * Alias for camel_case($s, true) for use in e.g.
+     * array_map.
+     * @copyright (c) 2012 Codestruck, LLC.
+     * @license http://opensource.org/licenses/mit-license.php/
+     */
+    function camel_case_with_initial_capital($s) {
+        return camel_case($s, true);
+    }
+
+    /**
+     * @internal
+     * @copyright (c) 2012 Codestruck, LLC.
+     * @license http://opensource.org/licenses/mit-license.php/
+     */
+    function _camel_case_helper($matches) {
+
+        $prev = $matches[1];
+        $next = $matches[2];
+
+        return $prev . strtoupper($next);
+    }
+
+    /**
+     * Capitalizes the first word in sentences.
+     * @copyright (c) 2012 Codestruck, LLC.
+     * @license http://opensource.org/licenses/mit-license.php/
+     */
+    function capitalize_sentences($str) {
+
+        $str = strtolower($str);
+        return preg_replace_callback('/(^|\.\s*)([a-z])/', '_capitalize_sentences_helper');
+
+    }
+
+    /**
+     * @internal
+     * @copyright (c) 2012 Codestruck, LLC.
+     * @license http://opensource.org/licenses/mit-license.php/
+     */
+    function _capitalize_sentences_helper($matches) {
+        return $matches[1] . strtoupper($matches[2]);
+    }
+
+    /**
+     * Converts a StringOfSomeKind to a string-of-some-kind
+     * @copyright (c) 2012 Codestruck, LLC.
+     * @license http://opensource.org/licenses/mit-license.php/
+     */
+    function dashed($s) {
+        return underscore($s, '-');
+    }
+
+    /**
+     * @copyright (c) 2012 Codestruck, LLC.
+     * @license http://opensource.org/licenses/mit-license.php/
+     */
+    function end_in($end, $str) {
+
+        $len = strlen($str);
+
+        if ($len > 0 && substr($str, $len - strlen($end)) != $end) {
+            $str .= $end;
+        }
+
+        return $str;
+
+    }
+
+    /**
+     * @param $x String Longer string.
+     * @param $x String String that $x might end with.
+     * @param $ignoreCase bool Whether to ignore case.
+     * @param $remainder String Gets set to the portion of $x after $y, if
+     * $x ends with $y;
+     * @return bool Whether $x ends with $y;
+     * @copyright (c) 2012 Codestruck, LLC.
+     * @license http://opensource.org/licenses/mit-license.php/
+     */
+    function ends_with($x, $y, $ignoreCase = false, &$remainder = null) {
+
+        $xLen = strlen($x);
+        $yLen = strlen($y);
+
+        if ($yLen > $xLen) {
+            return false;
+        }
+
+        if ($yLen == 0) {
+            $remainder = $x;
+            return true;
+        }
+
+        $end = substr($x, $xLen - $yLen);
+
+        if ($ignoreCase) {
+            $success = strcasecmp($end, $y) == 0;
+        } else {
+            $success = strcmp($end, $y) == 0;
+        }
+
+        if (!$success) {
+            $remainder = null;
+            return false;
+        }
+
+        $remainder = substr($x, 0, $xLen - $yLen);
+        return true;
+    }
+
+    /**
+     * Converts a glob expression to a regular expression.
+     * @copyright (c) 2012 Codestruck, LLC.
+     * @license http://opensource.org/licenses/mit-license.php/
+     */
+    function glob_to_regex($glob) {
+
+        $glob = str_replace('.', '\.', $glob);
+        $glob = str_replace('+', '\+', $glob);
+        $glob = str_replace('*', '.+', $glob);
+        $glob = str_replace('?', '.', $glob);
+
+        return $glob ? "^$glob$" : $glob;
+    }
+
+    /**
+     * Alias for htmlspecialchars. Escapes quotes and assumes UTF-8 string
+     * encoding.
+     * @param mixed Individual strings to escape and concatenate. If h() is
+     * passed a single array as an argument, it will return an array with all
+     * its keys and values escaped (recursively).
+     * @return Mixed If a single array was passed in, returns an array with
+     * all keys and values (recursive) escaped (unless the value is true, false,
+     * or null-- those are preserved) Otherwise, returns all
+     * arguments passed in escaped and concatenated into a single string.
+     * @copyright (c) 2012 Codestruck, LLC.
+     * @license http://opensource.org/licenses/mit-license.php/
+     */
+    function h() {
+
+        $count = func_num_args();
+
+        switch($count) {
+
+            case 0: return '';
+
+            case 1:
+
+                $arg = func_get_arg(0);
+
+                if (is_array($arg)) {
+                    $result = array();
+                    _h_array($arg, $result);
+                    return $result;
+                } else {
+                    return htmlspecialchars($arg, ENT_QUOTES, 'UTF-8');
+                }
+
+        }
+
+        $result = array();
+        for($i = 0; $i < $count; $i++) {
+            $arg = func_get_arg($i);
+            $result[] = htmlspecialchars($arg, ENT_QUOTES, 'UTF-8');
+        }
+
+        return implode('', $result);
+    }
+
+    /**
+     * @internal
+     * Internal function used to recursively escape h().
+     * @copyright (c) 2012 Codestruck, LLC.
+     * @license http://opensource.org/licenses/mit-license.php/
+     */
+    function _h_array(Array $arg, &$dest = null) {
+
+        if ($dest === null) $dest = array();
+
+        foreach($arg as $key => $value) {
+
+            if (!is_numeric($key)) {
+                $key = h($key);
+            }
+
+            if (is_array($value)) {
+                $dest[$key] = null;
+                _h_array($value, $dest[$key]);
+            } else if ($value === true || $value === false || $value === null) {
+                // Preserve true, false, and null values
+                $dest[$key] = $value;
+            } else {
+                $dest[$key] = h($value);
+            }
+
+        }
+
+
+    }
+
+    /**
+     * Converts a 'COMPUTERY_STRING' into a 'Computery String'.
+     * @copyright (c) 2012 Codestruck, LLC.
+     * @license http://opensource.org/licenses/mit-license.php/
+     */
+    function humanize($str, $titleCaps = true) {
+
+        $str = strtolower(trim(str_replace('_', ' ', $str)));
+        if (!$str) return $str;
+
+        $str = preg_replace('/\[\s*\]$/', '', $str);
+
+        if ($titleCaps) {
+            return ucwords($str);
+        } else {
+            return strtoupper(substr($str, 0, 1)) . substr($str, 1);
+        }
+    }
+
+    /**
+     * @return boolean
+     * @copyright (c) 2012 Codestruck, LLC.
+     * @license http://opensource.org/licenses/mit-license.php/
+     */
+    function is_email($input) {
+        return !!parse_email($input);
+    }
+
+    /**
+     * Given some input, tries to turn it into a well-formed http:// url.
+     * @todo TEST
+     * @copyright (c) 2012 Codestruck, LLC.
+     * @license http://opensource.org/licenses/mit-license.php/
+     */
+    function normalize_url($url) {
+
+        $url = trim($url);
+        if (!$url) return $url;
+
+        if (preg_match('~^([a-z0-9_-]+)://~i', $url)) {
+            return $url;
+        }
+
+        return 'http://' . $url;
+    }
+
+    /**
+     * Attempts to parse an email address out of some input.
+     * @return Mixed false if unsuccessful.
+     * @copyright (c) 2012 Codestruck, LLC.
+     * @license http://opensource.org/licenses/mit-license.php/
+     */
+    function parse_email($input) {
+
+        // TODO TEST
+
+        $input = trim($input);
+        if (!$input) return false;
+
+        if (preg_match('/^\s*(([A-Z0-9._%+-]+)@([A-Z0-9.-]+\.[A-Z]{2,4}))\s*$/i', $input, $m)) {
+            return array(
+                'email' => $m[1],
+                'user' => $m[2],
+                'domain' => $m[3]
+            );
+        } else {
+            return false;
+        }
+
+    }
+
+    /**
+     * Examines a string and tells you if it looks like a regular expression.
+     * For our purposes, regexes look like this:
+     *
+     * /whatever/i
+     *
+     * @param $s String You know, the one to check whether it's a regex
+     * @return Mixed if $s is a valid regex, returns an array with keys 'pattern' and 'flag'.
+     * Otherwise returns false.
+     * @copyright (c) 2012 Codestruck, LLC.
+     * @license http://opensource.org/licenses/mit-license.php/
+     */
+    function parse_regex($s, $boundaryChars = '\/#-') {
+
+        $pattern = '/^([' . $boundaryChars . '])(.*)\1([i]*)/i';
+
+        if (preg_match($pattern, $s, $m)) {
+            $result = array('pattern' => $m[2], 'flags' => strtolower($m[3]));
+            return $result;
+        }
+
+        return false;
+    }
+
+    /**
+     * Turns URLs in $s into hyperlinks.
+     * @copyright (c) 2012 Codestruck, LLC.
+     * @license http://opensource.org/licenses/mit-license.php/
+     */
+    function linkify($s) {
+
+        Octopus::loadExternal('simplehtmldom');
+
+        $s = '<p>' . $s . '</p>';
+        $dom = str_get_html($s);
+        $regex = '/(\s|^|\()(https?:\/\/[^\s<]+?[^\.])(\.?(\s|$|\)))/ims';
+        $regex2 = '/(\s|^|\()([^\s<\(\.]+\.[\w]{2,}[^\s<]*?)(\.?(\s|$|\)))/ims';
+
+        foreach ($dom->nodes as $el) {
+
+            if ($el->tag == 'text') {
+                if (count($el->nodes) == 0 && $el->parent->tag != 'a') {
+                    $el->innertext = preg_replace($regex, '$1<a href="$2">$2</a>$3', $el->innertext);
+                    $el->innertext = preg_replace($regex2, '$1<a href="http://$2">$2</a>$3', $el->innertext);
+                }
+            }
+
+        }
+
+        return substr($dom->save(), 3, -4);
+
+    }
+
+    /**
+     * Converts urls to links AND adds rel and target
+     * @copyright (c) 2012 Codestruck, LLC.
+     * @license http://opensource.org/licenses/mit-license.php/
+     */
+    function linkify_external($s) {
+        $s = linkify($s);
+
+        $s = '<p>' . $s . '</p>';
+        $dom = str_get_html($s);
+
+        foreach ($dom->nodes as $el) {
+            if ($el->tag == 'a') {
+                $el->rel = 'nofollow';
+                $el->target = '_blank';
+            }
+        }
+
+        return substr($dom->save(), 3, -4);
+
+    }
+
+    /**
+     * @copyright (c) 2012 Codestruck, LLC.
+     * @license http://opensource.org/licenses/mit-license.php/
+     */
+    function add_link_references($s, $domain, $data) {
+
+        Octopus::loadExternal('simplehtmldom');
+
+        $s = '<p>' . $s . '</p>';
+        $dom = str_get_html($s);
+
+        foreach ($dom->find('a') as $el) {
+
+            if (preg_match('/https?:\/\/(www.)?' . preg_quote($domain, '/') . '(\/.*|$)/', $el->href)) {
+                $el->href = u($el->href, $data, array('html' => true));
+            }
+
+        }
+
+        return substr($dom->save(), 3, -4);
+
+    }
+
+    /**
+     * Given an arbitrary SQL string, normalizes it (compacts whitespace,
+     * removes newlines) so it can be compared, e.g. for testing.
+     * @copyright (c) 2012 Codestruck, LLC.
+     * @license http://opensource.org/licenses/mit-license.php/
+     */
+    function normalize_sql($sql, $params = null, $detectErrors = false) {
+
+        // TODO: move to a tests.php file that is only included w/ tests?
+        // TODO: actually watch out for whitespace in fields
+
+        $sql = preg_replace('/\s+/m', ' ', trim($sql));
+        if (empty($params)) return $sql;
+
+        //TODO: be smarter about ? characters in
+        $pos = 0;
+        while(count($params) && ($pos = strpos($sql, '?', $pos)) !== false) {
+
+            $p = array_shift($params);
+            $p = "'" . str_replace("'", "\\'", $p) . "'";
+
+            $sql = substr($sql,0,$pos) . $p . substr($sql,$pos + 1);
+            $pos += strlen($p);
+        }
+
+        if ($detectErrors && count($params)) {
+            throw new Octopus_Exception(count($params) . " parameter(s) left in params array: " . implode(',', $params));
+        }
+
+        return $sql;
+    }
+
+    /**
+     * Pluralizes a singular noun. Doesn't try too hard.
+     * @param String $x Noun to pluralize
+     * @param Mixed $number If provided, the number to use when determining
+     * whether to pluralize.
+     * @return String The pluralized form of $x. Or, if $number indicates
+     * it should be singular, the singularized form.
+     * @copyright (c) 2012 Codestruck, LLC.
+     * @license http://opensource.org/licenses/mit-license.php/
+     */
+    function pluralize($x, $number = null) {
+
+        if ($number == 1) {
+            return singularize($x);
+        }
+
+        if (preg_match('/([aieou]?)(s?)s$/i', $x, $m)) {
+
+            if ($m[1] && $m[2]) {
+                // class -> classes
+                return $x . 'es';
+            } else {
+                // already plural already
+                return $x;
+            }
+        }
+
+        $x = preg_replace('/([^aeiou])y$/i', '$1ies', $x, 1, $count);
+        if ($count) return $x;
+
+        $x = preg_replace('/x$/i', 'xes', $x, 1, $count);
+        if ($count) return $x;
+
+        return $x . 's';
+    }
+
+    /**
+     * @return count then correctly pluralized word
+     * @param $format Whether to pass the number through number_format.
+     * @copyright (c) 2012 Codestruck, LLC.
+     * @license http://opensource.org/licenses/mit-license.php/
+     */
+    function plural_count($array_or_number, $word, $format = true) {
+
+        if (is_numeric($array_or_number)) {
+            $count = $array_or_number;
+        } else {
+            $count = count($array_or_number);
+        }
+
+        $nice_count = $format ? number_format($count) : $count;
+
+        if ($count != 1) {
+            return $nice_count . ' ' . pluralize($word);
+        } else {
+            return $nice_count . ' ' . $word;
+        }
+    }
+
+    /**
+     * Converts a plural back into a singular noun.
+     * @copyright (c) 2012 Codestruck, LLC.
+     * @license http://opensource.org/licenses/mit-license.php/
+     */
+    function singularize($x) {
+
+        if (substr($x, -1) != 's') {
+            return $x;
+        }
+
+        $x = preg_replace('/ies$/i', 'y', $x, 1, $count);
+        if ($count) return $x;
+
+        return substr($x, 0, strlen($x) - 1);
+    }
+
+    /**
+     * @copyright (c) 2012 Codestruck, LLC.
+     * @license http://opensource.org/licenses/mit-license.php/
+     */
+    function start_in($start, $str) {
+
+        if (strncmp($start, $str, strlen($start)) != 0) {
+            return $start . $str;
+        } else {
+            return $str;
+        }
+    }
+
+    /**
+     * @param $x String Longer string.
+     * @param $x String String that $x might start with.
+     * @param $ignoreCase bool Whether to ignore case.
+     * @param $remainder String Gets set to the portion of $x after $y, if
+     * $x starts with $y;
+     * @return bool Whether $x starts with $y;
+     * @copyright (c) 2012 Codestruck, LLC.
+     * @license http://opensource.org/licenses/mit-license.php/
+     */
+    function starts_with($x, $y, $ignoreCase = false, &$remainder = null) {
+
+        $xLen = strlen($x);
+        $yLen = strlen($y);
+
+        if ($yLen > $xLen) {
+            return false;
+        }
+
+        $start = substr($x, 0, $yLen);
+
+        if ($ignoreCase) {
+            $success = strcasecmp($start, $y) == 0;
+        } else {
+            $success = strcmp($start, $y) == 0;
+        }
+
+        if (!$success) {
+            $remainder = null;
+            return false;
+        }
+
+        $remainder = substr($x, $yLen);
+        return true;
+    }
+
+    /**
+     * Converts an arbitrary string into a valid css class.
+     * @copyright (c) 2012 Codestruck, LLC.
+     * @license http://opensource.org/licenses/mit-license.php/
+     */
+    function to_css_class($x) {
+
+        $x = dashed($x);
+        $x = preg_replace('/[^a-z0-9-]/i', '-', $x);
+        $x = preg_replace('/-{2,}/', '-', $x);
+        $x = preg_replace('/^([^a-z-])/i', '-$1', $x);
+
+        return $x;
+    }
+
+    /**
+     * Converts arbitrary text into a valid DOM id.
+     * @copyright (c) 2012 Codestruck, LLC.
+     * @license http://opensource.org/licenses/mit-license.php/
+     */
+    function to_html_id($x) {
+
+        $x = underscore($x);
+        // move initial numbers to the end
+        $x = preg_replace('/^(\d+_?)(.*)$/', '$2$1', $x);
+        $x = camel_case($x);
+
+        return $x;
+    }
+
+    /**
+     * Converts a string (plural or singular) into a database_id.
+     * <example>
+     * to_id('foo') = 'foo_id',
+     * to_id('categories') = 'category_id'
+     * @copyright (c) 2012 Codestruck, LLC.
+     * @license http://opensource.org/licenses/mit-license.php/
+     */
+    function to_id($s) {
+        $s = singularize(trim($s));
+        if (!$s) return $s;
+
+        return underscore($s) . '_id';
+    }
+
+    /**
+     * Takes a PHP regex pattern and converts it for use in mysql queries.
+     * @copyright (c) 2012 Codestruck, LLC.
+     * @license http://opensource.org/licenses/mit-license.php/
+     */
+    function to_mysql_regex($pattern) {
+        $pattern = str_replace('\\(', '[(]', $pattern);
+        $pattern = str_replace('\\)', '[)]', $pattern);
+        return $pattern;
+    }
+
+    /**
+     * Converts an arbitrary string into a valid slug.
+     * @param $x String Text you want to slugify.
+     * @param $counter Number A numeric index to append to the end (for when
+     * you are trying to find a unique slug. If $counter is greater than 1,
+     * it will be appended to the resulting slug.
+     * @copyright (c) 2012 Codestruck, LLC.
+     * @license http://opensource.org/licenses/mit-license.php/
+     */
+    function to_slug($x, $counter = null) {
+
+        $x = strtolower(trim($x));
+        $x = str_replace('&', ' and ', $x);
+        $x = preg_replace('/[\'"\(\)]/', '', $x);
+        $x = preg_replace('/[^a-z0-9-]/i', '-', $x);
+        $x = preg_replace('/-{2,}/', '-', $x);
+        $x = trim($x, '-');
+
+        if ($counter > 1) {
+            $x .= '-' . $counter;
+        }
+
+        return $x;
+    }
+
+    /**
+     * Given a singular or plural string, returns a pluralized table name.
+     * @copyright (c) 2012 Codestruck, LLC.
+     * @license http://opensource.org/licenses/mit-license.php/
+     */
+    function to_table_name($s) {
+
+        $s = trim($s);
+        if (!$s) return $s;
+
+        return pluralize(underscore($s));
+    }
+
+    /**
+     * Converts a camelCased string to an underscore_separated_string
+     * @copyright (c) 2012 Codestruck, LLC.
+     * @license http://opensource.org/licenses/mit-license.php/
+     */
+    function underscore($s, $sep = '_') {
+
+        $s = preg_replace('/([a-z0-9])([A-Z])/', '$1_$2', $s);
+        $s = preg_replace('/([0-9])([a-z])/', '$1_$2', $s);
+        $s = preg_replace('/([a-zA-Z])([0-9])/', '$1_$2', $s);
+        $s = preg_replace('/[\s_-]+/', $sep, $s);
+
+        return strtolower($s);
+
+    }
+
+    /**
+     * @copyright (c) 2012 Codestruck, LLC.
+     * @license http://opensource.org/licenses/mit-license.php/
+     */
+    function truncate_words($str, $count, $marker = '') {
+
+       $str = trim($str);
+       $result = '';
+
+       $words = explode(' ', $str);
+       if (count($words) < $count) {
+           return $str;
+       }
+
+       $i = 0;
+       foreach($words as $w) {
+           if ($i >= $count) {
+               return $result . $marker;
+           }
+           $result .= ($result ? ' ' : '') . $w;
+           $i++;
+       }
+
+        return $result . $marker;
+    }
+
+    /**
+     * Takes an input string and converts wildcard characters ('*', '?') to
+     * the valid mysql LIKE equivalents.
+     * @param $s String Input string.
+     * @param $wrap String If no wildcard characters are found in $s, it will
+     * be wrapped in the character specified here. Set to false to disable
+     * auto-wrapping.
+     * @copyright (c) 2012 Codestruck, LLC.
+     * @license http://opensource.org/licenses/mit-license.php/
+     */
+    function wildcardify($s, $wrap = '%') {
+
+
+        $result = '';
+        $escape = false;
+        $len = strlen($s);
+        $foundWildcard = false;
+
+        for($i = 0; $i < $len; $i++) {
+
+            $c = substr($s, $i, 1);
+
+            if ($escape) {
+                $result .= $c;
+                $escape = false;
+                continue;
+            } else if ($c === '\\') {
+                $escape = true;
+                continue;
+            }
+
+            if ($c === '%') $c = '\\%';
+            if ($c === '_') $c = '\\_';
+
+            $foundWildcard = $foundWildcard || ($c === '*' || $c === '?');
+
+            if ($c === '*') $c = '%';
+            if ($c === '?') $c = '_';
+
+            $result .= $c;
+        }
+
+        if ($wrap && !$foundWildcard) {
+            $result = "{$wrap}{$result}{$wrap}";
+        }
+
+        return $result;
+    }
+
+
+    /**
+     * @copyright (c) 2012 Codestruck, LLC.
+     * @license http://opensource.org/licenses/mit-license.php/
+     */
+    function pretty_json_encode($data) {
+        $str = json_encode($data);
+        $new = '';
+        $prev = null;
+        $indent = 0;
+        $inQuote = false;
+
+        for ($i = 0; $i < strlen($str); $i++) {
+            $char = $str[$i];
+
+            if ($char === '"' && $prev !== '\\') {
+                $inQuote = !$inQuote;
+            }
+
+            if (!$inQuote && ($char == '}' || $char == ']')) {
+                $new .= "\n";
+                $indent -= 4;
+                $new .= str_repeat(' ', $indent);
+            }
+
+            $new .= $char;
+
+            if (!$inQuote && ($char == '{' || $char == '[')) {
+                $new .= "\n";
+                $indent += 4;
+                $new .= str_repeat(' ', $indent);
+            }
+
+            if (!$inQuote && $char == ',') {
+                $new .= "\n";
+                $new .= str_repeat(' ', $indent);
+            }
+
+            if (!$inQuote && $char == ':') {
+                $new .= ' ';
+            }
+
+            $prev = $char;
+
+        }
+
+        return $new;
+    }
+
+    /**
+     * @copyright (c) 2012 Codestruck, LLC.
+     * @license http://opensource.org/licenses/mit-license.php/
+     */
+    function remove_extension($str) {
+
+        $dot = strrpos($str, '.');
+        if ($dot !== false) {
+            $str = substr($str, 0, $dot);
+        }
+
+        return $str;
+    }
