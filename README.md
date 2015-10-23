@@ -20,3 +20,26 @@ tolmach.detect('#include <stdio.h>');
 tolmach.detect('prices = items.map{ |i| i.price }');
 // => "ruby"
 ```
+
+## Supported languages
+
+```
+c
+csharp
+fortran
+go
+haskell
+java
+javascript
+lisp
+lua
+objective-c
+perl
+php
+python
+ruby
+rust
+shell
+swift
+vbnet
+```
