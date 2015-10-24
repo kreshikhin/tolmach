@@ -1,19 +1,23 @@
 {
-  "name": "tolmach",
-  "version": "1.0.1",
-  "private": false,
-  "description": "Programming language classifier of a code for node.js",
-  "main": "index.js",
-  "author": "Denis Kreshikhin",
-  "license": "MIT",
-  "dependencies": {
-    "natural": "0.2.1",
-    "lodash": "3.10.1"
-  },
-  "devDependencies": {
-    "mocha": "2.3.3"
-  },
-  "scripts": {
-    "test": "mocha test"
-  }
+    "name": "tolmach",
+    "version": "1.0.1",
+    "private": false,
+    "description": "Programming language classifier of a code for node.js",
+    "main": "index.js",
+    "author": "Denis Kreshikhin",
+    "license": "MIT",
+    "repository" : {
+        "type" : "git",
+        "url" : "https://github.com/kreshikhin/tolmach.git"
+    },
+    "dependencies": {
+        "natural": "0.2.1",
+        "lodash": "3.10.1"
+    },
+    "devDependencies": {
+        "mocha": "2.3.3"
+    },
+    "scripts": {
+        "test": "mocha test"
+    }
 }
