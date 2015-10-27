@@ -1,0 +1,108 @@
+#include <iostream>
+#include <string>
+
+int main() {
+    std::string name = "world";
+    std::cout << "hello " << name << std::endl;
+    return 0;
+}
+
+---
+#include <vector>
+#include <algorithm>
+#include <iostream>
+
+void print_sorted(std::vector<int> values) {
+    std::sort(values.begin(), values.end());
+    for (int value : values) {
+        std::cout << value << std::endl;
+    }
+}
+
+---
+#include <string>
+
+class User {
+public:
+    explicit User(std::string name) : name_(std::move(name)) {}
+
+    const std::string &name() const { return name_; }
+
+private:
+    std::string name_;
+};
+
+---
+#include <iostream>
+
+template <typename T>
+T larger(T left, T right) {
+    return left > right ? left : right;
+}
+
+int main() {
+    std::cout << larger(3, 8) << std::endl;
+    return 0;
+}
+
+---
+#include <memory>
+#include <string>
+#include <iostream>
+
+struct Node {
+    std::string label;
+    std::unique_ptr<Node> next;
+};
+
+void show(const Node &node) {
+    std::cout << node.label << std::endl;
+}
+
+---
+#include <iostream>
+#include <stdexcept>
+
+double divide(double left, double right) {
+    if (right == 0.0) {
+        throw std::runtime_error("division by zero");
+    }
+    return left / right;
+}
+
+---
+#include <map>
+#include <string>
+#include <iostream>
+
+int main() {
+    std::map<std::string, int> scores;
+    scores["ada"] = 10;
+    for (const auto &entry : scores) {
+        std::cout << entry.first << entry.second << std::endl;
+    }
+    return 0;
+}
+
+---
+#include <iostream>
+
+namespace demo {
+
+class Counter {
+public:
+    void add(int delta) { value_ += delta; }
+    int value() const { return value_; }
+
+private:
+    int value_ = 0;
+};
+
+}
+
+int main() {
+    demo::Counter counter;
+    counter.add(2);
+    std::cout << counter.value() << std::endl;
+    return 0;
+}
