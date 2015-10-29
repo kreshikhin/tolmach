@@ -1,26 +1,62 @@
-var natural = require('natural');
-var fs = require('fs');
-var path = require('path');
-var _ = require('lodash');
+'use strict';
 
-var classifier = new natural.BayesClassifier();
+const fs = require('fs');
+const path = require('path');
+const { Classifier } = require('./lib/classifier');
 
-fs.readdir(path.join(__dirname, 'data'), function(err, files){
-    console.log(files);
-    _.each(files, function(file){
-        var content = fs.readFileSync(path.join(__dirname, 'data', file), 'utf8');
-        classifier.addDocument(content, path.basename(file, path.extname(file)));
-    });
+function readDocuments(content) {
+    return content.split(/\r?\n---\r?\n/).map(function (part) {
+        return part.trim();
+    }).filter(Boolean);
+}
 
-    classifier.train();
+function buildModel(dataDir) {
+    const directory = dataDir || path.join(__dirname, 'data');
+    const classifier = new Classifier();
+    const files = fs.readdirSync(directory).filter(function (file) {
+        return file.endsWith('.txt');
+    }).sort();
 
-    console.log(classifier.classify('function() { console.log("hello world!"; )}'));
-    console.log(classifier.classify('for item in items:'));
-    console.log(classifier.classify('prices = items.map{ |i| i.price }'));
-    console.log(classifier.classify('#include <stdio.h>'));
+    if (files.length === 0) {
+        throw new Error('No training files in ' + directory);
+    }
 
-    classifier.save('classifier.json', function(err, classifier) {
-        console.log('the classifier is saved to the classifier.json file!');
-        process.exit();
-    });
-});
+    for (let i = 0; i < files.length; i += 1) {
+        const language = path.basename(files[i], '.txt');
+        const docs = readDocuments(fs.readFileSync(path.join(directory, files[i]), 'utf8'));
+        if (docs.length < 4) {
+            throw new Error(language + ' has only ' + docs.length + ' documents; expected at least 4');
+        }
+        for (let j = 0; j < docs.length; j += 1) {
+            classifier.addDocument(docs[j], language);
+        }
+    }
+
+    return classifier.toJSON();
+}
+
+function writeModel(outPath) {
+    const model = buildModel();
+    const target = outPath || path.join(__dirname, 'classifier.json');
+    fs.writeFileSync(target, JSON.stringify(model));
+    const languages = Object.keys(model.classes);
+    console.log('Wrote classifier.json (' + languages.length + ' languages)');
+    for (let i = 0; i < languages.length; i += 1) {
+        console.log('  ' + languages[i].padEnd(14) + model.classes[languages[i]].docs + ' documents');
+    }
+    return model;
+}
+
+if (require.main === module) {
+    try {
+        writeModel();
+    } catch (err) {
+        console.error(err.message);
+        process.exit(1);
+    }
+}
+
+module.exports = {
+    buildModel: buildModel,
+    readDocuments: readDocuments
+};
