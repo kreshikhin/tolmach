@@ -1,8 +1,13 @@
-// my second program in C++
-#include <iostream>
-using namespace std;
+#include <stdio.h>
+#include <stdlib.h>
 
-int main () {
-  cout << "Hello World! ";
-  cout << "I'm a C++ program";
+int main(void) {
+    char *message = malloc(6);
+    if (message == NULL) {
+        return 1;
+    }
+    sprintf(message, "hello");
+    printf("%s\n", message);
+    free(message);
+    return 0;
 }

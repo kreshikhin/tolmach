@@ -1,13 +1,9 @@
--- example from http://www.lua.org/pil/1.html
--- defines a factorial function
-function fact (n)
-  if n == 0 then
-    return 1
-  else
-    return n * fact(n-1)
-  end
+local function group(rows)
+    local buckets = {}
+    for _, row in ipairs(rows) do
+        local key = row.kind
+        buckets[key] = buckets[key] or {}
+        table.insert(buckets[key], row)
+    end
+    return buckets
 end
-
-print("enter a number:")
-a = io.read("*number")        -- read a number
-print(fact(a))

@@ -1,13 +1,16 @@
-import UIKit
+import Foundation
 
-class ViewController: UIViewController {
+struct Queue<Element> {
+    private var storage: [Element] = []
 
-    override func viewDidLoad() {
-        super.viewDidLoad()
-        self.title = "Swift Example"
+    mutating func push(_ item: Element) {
+        storage.append(item)
     }
 
-    override func didReceiveMemoryWarning() {
-        super.didReceiveMemoryWarning()
+    mutating func pop() -> Element? {
+        guard !storage.isEmpty else {
+            return nil
+        }
+        return storage.removeFirst()
     }
 }

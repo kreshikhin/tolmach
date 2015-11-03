@@ -1,9 +1,14 @@
-'Visual Basic 2010
-'How to open Url in a default browser.
-Public Class Form1
-Dim MyUrl As String = ("http://www.example.com")
-    Private Sub Form1_Click(ByVal sender As Object,_
-    ByVal e As System.EventArgs) Handles Me.Click
-Process.Start(MyUrl)
+Imports System.IO
+
+Public Class Backup
+    Public Sub CopyFolder(source As String, dest As String)
+        If Not Directory.Exists(source) Then
+            Throw New DirectoryNotFoundException(source)
+        End If
+        Directory.CreateDirectory(dest)
+        For Each file As String In Directory.GetFiles(source)
+            Dim name As String = Path.GetFileName(file)
+            File.Copy(file, Path.Combine(dest, name), True)
+        Next
     End Sub
 End Class

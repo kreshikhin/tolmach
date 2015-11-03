@@ -1,8 +1,6 @@
-;;; example
-(defun list-nth (N L)
-  "Return the N'th member of a list L."
-  (if (null L)
-      nil
-    (if (zerop N)
-    (first L)
-      (list-nth (1- N) (rest L)))))
+(defun flatten (tree)
+  (cond
+    ((null tree) nil)
+    ((atom tree) (list tree))
+    (t (append (flatten (car tree))
+               (flatten (cdr tree))))))

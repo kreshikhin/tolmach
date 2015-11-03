@@ -1,7 +1,22 @@
 package main
 
-import "fmt"
+import (
+    "errors"
+    "fmt"
+)
+
+func positive(value int) (int, error) {
+    if value < 0 {
+        return 0, errors.New("negative")
+    }
+    return value, nil
+}
 
 func main() {
-    fmt.Printf("Hello, world.\n")
+    value, err := positive(4)
+    if err != nil {
+        fmt.Println(err)
+        return
+    }
+    fmt.Println(value)
 }

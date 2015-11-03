@@ -1,15 +1,8 @@
-    public static function getInstance($section = "default", $level = null) {
-        if (!isset(self::$instances[$section])) {
-            if ($level == null) {
-                $levels = Config::getInstance()->getValue('log', 'levels', array());
-                if (isset($levels[$section])) {
-                    $level = $levels[$section];
-                } else {
-                    $level = Config::getInstance()->getValue('log', 'level', self::WARNING);
-                }
-            }
-            $class = __NAMESPACE__.'\\'.$level;
-            self::$instances[$section] = new $class($section);
-        }
-        return self::$instances[$section];
-    }
+<?php
+declare(strict_types=1);
+
+function slug(string $text): string {
+    $text = strtolower(trim($text));
+    $text = preg_replace('/[^a-z0-9]+/', '-', $text);
+    return trim($text, '-');
+}
