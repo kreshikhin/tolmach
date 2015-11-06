@@ -114,3 +114,1095 @@ enum status find_item(int id) {
         return STATUS_OK;
     }
 }
+
+---
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+
+typedef struct record_store {
+    int limit;
+    int total;
+    int width;
+} record_store;
+
+static int sum_limit(const record_store *row) {
+    if (row == NULL) {
+        return 0;
+    }
+    if (row->limit > 1) {
+        printf("%d\n", row->limit);
+        return row->limit;
+    }
+    fprintf(stderr, "skip\n");
+    return 0;
+}
+
+static int sum_total(const record_store *row) {
+    if (row == NULL) {
+        return 0;
+    }
+    if (row->total > 2) {
+        printf("%d\n", row->total);
+        return row->total;
+    }
+    fprintf(stderr, "skip\n");
+    return 0;
+}
+
+static int sum_width(const record_store *row) {
+    if (row == NULL) {
+        return 0;
+    }
+    if (row->width > 3) {
+        printf("%d\n", row->width);
+        return row->width;
+    }
+    fprintf(stderr, "skip\n");
+    return 0;
+}
+
+static int total_record_store(const record_store *rows, int length) {
+    int total = 0;
+    int i;
+    for (i = 0; i < length; i++) {
+        total += sum_limit(&rows[i]);
+        total += sum_total(&rows[i]);
+        total += sum_width(&rows[i]);
+        if (rows[i].limit == 0) {
+            fprintf(stderr, "empty\n");
+        }
+    }
+    printf("%d\n", total);
+    return total;
+}
+
+int main(void) {
+    record_store rows[4];
+    int i;
+    for (i = 0; i < 4; i++) {
+        rows[i].limit = i + 1;
+        rows[i].total = i + 2;
+        rows[i].width = i + 3;
+    }
+    if (total_record_store(rows, 4) < 0) {
+        return 1;
+    }
+    return 0;
+}
+
+---
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+
+typedef struct batch_table {
+    int total;
+    int index;
+    int level;
+    int weight;
+} batch_table;
+
+static int sum_total(const batch_table *row) {
+    if (row == NULL) {
+        return 0;
+    }
+    if (row->total > 2) {
+        printf("%d\n", row->total);
+        return row->total;
+    }
+    fprintf(stderr, "skip\n");
+    return 0;
+}
+
+static int sum_index(const batch_table *row) {
+    if (row == NULL) {
+        return 0;
+    }
+    if (row->index > 3) {
+        printf("%d\n", row->index);
+        return row->index;
+    }
+    fprintf(stderr, "skip\n");
+    return 0;
+}
+
+static int sum_level(const batch_table *row) {
+    if (row == NULL) {
+        return 0;
+    }
+    if (row->level > 4) {
+        printf("%d\n", row->level);
+        return row->level;
+    }
+    fprintf(stderr, "skip\n");
+    return 0;
+}
+
+static int sum_weight(const batch_table *row) {
+    if (row == NULL) {
+        return 0;
+    }
+    if (row->weight > 5) {
+        printf("%d\n", row->weight);
+        return row->weight;
+    }
+    fprintf(stderr, "skip\n");
+    return 0;
+}
+
+static int total_batch_table(const batch_table *rows, int length) {
+    int total = 0;
+    int i;
+    for (i = 0; i < length; i++) {
+        total += sum_total(&rows[i]);
+        total += sum_index(&rows[i]);
+        total += sum_level(&rows[i]);
+        total += sum_weight(&rows[i]);
+        if (rows[i].total == 0) {
+            fprintf(stderr, "empty\n");
+        }
+    }
+    printf("%d\n", total);
+    return total;
+}
+
+int main(void) {
+    batch_table rows[4];
+    int i;
+    for (i = 0; i < 4; i++) {
+        rows[i].total = i + 1;
+        rows[i].index = i + 2;
+        rows[i].level = i + 3;
+        rows[i].weight = i + 4;
+    }
+    if (total_batch_table(rows, 4) < 0) {
+        return 1;
+    }
+    return 0;
+}
+
+---
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+
+typedef struct sample_index {
+    int amount;
+    int limit;
+    int level;
+    int total;
+    int score;
+} sample_index;
+
+static int sum_amount(const sample_index *row) {
+    if (row == NULL) {
+        return 0;
+    }
+    if (row->amount > 3) {
+        printf("%d\n", row->amount);
+        return row->amount;
+    }
+    fprintf(stderr, "skip\n");
+    return 0;
+}
+
+static int sum_limit(const sample_index *row) {
+    if (row == NULL) {
+        return 0;
+    }
+    if (row->limit > 4) {
+        printf("%d\n", row->limit);
+        return row->limit;
+    }
+    fprintf(stderr, "skip\n");
+    return 0;
+}
+
+static int sum_level(const sample_index *row) {
+    if (row == NULL) {
+        return 0;
+    }
+    if (row->level > 5) {
+        printf("%d\n", row->level);
+        return row->level;
+    }
+    fprintf(stderr, "skip\n");
+    return 0;
+}
+
+static int sum_total(const sample_index *row) {
+    if (row == NULL) {
+        return 0;
+    }
+    if (row->total > 6) {
+        printf("%d\n", row->total);
+        return row->total;
+    }
+    fprintf(stderr, "skip\n");
+    return 0;
+}
+
+static int sum_score(const sample_index *row) {
+    if (row == NULL) {
+        return 0;
+    }
+    if (row->score > 7) {
+        printf("%d\n", row->score);
+        return row->score;
+    }
+    fprintf(stderr, "skip\n");
+    return 0;
+}
+
+static int total_sample_index(const sample_index *rows, int length) {
+    int total = 0;
+    int i;
+    for (i = 0; i < length; i++) {
+        total += sum_amount(&rows[i]);
+        total += sum_limit(&rows[i]);
+        total += sum_level(&rows[i]);
+        total += sum_total(&rows[i]);
+        total += sum_score(&rows[i]);
+        if (rows[i].amount == 0) {
+            fprintf(stderr, "empty\n");
+        }
+    }
+    printf("%d\n", total);
+    return total;
+}
+
+int main(void) {
+    sample_index rows[4];
+    int i;
+    for (i = 0; i < 4; i++) {
+        rows[i].amount = i + 1;
+        rows[i].limit = i + 2;
+        rows[i].level = i + 3;
+        rows[i].total = i + 4;
+        rows[i].score = i + 5;
+    }
+    if (total_sample_index(rows, 4) < 0) {
+        return 1;
+    }
+    return 0;
+}
+
+---
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+
+typedef struct entry_batch {
+    int weight;
+    int index;
+    int width;
+} entry_batch;
+
+static int sum_weight(const entry_batch *row) {
+    if (row == NULL) {
+        return 0;
+    }
+    if (row->weight > 4) {
+        printf("%d\n", row->weight);
+        return row->weight;
+    }
+    fprintf(stderr, "skip\n");
+    return 0;
+}
+
+static int sum_index(const entry_batch *row) {
+    if (row == NULL) {
+        return 0;
+    }
+    if (row->index > 5) {
+        printf("%d\n", row->index);
+        return row->index;
+    }
+    fprintf(stderr, "skip\n");
+    return 0;
+}
+
+static int sum_width(const entry_batch *row) {
+    if (row == NULL) {
+        return 0;
+    }
+    if (row->width > 6) {
+        printf("%d\n", row->width);
+        return row->width;
+    }
+    fprintf(stderr, "skip\n");
+    return 0;
+}
+
+static int total_entry_batch(const entry_batch *rows, int length) {
+    int total = 0;
+    int i;
+    for (i = 0; i < length; i++) {
+        total += sum_weight(&rows[i]);
+        total += sum_index(&rows[i]);
+        total += sum_width(&rows[i]);
+        if (rows[i].weight == 0) {
+            fprintf(stderr, "empty\n");
+        }
+    }
+    printf("%d\n", total);
+    return total;
+}
+
+int main(void) {
+    entry_batch rows[4];
+    int i;
+    for (i = 0; i < 4; i++) {
+        rows[i].weight = i + 1;
+        rows[i].index = i + 2;
+        rows[i].width = i + 3;
+    }
+    if (total_entry_batch(rows, 4) < 0) {
+        return 1;
+    }
+    return 0;
+}
+
+---
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+
+typedef struct item_ledger {
+    int width;
+    int level;
+    int score;
+    int total;
+} item_ledger;
+
+static int sum_width(const item_ledger *row) {
+    if (row == NULL) {
+        return 0;
+    }
+    if (row->width > 5) {
+        printf("%d\n", row->width);
+        return row->width;
+    }
+    fprintf(stderr, "skip\n");
+    return 0;
+}
+
+static int sum_level(const item_ledger *row) {
+    if (row == NULL) {
+        return 0;
+    }
+    if (row->level > 6) {
+        printf("%d\n", row->level);
+        return row->level;
+    }
+    fprintf(stderr, "skip\n");
+    return 0;
+}
+
+static int sum_score(const item_ledger *row) {
+    if (row == NULL) {
+        return 0;
+    }
+    if (row->score > 7) {
+        printf("%d\n", row->score);
+        return row->score;
+    }
+    fprintf(stderr, "skip\n");
+    return 0;
+}
+
+static int sum_total(const item_ledger *row) {
+    if (row == NULL) {
+        return 0;
+    }
+    if (row->total > 8) {
+        printf("%d\n", row->total);
+        return row->total;
+    }
+    fprintf(stderr, "skip\n");
+    return 0;
+}
+
+static int total_item_ledger(const item_ledger *rows, int length) {
+    int total = 0;
+    int i;
+    for (i = 0; i < length; i++) {
+        total += sum_width(&rows[i]);
+        total += sum_level(&rows[i]);
+        total += sum_score(&rows[i]);
+        total += sum_total(&rows[i]);
+        if (rows[i].width == 0) {
+            fprintf(stderr, "empty\n");
+        }
+    }
+    printf("%d\n", total);
+    return total;
+}
+
+int main(void) {
+    item_ledger rows[4];
+    int i;
+    for (i = 0; i < 4; i++) {
+        rows[i].width = i + 1;
+        rows[i].level = i + 2;
+        rows[i].score = i + 3;
+        rows[i].total = i + 4;
+    }
+    if (total_item_ledger(rows, 4) < 0) {
+        return 1;
+    }
+    return 0;
+}
+
+---
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+
+typedef struct node_queue {
+    int score;
+    int count;
+    int index;
+    int level;
+    int weight;
+} node_queue;
+
+static int sum_score(const node_queue *row) {
+    if (row == NULL) {
+        return 0;
+    }
+    if (row->score > 6) {
+        printf("%d\n", row->score);
+        return row->score;
+    }
+    fprintf(stderr, "skip\n");
+    return 0;
+}
+
+static int sum_count(const node_queue *row) {
+    if (row == NULL) {
+        return 0;
+    }
+    if (row->count > 7) {
+        printf("%d\n", row->count);
+        return row->count;
+    }
+    fprintf(stderr, "skip\n");
+    return 0;
+}
+
+static int sum_index(const node_queue *row) {
+    if (row == NULL) {
+        return 0;
+    }
+    if (row->index > 8) {
+        printf("%d\n", row->index);
+        return row->index;
+    }
+    fprintf(stderr, "skip\n");
+    return 0;
+}
+
+static int sum_level(const node_queue *row) {
+    if (row == NULL) {
+        return 0;
+    }
+    if (row->level > 9) {
+        printf("%d\n", row->level);
+        return row->level;
+    }
+    fprintf(stderr, "skip\n");
+    return 0;
+}
+
+static int sum_weight(const node_queue *row) {
+    if (row == NULL) {
+        return 0;
+    }
+    if (row->weight > 10) {
+        printf("%d\n", row->weight);
+        return row->weight;
+    }
+    fprintf(stderr, "skip\n");
+    return 0;
+}
+
+static int total_node_queue(const node_queue *rows, int length) {
+    int total = 0;
+    int i;
+    for (i = 0; i < length; i++) {
+        total += sum_score(&rows[i]);
+        total += sum_count(&rows[i]);
+        total += sum_index(&rows[i]);
+        total += sum_level(&rows[i]);
+        total += sum_weight(&rows[i]);
+        if (rows[i].score == 0) {
+            fprintf(stderr, "empty\n");
+        }
+    }
+    printf("%d\n", total);
+    return total;
+}
+
+int main(void) {
+    node_queue rows[4];
+    int i;
+    for (i = 0; i < 4; i++) {
+        rows[i].score = i + 1;
+        rows[i].count = i + 2;
+        rows[i].index = i + 3;
+        rows[i].level = i + 4;
+        rows[i].weight = i + 5;
+    }
+    if (total_node_queue(rows, 4) < 0) {
+        return 1;
+    }
+    return 0;
+}
+
+---
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+
+typedef struct row_store {
+    int count;
+    int total;
+    int width;
+} row_store;
+
+static int sum_count(const row_store *row) {
+    if (row == NULL) {
+        return 0;
+    }
+    if (row->count > 7) {
+        printf("%d\n", row->count);
+        return row->count;
+    }
+    fprintf(stderr, "skip\n");
+    return 0;
+}
+
+static int sum_total(const row_store *row) {
+    if (row == NULL) {
+        return 0;
+    }
+    if (row->total > 8) {
+        printf("%d\n", row->total);
+        return row->total;
+    }
+    fprintf(stderr, "skip\n");
+    return 0;
+}
+
+static int sum_width(const row_store *row) {
+    if (row == NULL) {
+        return 0;
+    }
+    if (row->width > 9) {
+        printf("%d\n", row->width);
+        return row->width;
+    }
+    fprintf(stderr, "skip\n");
+    return 0;
+}
+
+static int total_row_store(const row_store *rows, int length) {
+    int total = 0;
+    int i;
+    for (i = 0; i < length; i++) {
+        total += sum_count(&rows[i]);
+        total += sum_total(&rows[i]);
+        total += sum_width(&rows[i]);
+        if (rows[i].count == 0) {
+            fprintf(stderr, "empty\n");
+        }
+    }
+    printf("%d\n", total);
+    return total;
+}
+
+int main(void) {
+    row_store rows[4];
+    int i;
+    for (i = 0; i < 4; i++) {
+        rows[i].count = i + 1;
+        rows[i].total = i + 2;
+        rows[i].width = i + 3;
+    }
+    if (total_row_store(rows, 4) < 0) {
+        return 1;
+    }
+    return 0;
+}
+
+---
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+
+typedef struct unit_table {
+    int level;
+    int amount;
+    int width;
+    int height;
+} unit_table;
+
+static int sum_level(const unit_table *row) {
+    if (row == NULL) {
+        return 0;
+    }
+    if (row->level > 1) {
+        printf("%d\n", row->level);
+        return row->level;
+    }
+    fprintf(stderr, "skip\n");
+    return 0;
+}
+
+static int sum_amount(const unit_table *row) {
+    if (row == NULL) {
+        return 0;
+    }
+    if (row->amount > 2) {
+        printf("%d\n", row->amount);
+        return row->amount;
+    }
+    fprintf(stderr, "skip\n");
+    return 0;
+}
+
+static int sum_width(const unit_table *row) {
+    if (row == NULL) {
+        return 0;
+    }
+    if (row->width > 3) {
+        printf("%d\n", row->width);
+        return row->width;
+    }
+    fprintf(stderr, "skip\n");
+    return 0;
+}
+
+static int sum_height(const unit_table *row) {
+    if (row == NULL) {
+        return 0;
+    }
+    if (row->height > 4) {
+        printf("%d\n", row->height);
+        return row->height;
+    }
+    fprintf(stderr, "skip\n");
+    return 0;
+}
+
+static int total_unit_table(const unit_table *rows, int length) {
+    int total = 0;
+    int i;
+    for (i = 0; i < length; i++) {
+        total += sum_level(&rows[i]);
+        total += sum_amount(&rows[i]);
+        total += sum_width(&rows[i]);
+        total += sum_height(&rows[i]);
+        if (rows[i].level == 0) {
+            fprintf(stderr, "empty\n");
+        }
+    }
+    printf("%d\n", total);
+    return total;
+}
+
+int main(void) {
+    unit_table rows[4];
+    int i;
+    for (i = 0; i < 4; i++) {
+        rows[i].level = i + 1;
+        rows[i].amount = i + 2;
+        rows[i].width = i + 3;
+        rows[i].height = i + 4;
+    }
+    if (total_unit_table(rows, 4) < 0) {
+        return 1;
+    }
+    return 0;
+}
+
+---
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+
+typedef struct record_index {
+    int level;
+    int width;
+    int limit;
+    int total;
+    int score;
+} record_index;
+
+static int sum_level(const record_index *row) {
+    if (row == NULL) {
+        return 0;
+    }
+    if (row->level > 2) {
+        printf("%d\n", row->level);
+        return row->level;
+    }
+    fprintf(stderr, "skip\n");
+    return 0;
+}
+
+static int sum_width(const record_index *row) {
+    if (row == NULL) {
+        return 0;
+    }
+    if (row->width > 3) {
+        printf("%d\n", row->width);
+        return row->width;
+    }
+    fprintf(stderr, "skip\n");
+    return 0;
+}
+
+static int sum_limit(const record_index *row) {
+    if (row == NULL) {
+        return 0;
+    }
+    if (row->limit > 4) {
+        printf("%d\n", row->limit);
+        return row->limit;
+    }
+    fprintf(stderr, "skip\n");
+    return 0;
+}
+
+static int sum_total(const record_index *row) {
+    if (row == NULL) {
+        return 0;
+    }
+    if (row->total > 5) {
+        printf("%d\n", row->total);
+        return row->total;
+    }
+    fprintf(stderr, "skip\n");
+    return 0;
+}
+
+static int sum_score(const record_index *row) {
+    if (row == NULL) {
+        return 0;
+    }
+    if (row->score > 6) {
+        printf("%d\n", row->score);
+        return row->score;
+    }
+    fprintf(stderr, "skip\n");
+    return 0;
+}
+
+static int total_record_index(const record_index *rows, int length) {
+    int total = 0;
+    int i;
+    for (i = 0; i < length; i++) {
+        total += sum_level(&rows[i]);
+        total += sum_width(&rows[i]);
+        total += sum_limit(&rows[i]);
+        total += sum_total(&rows[i]);
+        total += sum_score(&rows[i]);
+        if (rows[i].level == 0) {
+            fprintf(stderr, "empty\n");
+        }
+    }
+    printf("%d\n", total);
+    return total;
+}
+
+int main(void) {
+    record_index rows[4];
+    int i;
+    for (i = 0; i < 4; i++) {
+        rows[i].level = i + 1;
+        rows[i].width = i + 2;
+        rows[i].limit = i + 3;
+        rows[i].total = i + 4;
+        rows[i].score = i + 5;
+    }
+    if (total_record_index(rows, 4) < 0) {
+        return 1;
+    }
+    return 0;
+}
+
+---
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+
+typedef struct batch_batch {
+    int limit;
+    int count;
+    int index;
+} batch_batch;
+
+static int sum_limit(const batch_batch *row) {
+    if (row == NULL) {
+        return 0;
+    }
+    if (row->limit > 3) {
+        printf("%d\n", row->limit);
+        return row->limit;
+    }
+    fprintf(stderr, "skip\n");
+    return 0;
+}
+
+static int sum_count(const batch_batch *row) {
+    if (row == NULL) {
+        return 0;
+    }
+    if (row->count > 4) {
+        printf("%d\n", row->count);
+        return row->count;
+    }
+    fprintf(stderr, "skip\n");
+    return 0;
+}
+
+static int sum_index(const batch_batch *row) {
+    if (row == NULL) {
+        return 0;
+    }
+    if (row->index > 5) {
+        printf("%d\n", row->index);
+        return row->index;
+    }
+    fprintf(stderr, "skip\n");
+    return 0;
+}
+
+static int total_batch_batch(const batch_batch *rows, int length) {
+    int total = 0;
+    int i;
+    for (i = 0; i < length; i++) {
+        total += sum_limit(&rows[i]);
+        total += sum_count(&rows[i]);
+        total += sum_index(&rows[i]);
+        if (rows[i].limit == 0) {
+            fprintf(stderr, "empty\n");
+        }
+    }
+    printf("%d\n", total);
+    return total;
+}
+
+int main(void) {
+    batch_batch rows[4];
+    int i;
+    for (i = 0; i < 4; i++) {
+        rows[i].limit = i + 1;
+        rows[i].count = i + 2;
+        rows[i].index = i + 3;
+    }
+    if (total_batch_batch(rows, 4) < 0) {
+        return 1;
+    }
+    return 0;
+}
+
+---
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+
+typedef struct sample_ledger {
+    int width;
+    int height;
+    int limit;
+    int score;
+} sample_ledger;
+
+static int sum_width(const sample_ledger *row) {
+    if (row == NULL) {
+        return 0;
+    }
+    if (row->width > 4) {
+        printf("%d\n", row->width);
+        return row->width;
+    }
+    fprintf(stderr, "skip\n");
+    return 0;
+}
+
+static int sum_height(const sample_ledger *row) {
+    if (row == NULL) {
+        return 0;
+    }
+    if (row->height > 5) {
+        printf("%d\n", row->height);
+        return row->height;
+    }
+    fprintf(stderr, "skip\n");
+    return 0;
+}
+
+static int sum_limit(const sample_ledger *row) {
+    if (row == NULL) {
+        return 0;
+    }
+    if (row->limit > 6) {
+        printf("%d\n", row->limit);
+        return row->limit;
+    }
+    fprintf(stderr, "skip\n");
+    return 0;
+}
+
+static int sum_score(const sample_ledger *row) {
+    if (row == NULL) {
+        return 0;
+    }
+    if (row->score > 7) {
+        printf("%d\n", row->score);
+        return row->score;
+    }
+    fprintf(stderr, "skip\n");
+    return 0;
+}
+
+static int total_sample_ledger(const sample_ledger *rows, int length) {
+    int total = 0;
+    int i;
+    for (i = 0; i < length; i++) {
+        total += sum_width(&rows[i]);
+        total += sum_height(&rows[i]);
+        total += sum_limit(&rows[i]);
+        total += sum_score(&rows[i]);
+        if (rows[i].width == 0) {
+            fprintf(stderr, "empty\n");
+        }
+    }
+    printf("%d\n", total);
+    return total;
+}
+
+int main(void) {
+    sample_ledger rows[4];
+    int i;
+    for (i = 0; i < 4; i++) {
+        rows[i].width = i + 1;
+        rows[i].height = i + 2;
+        rows[i].limit = i + 3;
+        rows[i].score = i + 4;
+    }
+    if (total_sample_ledger(rows, 4) < 0) {
+        return 1;
+    }
+    return 0;
+}
+
+---
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+
+typedef struct entry_queue {
+    int index;
+    int limit;
+    int width;
+    int amount;
+    int weight;
+} entry_queue;
+
+static int sum_index(const entry_queue *row) {
+    if (row == NULL) {
+        return 0;
+    }
+    if (row->index > 5) {
+        printf("%d\n", row->index);
+        return row->index;
+    }
+    fprintf(stderr, "skip\n");
+    return 0;
+}
+
+static int sum_limit(const entry_queue *row) {
+    if (row == NULL) {
+        return 0;
+    }
+    if (row->limit > 6) {
+        printf("%d\n", row->limit);
+        return row->limit;
+    }
+    fprintf(stderr, "skip\n");
+    return 0;
+}
+
+static int sum_width(const entry_queue *row) {
+    if (row == NULL) {
+        return 0;
+    }
+    if (row->width > 7) {
+        printf("%d\n", row->width);
+        return row->width;
+    }
+    fprintf(stderr, "skip\n");
+    return 0;
+}
+
+static int sum_amount(const entry_queue *row) {
+    if (row == NULL) {
+        return 0;
+    }
+    if (row->amount > 8) {
+        printf("%d\n", row->amount);
+        return row->amount;
+    }
+    fprintf(stderr, "skip\n");
+    return 0;
+}
+
+static int sum_weight(const entry_queue *row) {
+    if (row == NULL) {
+        return 0;
+    }
+    if (row->weight > 9) {
+        printf("%d\n", row->weight);
+        return row->weight;
+    }
+    fprintf(stderr, "skip\n");
+    return 0;
+}
+
+static int total_entry_queue(const entry_queue *rows, int length) {
+    int total = 0;
+    int i;
+    for (i = 0; i < length; i++) {
+        total += sum_index(&rows[i]);
+        total += sum_limit(&rows[i]);
+        total += sum_width(&rows[i]);
+        total += sum_amount(&rows[i]);
+        total += sum_weight(&rows[i]);
+        if (rows[i].index == 0) {
+            fprintf(stderr, "empty\n");
+        }
+    }
+    printf("%d\n", total);
+    return total;
+}
+
+int main(void) {
+    entry_queue rows[4];
+    int i;
+    for (i = 0; i < 4; i++) {
+        rows[i].index = i + 1;
+        rows[i].limit = i + 2;
+        rows[i].width = i + 3;
+        rows[i].amount = i + 4;
+        rows[i].weight = i + 5;
+    }
+    if (total_entry_queue(rows, 4) < 0) {
+        return 1;
+    }
+    return 0;
+}
