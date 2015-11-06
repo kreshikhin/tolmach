@@ -106,3 +106,1173 @@ int main() {
     std::cout << counter.value() << std::endl;
     return 0;
 }
+
+---
+#include <iostream>
+#include <vector>
+#include <string>
+
+class RecordBatch {
+public:
+    explicit RecordBatch(int seed) : seed_(seed) {}
+
+    void add_index(int index) {
+        if (index > 1) {
+            index_ += index;
+            std::cout << index_ << std::endl;
+        } else {
+            std::cerr << "skip" << std::endl;
+        }
+    }
+
+    int index() const { return index_; }
+
+    void add_weight(int weight) {
+        if (weight > 1) {
+            weight_ += weight;
+            std::cout << weight_ << std::endl;
+        } else {
+            std::cerr << "skip" << std::endl;
+        }
+    }
+
+    int weight() const { return weight_; }
+
+    void add_count(int count) {
+        if (count > 1) {
+            count_ += count;
+            std::cout << count_ << std::endl;
+        } else {
+            std::cerr << "skip" << std::endl;
+        }
+    }
+
+    int count() const { return count_; }
+
+    int total() const {
+        return index_ + weight_ + count_;
+    }
+
+private:
+    int seed_;
+    int index_ = 0;
+    int weight_ = 0;
+    int count_ = 0;
+};
+
+int main() {
+    std::vector<RecordBatch> rows;
+    rows.emplace_back(1);
+    for (int value : {1, 2, 3, 4}) {
+        rows.back().add_index(value);
+        rows.back().add_weight(value);
+        rows.back().add_count(value);
+    }
+    std::cout << rows.back().total() << std::endl;
+    return 0;
+}
+
+---
+#include <iostream>
+#include <vector>
+#include <string>
+
+class BatchLedger {
+public:
+    explicit BatchLedger(int seed) : seed_(seed) {}
+
+    void add_width(int width) {
+        if (width > 2) {
+            width_ += width;
+            std::cout << width_ << std::endl;
+        } else {
+            std::cerr << "skip" << std::endl;
+        }
+    }
+
+    int width() const { return width_; }
+
+    void add_amount(int amount) {
+        if (amount > 2) {
+            amount_ += amount;
+            std::cout << amount_ << std::endl;
+        } else {
+            std::cerr << "skip" << std::endl;
+        }
+    }
+
+    int amount() const { return amount_; }
+
+    void add_weight(int weight) {
+        if (weight > 2) {
+            weight_ += weight;
+            std::cout << weight_ << std::endl;
+        } else {
+            std::cerr << "skip" << std::endl;
+        }
+    }
+
+    int weight() const { return weight_; }
+
+    void add_level(int level) {
+        if (level > 2) {
+            level_ += level;
+            std::cout << level_ << std::endl;
+        } else {
+            std::cerr << "skip" << std::endl;
+        }
+    }
+
+    int level() const { return level_; }
+
+    int total() const {
+        return width_ + amount_ + weight_ + level_;
+    }
+
+private:
+    int seed_;
+    int width_ = 0;
+    int amount_ = 0;
+    int weight_ = 0;
+    int level_ = 0;
+};
+
+int main() {
+    std::vector<BatchLedger> rows;
+    rows.emplace_back(2);
+    for (int value : {1, 2, 3, 4}) {
+        rows.back().add_width(value);
+        rows.back().add_amount(value);
+        rows.back().add_weight(value);
+        rows.back().add_level(value);
+    }
+    std::cout << rows.back().total() << std::endl;
+    return 0;
+}
+
+---
+#include <iostream>
+#include <vector>
+#include <string>
+
+class SampleQueue {
+public:
+    explicit SampleQueue(int seed) : seed_(seed) {}
+
+    void add_total(int total) {
+        if (total > 3) {
+            total_ += total;
+            std::cout << total_ << std::endl;
+        } else {
+            std::cerr << "skip" << std::endl;
+        }
+    }
+
+    int total() const { return total_; }
+
+    void add_level(int level) {
+        if (level > 3) {
+            level_ += level;
+            std::cout << level_ << std::endl;
+        } else {
+            std::cerr << "skip" << std::endl;
+        }
+    }
+
+    int level() const { return level_; }
+
+    void add_limit(int limit) {
+        if (limit > 3) {
+            limit_ += limit;
+            std::cout << limit_ << std::endl;
+        } else {
+            std::cerr << "skip" << std::endl;
+        }
+    }
+
+    int limit() const { return limit_; }
+
+    void add_amount(int amount) {
+        if (amount > 3) {
+            amount_ += amount;
+            std::cout << amount_ << std::endl;
+        } else {
+            std::cerr << "skip" << std::endl;
+        }
+    }
+
+    int amount() const { return amount_; }
+
+    void add_score(int score) {
+        if (score > 3) {
+            score_ += score;
+            std::cout << score_ << std::endl;
+        } else {
+            std::cerr << "skip" << std::endl;
+        }
+    }
+
+    int score() const { return score_; }
+
+    int total() const {
+        return total_ + level_ + limit_ + amount_ + score_;
+    }
+
+private:
+    int seed_;
+    int total_ = 0;
+    int level_ = 0;
+    int limit_ = 0;
+    int amount_ = 0;
+    int score_ = 0;
+};
+
+int main() {
+    std::vector<SampleQueue> rows;
+    rows.emplace_back(3);
+    for (int value : {1, 2, 3, 4}) {
+        rows.back().add_total(value);
+        rows.back().add_level(value);
+        rows.back().add_limit(value);
+        rows.back().add_amount(value);
+        rows.back().add_score(value);
+    }
+    std::cout << rows.back().total() << std::endl;
+    return 0;
+}
+
+---
+#include <iostream>
+#include <vector>
+#include <string>
+
+class EntryStore {
+public:
+    explicit EntryStore(int seed) : seed_(seed) {}
+
+    void add_limit(int limit) {
+        if (limit > 4) {
+            limit_ += limit;
+            std::cout << limit_ << std::endl;
+        } else {
+            std::cerr << "skip" << std::endl;
+        }
+    }
+
+    int limit() const { return limit_; }
+
+    void add_count(int count) {
+        if (count > 4) {
+            count_ += count;
+            std::cout << count_ << std::endl;
+        } else {
+            std::cerr << "skip" << std::endl;
+        }
+    }
+
+    int count() const { return count_; }
+
+    void add_index(int index) {
+        if (index > 4) {
+            index_ += index;
+            std::cout << index_ << std::endl;
+        } else {
+            std::cerr << "skip" << std::endl;
+        }
+    }
+
+    int index() const { return index_; }
+
+    int total() const {
+        return limit_ + count_ + index_;
+    }
+
+private:
+    int seed_;
+    int limit_ = 0;
+    int count_ = 0;
+    int index_ = 0;
+};
+
+int main() {
+    std::vector<EntryStore> rows;
+    rows.emplace_back(4);
+    for (int value : {1, 2, 3, 4}) {
+        rows.back().add_limit(value);
+        rows.back().add_count(value);
+        rows.back().add_index(value);
+    }
+    std::cout << rows.back().total() << std::endl;
+    return 0;
+}
+
+---
+#include <iostream>
+#include <vector>
+#include <string>
+
+class ItemTable {
+public:
+    explicit ItemTable(int seed) : seed_(seed) {}
+
+    void add_height(int height) {
+        if (height > 5) {
+            height_ += height;
+            std::cout << height_ << std::endl;
+        } else {
+            std::cerr << "skip" << std::endl;
+        }
+    }
+
+    int height() const { return height_; }
+
+    void add_count(int count) {
+        if (count > 5) {
+            count_ += count;
+            std::cout << count_ << std::endl;
+        } else {
+            std::cerr << "skip" << std::endl;
+        }
+    }
+
+    int count() const { return count_; }
+
+    void add_total(int total) {
+        if (total > 5) {
+            total_ += total;
+            std::cout << total_ << std::endl;
+        } else {
+            std::cerr << "skip" << std::endl;
+        }
+    }
+
+    int total() const { return total_; }
+
+    void add_limit(int limit) {
+        if (limit > 5) {
+            limit_ += limit;
+            std::cout << limit_ << std::endl;
+        } else {
+            std::cerr << "skip" << std::endl;
+        }
+    }
+
+    int limit() const { return limit_; }
+
+    int total() const {
+        return height_ + count_ + total_ + limit_;
+    }
+
+private:
+    int seed_;
+    int height_ = 0;
+    int count_ = 0;
+    int total_ = 0;
+    int limit_ = 0;
+};
+
+int main() {
+    std::vector<ItemTable> rows;
+    rows.emplace_back(5);
+    for (int value : {1, 2, 3, 4}) {
+        rows.back().add_height(value);
+        rows.back().add_count(value);
+        rows.back().add_total(value);
+        rows.back().add_limit(value);
+    }
+    std::cout << rows.back().total() << std::endl;
+    return 0;
+}
+
+---
+#include <iostream>
+#include <vector>
+#include <string>
+
+class NodeIndex {
+public:
+    explicit NodeIndex(int seed) : seed_(seed) {}
+
+    void add_count(int count) {
+        if (count > 6) {
+            count_ += count;
+            std::cout << count_ << std::endl;
+        } else {
+            std::cerr << "skip" << std::endl;
+        }
+    }
+
+    int count() const { return count_; }
+
+    void add_index(int index) {
+        if (index > 6) {
+            index_ += index;
+            std::cout << index_ << std::endl;
+        } else {
+            std::cerr << "skip" << std::endl;
+        }
+    }
+
+    int index() const { return index_; }
+
+    void add_score(int score) {
+        if (score > 6) {
+            score_ += score;
+            std::cout << score_ << std::endl;
+        } else {
+            std::cerr << "skip" << std::endl;
+        }
+    }
+
+    int score() const { return score_; }
+
+    void add_width(int width) {
+        if (width > 6) {
+            width_ += width;
+            std::cout << width_ << std::endl;
+        } else {
+            std::cerr << "skip" << std::endl;
+        }
+    }
+
+    int width() const { return width_; }
+
+    void add_total(int total) {
+        if (total > 6) {
+            total_ += total;
+            std::cout << total_ << std::endl;
+        } else {
+            std::cerr << "skip" << std::endl;
+        }
+    }
+
+    int total() const { return total_; }
+
+    int total() const {
+        return count_ + index_ + score_ + width_ + total_;
+    }
+
+private:
+    int seed_;
+    int count_ = 0;
+    int index_ = 0;
+    int score_ = 0;
+    int width_ = 0;
+    int total_ = 0;
+};
+
+int main() {
+    std::vector<NodeIndex> rows;
+    rows.emplace_back(6);
+    for (int value : {1, 2, 3, 4}) {
+        rows.back().add_count(value);
+        rows.back().add_index(value);
+        rows.back().add_score(value);
+        rows.back().add_width(value);
+        rows.back().add_total(value);
+    }
+    std::cout << rows.back().total() << std::endl;
+    return 0;
+}
+
+---
+#include <iostream>
+#include <vector>
+#include <string>
+
+class RowBatch {
+public:
+    explicit RowBatch(int seed) : seed_(seed) {}
+
+    void add_amount(int amount) {
+        if (amount > 7) {
+            amount_ += amount;
+            std::cout << amount_ << std::endl;
+        } else {
+            std::cerr << "skip" << std::endl;
+        }
+    }
+
+    int amount() const { return amount_; }
+
+    void add_level(int level) {
+        if (level > 7) {
+            level_ += level;
+            std::cout << level_ << std::endl;
+        } else {
+            std::cerr << "skip" << std::endl;
+        }
+    }
+
+    int level() const { return level_; }
+
+    void add_weight(int weight) {
+        if (weight > 7) {
+            weight_ += weight;
+            std::cout << weight_ << std::endl;
+        } else {
+            std::cerr << "skip" << std::endl;
+        }
+    }
+
+    int weight() const { return weight_; }
+
+    int total() const {
+        return amount_ + level_ + weight_;
+    }
+
+private:
+    int seed_;
+    int amount_ = 0;
+    int level_ = 0;
+    int weight_ = 0;
+};
+
+int main() {
+    std::vector<RowBatch> rows;
+    rows.emplace_back(7);
+    for (int value : {1, 2, 3, 4}) {
+        rows.back().add_amount(value);
+        rows.back().add_level(value);
+        rows.back().add_weight(value);
+    }
+    std::cout << rows.back().total() << std::endl;
+    return 0;
+}
+
+---
+#include <iostream>
+#include <vector>
+#include <string>
+
+class UnitLedger {
+public:
+    explicit UnitLedger(int seed) : seed_(seed) {}
+
+    void add_score(int score) {
+        if (score > 1) {
+            score_ += score;
+            std::cout << score_ << std::endl;
+        } else {
+            std::cerr << "skip" << std::endl;
+        }
+    }
+
+    int score() const { return score_; }
+
+    void add_index(int index) {
+        if (index > 1) {
+            index_ += index;
+            std::cout << index_ << std::endl;
+        } else {
+            std::cerr << "skip" << std::endl;
+        }
+    }
+
+    int index() const { return index_; }
+
+    void add_weight(int weight) {
+        if (weight > 1) {
+            weight_ += weight;
+            std::cout << weight_ << std::endl;
+        } else {
+            std::cerr << "skip" << std::endl;
+        }
+    }
+
+    int weight() const { return weight_; }
+
+    void add_width(int width) {
+        if (width > 1) {
+            width_ += width;
+            std::cout << width_ << std::endl;
+        } else {
+            std::cerr << "skip" << std::endl;
+        }
+    }
+
+    int width() const { return width_; }
+
+    int total() const {
+        return score_ + index_ + weight_ + width_;
+    }
+
+private:
+    int seed_;
+    int score_ = 0;
+    int index_ = 0;
+    int weight_ = 0;
+    int width_ = 0;
+};
+
+int main() {
+    std::vector<UnitLedger> rows;
+    rows.emplace_back(1);
+    for (int value : {1, 2, 3, 4}) {
+        rows.back().add_score(value);
+        rows.back().add_index(value);
+        rows.back().add_weight(value);
+        rows.back().add_width(value);
+    }
+    std::cout << rows.back().total() << std::endl;
+    return 0;
+}
+
+---
+#include <iostream>
+#include <vector>
+#include <string>
+
+class RecordQueue {
+public:
+    explicit RecordQueue(int seed) : seed_(seed) {}
+
+    void add_level(int level) {
+        if (level > 2) {
+            level_ += level;
+            std::cout << level_ << std::endl;
+        } else {
+            std::cerr << "skip" << std::endl;
+        }
+    }
+
+    int level() const { return level_; }
+
+    void add_count(int count) {
+        if (count > 2) {
+            count_ += count;
+            std::cout << count_ << std::endl;
+        } else {
+            std::cerr << "skip" << std::endl;
+        }
+    }
+
+    int count() const { return count_; }
+
+    void add_limit(int limit) {
+        if (limit > 2) {
+            limit_ += limit;
+            std::cout << limit_ << std::endl;
+        } else {
+            std::cerr << "skip" << std::endl;
+        }
+    }
+
+    int limit() const { return limit_; }
+
+    void add_weight(int weight) {
+        if (weight > 2) {
+            weight_ += weight;
+            std::cout << weight_ << std::endl;
+        } else {
+            std::cerr << "skip" << std::endl;
+        }
+    }
+
+    int weight() const { return weight_; }
+
+    void add_score(int score) {
+        if (score > 2) {
+            score_ += score;
+            std::cout << score_ << std::endl;
+        } else {
+            std::cerr << "skip" << std::endl;
+        }
+    }
+
+    int score() const { return score_; }
+
+    int total() const {
+        return level_ + count_ + limit_ + weight_ + score_;
+    }
+
+private:
+    int seed_;
+    int level_ = 0;
+    int count_ = 0;
+    int limit_ = 0;
+    int weight_ = 0;
+    int score_ = 0;
+};
+
+int main() {
+    std::vector<RecordQueue> rows;
+    rows.emplace_back(2);
+    for (int value : {1, 2, 3, 4}) {
+        rows.back().add_level(value);
+        rows.back().add_count(value);
+        rows.back().add_limit(value);
+        rows.back().add_weight(value);
+        rows.back().add_score(value);
+    }
+    std::cout << rows.back().total() << std::endl;
+    return 0;
+}
+
+---
+#include <iostream>
+#include <vector>
+#include <string>
+
+class BatchStore {
+public:
+    explicit BatchStore(int seed) : seed_(seed) {}
+
+    void add_width(int width) {
+        if (width > 3) {
+            width_ += width;
+            std::cout << width_ << std::endl;
+        } else {
+            std::cerr << "skip" << std::endl;
+        }
+    }
+
+    int width() const { return width_; }
+
+    void add_limit(int limit) {
+        if (limit > 3) {
+            limit_ += limit;
+            std::cout << limit_ << std::endl;
+        } else {
+            std::cerr << "skip" << std::endl;
+        }
+    }
+
+    int limit() const { return limit_; }
+
+    void add_weight(int weight) {
+        if (weight > 3) {
+            weight_ += weight;
+            std::cout << weight_ << std::endl;
+        } else {
+            std::cerr << "skip" << std::endl;
+        }
+    }
+
+    int weight() const { return weight_; }
+
+    int total() const {
+        return width_ + limit_ + weight_;
+    }
+
+private:
+    int seed_;
+    int width_ = 0;
+    int limit_ = 0;
+    int weight_ = 0;
+};
+
+int main() {
+    std::vector<BatchStore> rows;
+    rows.emplace_back(3);
+    for (int value : {1, 2, 3, 4}) {
+        rows.back().add_width(value);
+        rows.back().add_limit(value);
+        rows.back().add_weight(value);
+    }
+    std::cout << rows.back().total() << std::endl;
+    return 0;
+}
+
+---
+#include <iostream>
+#include <vector>
+#include <string>
+
+class SampleTable {
+public:
+    explicit SampleTable(int seed) : seed_(seed) {}
+
+    void add_count(int count) {
+        if (count > 4) {
+            count_ += count;
+            std::cout << count_ << std::endl;
+        } else {
+            std::cerr << "skip" << std::endl;
+        }
+    }
+
+    int count() const { return count_; }
+
+    void add_index(int index) {
+        if (index > 4) {
+            index_ += index;
+            std::cout << index_ << std::endl;
+        } else {
+            std::cerr << "skip" << std::endl;
+        }
+    }
+
+    int index() const { return index_; }
+
+    void add_limit(int limit) {
+        if (limit > 4) {
+            limit_ += limit;
+            std::cout << limit_ << std::endl;
+        } else {
+            std::cerr << "skip" << std::endl;
+        }
+    }
+
+    int limit() const { return limit_; }
+
+    void add_width(int width) {
+        if (width > 4) {
+            width_ += width;
+            std::cout << width_ << std::endl;
+        } else {
+            std::cerr << "skip" << std::endl;
+        }
+    }
+
+    int width() const { return width_; }
+
+    int total() const {
+        return count_ + index_ + limit_ + width_;
+    }
+
+private:
+    int seed_;
+    int count_ = 0;
+    int index_ = 0;
+    int limit_ = 0;
+    int width_ = 0;
+};
+
+int main() {
+    std::vector<SampleTable> rows;
+    rows.emplace_back(4);
+    for (int value : {1, 2, 3, 4}) {
+        rows.back().add_count(value);
+        rows.back().add_index(value);
+        rows.back().add_limit(value);
+        rows.back().add_width(value);
+    }
+    std::cout << rows.back().total() << std::endl;
+    return 0;
+}
+
+---
+#include <iostream>
+#include <vector>
+#include <string>
+
+class EntryIndex {
+public:
+    explicit EntryIndex(int seed) : seed_(seed) {}
+
+    void add_index(int index) {
+        if (index > 5) {
+            index_ += index;
+            std::cout << index_ << std::endl;
+        } else {
+            std::cerr << "skip" << std::endl;
+        }
+    }
+
+    int index() const { return index_; }
+
+    void add_weight(int weight) {
+        if (weight > 5) {
+            weight_ += weight;
+            std::cout << weight_ << std::endl;
+        } else {
+            std::cerr << "skip" << std::endl;
+        }
+    }
+
+    int weight() const { return weight_; }
+
+    void add_width(int width) {
+        if (width > 5) {
+            width_ += width;
+            std::cout << width_ << std::endl;
+        } else {
+            std::cerr << "skip" << std::endl;
+        }
+    }
+
+    int width() const { return width_; }
+
+    void add_height(int height) {
+        if (height > 5) {
+            height_ += height;
+            std::cout << height_ << std::endl;
+        } else {
+            std::cerr << "skip" << std::endl;
+        }
+    }
+
+    int height() const { return height_; }
+
+    void add_score(int score) {
+        if (score > 5) {
+            score_ += score;
+            std::cout << score_ << std::endl;
+        } else {
+            std::cerr << "skip" << std::endl;
+        }
+    }
+
+    int score() const { return score_; }
+
+    int total() const {
+        return index_ + weight_ + width_ + height_ + score_;
+    }
+
+private:
+    int seed_;
+    int index_ = 0;
+    int weight_ = 0;
+    int width_ = 0;
+    int height_ = 0;
+    int score_ = 0;
+};
+
+int main() {
+    std::vector<EntryIndex> rows;
+    rows.emplace_back(5);
+    for (int value : {1, 2, 3, 4}) {
+        rows.back().add_index(value);
+        rows.back().add_weight(value);
+        rows.back().add_width(value);
+        rows.back().add_height(value);
+        rows.back().add_score(value);
+    }
+    std::cout << rows.back().total() << std::endl;
+    return 0;
+}
+
+---
+#include <iostream>
+#include <vector>
+#include <string>
+
+class ItemBatch {
+public:
+    explicit ItemBatch(int seed) : seed_(seed) {}
+
+    void add_height(int height) {
+        if (height > 6) {
+            height_ += height;
+            std::cout << height_ << std::endl;
+        } else {
+            std::cerr << "skip" << std::endl;
+        }
+    }
+
+    int height() const { return height_; }
+
+    void add_total(int total) {
+        if (total > 6) {
+            total_ += total;
+            std::cout << total_ << std::endl;
+        } else {
+            std::cerr << "skip" << std::endl;
+        }
+    }
+
+    int total() const { return total_; }
+
+    void add_score(int score) {
+        if (score > 6) {
+            score_ += score;
+            std::cout << score_ << std::endl;
+        } else {
+            std::cerr << "skip" << std::endl;
+        }
+    }
+
+    int score() const { return score_; }
+
+    int total() const {
+        return height_ + total_ + score_;
+    }
+
+private:
+    int seed_;
+    int height_ = 0;
+    int total_ = 0;
+    int score_ = 0;
+};
+
+int main() {
+    std::vector<ItemBatch> rows;
+    rows.emplace_back(6);
+    for (int value : {1, 2, 3, 4}) {
+        rows.back().add_height(value);
+        rows.back().add_total(value);
+        rows.back().add_score(value);
+    }
+    std::cout << rows.back().total() << std::endl;
+    return 0;
+}
+
+---
+#include <iostream>
+#include <vector>
+#include <string>
+
+class NodeLedger {
+public:
+    explicit NodeLedger(int seed) : seed_(seed) {}
+
+    void add_limit(int limit) {
+        if (limit > 7) {
+            limit_ += limit;
+            std::cout << limit_ << std::endl;
+        } else {
+            std::cerr << "skip" << std::endl;
+        }
+    }
+
+    int limit() const { return limit_; }
+
+    void add_weight(int weight) {
+        if (weight > 7) {
+            weight_ += weight;
+            std::cout << weight_ << std::endl;
+        } else {
+            std::cerr << "skip" << std::endl;
+        }
+    }
+
+    int weight() const { return weight_; }
+
+    void add_level(int level) {
+        if (level > 7) {
+            level_ += level;
+            std::cout << level_ << std::endl;
+        } else {
+            std::cerr << "skip" << std::endl;
+        }
+    }
+
+    int level() const { return level_; }
+
+    void add_height(int height) {
+        if (height > 7) {
+            height_ += height;
+            std::cout << height_ << std::endl;
+        } else {
+            std::cerr << "skip" << std::endl;
+        }
+    }
+
+    int height() const { return height_; }
+
+    int total() const {
+        return limit_ + weight_ + level_ + height_;
+    }
+
+private:
+    int seed_;
+    int limit_ = 0;
+    int weight_ = 0;
+    int level_ = 0;
+    int height_ = 0;
+};
+
+int main() {
+    std::vector<NodeLedger> rows;
+    rows.emplace_back(7);
+    for (int value : {1, 2, 3, 4}) {
+        rows.back().add_limit(value);
+        rows.back().add_weight(value);
+        rows.back().add_level(value);
+        rows.back().add_height(value);
+    }
+    std::cout << rows.back().total() << std::endl;
+    return 0;
+}
+
+---
+#include <iostream>
+#include <vector>
+#include <string>
+
+class RowQueue {
+public:
+    explicit RowQueue(int seed) : seed_(seed) {}
+
+    void add_weight(int weight) {
+        if (weight > 1) {
+            weight_ += weight;
+            std::cout << weight_ << std::endl;
+        } else {
+            std::cerr << "skip" << std::endl;
+        }
+    }
+
+    int weight() const { return weight_; }
+
+    void add_level(int level) {
+        if (level > 1) {
+            level_ += level;
+            std::cout << level_ << std::endl;
+        } else {
+            std::cerr << "skip" << std::endl;
+        }
+    }
+
+    int level() const { return level_; }
+
+    void add_count(int count) {
+        if (count > 1) {
+            count_ += count;
+            std::cout << count_ << std::endl;
+        } else {
+            std::cerr << "skip" << std::endl;
+        }
+    }
+
+    int count() const { return count_; }
+
+    void add_width(int width) {
+        if (width > 1) {
+            width_ += width;
+            std::cout << width_ << std::endl;
+        } else {
+            std::cerr << "skip" << std::endl;
+        }
+    }
+
+    int width() const { return width_; }
+
+    void add_limit(int limit) {
+        if (limit > 1) {
+            limit_ += limit;
+            std::cout << limit_ << std::endl;
+        } else {
+            std::cerr << "skip" << std::endl;
+        }
+    }
+
+    int limit() const { return limit_; }
+
+    int total() const {
+        return weight_ + level_ + count_ + width_ + limit_;
+    }
+
+private:
+    int seed_;
+    int weight_ = 0;
+    int level_ = 0;
+    int count_ = 0;
+    int width_ = 0;
+    int limit_ = 0;
+};
+
+int main() {
+    std::vector<RowQueue> rows;
+    rows.emplace_back(1);
+    for (int value : {1, 2, 3, 4}) {
+        rows.back().add_weight(value);
+        rows.back().add_level(value);
+        rows.back().add_count(value);
+        rows.back().add_width(value);
+        rows.back().add_limit(value);
+    }
+    std::cout << rows.back().total() << std::endl;
+    return 0;
+}
