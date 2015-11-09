@@ -75,3 +75,1030 @@ program report
     count = 3
     write(*,*) "count", count
 end program report
+
+---
+module record_store
+    implicit none
+contains
+    integer function sum_level(total, level)
+        implicit none
+        integer, intent(in) :: total
+        integer, intent(in) :: level
+        if (level > 1) then
+            sum_level = total + level
+            print *, level
+        else
+            sum_level = total
+        end if
+    end function sum_level
+
+    integer function sum_width(total, width)
+        implicit none
+        integer, intent(in) :: total
+        integer, intent(in) :: width
+        if (width > 2) then
+            sum_width = total + width
+            print *, width
+        else
+            sum_width = total
+        end if
+    end function sum_width
+
+    integer function sum_amount(total, amount)
+        implicit none
+        integer, intent(in) :: total
+        integer, intent(in) :: amount
+        if (amount > 3) then
+            sum_amount = total + amount
+            print *, amount
+        else
+            sum_amount = total
+        end if
+    end function sum_amount
+
+    subroutine report_record_store(values, length)
+        implicit none
+        integer, intent(in) :: length
+        integer, intent(in) :: values(length)
+        integer :: i
+        integer :: total
+        total = 0
+        do i = 1, length
+            total = sum_level(total, values(i))
+            total = sum_width(total, values(i))
+            total = sum_amount(total, values(i))
+        end do
+        print *, total
+    end subroutine report_record_store
+end module record_store
+
+program run_record_store
+    use record_store
+    implicit none
+    integer :: values(4)
+    integer :: i
+    do i = 1, 4
+        values(i) = i
+    end do
+    call report_record_store(values, 4)
+end program run_record_store
+
+---
+module batch_table
+    implicit none
+contains
+    integer function sum_count(total, count)
+        implicit none
+        integer, intent(in) :: total
+        integer, intent(in) :: count
+        if (count > 2) then
+            sum_count = total + count
+            print *, count
+        else
+            sum_count = total
+        end if
+    end function sum_count
+
+    integer function sum_weight(total, weight)
+        implicit none
+        integer, intent(in) :: total
+        integer, intent(in) :: weight
+        if (weight > 3) then
+            sum_weight = total + weight
+            print *, weight
+        else
+            sum_weight = total
+        end if
+    end function sum_weight
+
+    integer function sum_index(total, index)
+        implicit none
+        integer, intent(in) :: total
+        integer, intent(in) :: index
+        if (index > 4) then
+            sum_index = total + index
+            print *, index
+        else
+            sum_index = total
+        end if
+    end function sum_index
+
+    integer function sum_amount(total, amount)
+        implicit none
+        integer, intent(in) :: total
+        integer, intent(in) :: amount
+        if (amount > 5) then
+            sum_amount = total + amount
+            print *, amount
+        else
+            sum_amount = total
+        end if
+    end function sum_amount
+
+    subroutine report_batch_table(values, length)
+        implicit none
+        integer, intent(in) :: length
+        integer, intent(in) :: values(length)
+        integer :: i
+        integer :: total
+        total = 0
+        do i = 1, length
+            total = sum_count(total, values(i))
+            total = sum_weight(total, values(i))
+            total = sum_index(total, values(i))
+            total = sum_amount(total, values(i))
+        end do
+        print *, total
+    end subroutine report_batch_table
+end module batch_table
+
+program run_batch_table
+    use batch_table
+    implicit none
+    integer :: values(4)
+    integer :: i
+    do i = 1, 4
+        values(i) = i
+    end do
+    call report_batch_table(values, 4)
+end program run_batch_table
+
+---
+module sample_index
+    implicit none
+contains
+    integer function sum_level(total, level)
+        implicit none
+        integer, intent(in) :: total
+        integer, intent(in) :: level
+        if (level > 3) then
+            sum_level = total + level
+            print *, level
+        else
+            sum_level = total
+        end if
+    end function sum_level
+
+    integer function sum_width(total, width)
+        implicit none
+        integer, intent(in) :: total
+        integer, intent(in) :: width
+        if (width > 4) then
+            sum_width = total + width
+            print *, width
+        else
+            sum_width = total
+        end if
+    end function sum_width
+
+    integer function sum_limit(total, limit)
+        implicit none
+        integer, intent(in) :: total
+        integer, intent(in) :: limit
+        if (limit > 5) then
+            sum_limit = total + limit
+            print *, limit
+        else
+            sum_limit = total
+        end if
+    end function sum_limit
+
+    integer function sum_height(total, height)
+        implicit none
+        integer, intent(in) :: total
+        integer, intent(in) :: height
+        if (height > 6) then
+            sum_height = total + height
+            print *, height
+        else
+            sum_height = total
+        end if
+    end function sum_height
+
+    integer function sum_weight(total, weight)
+        implicit none
+        integer, intent(in) :: total
+        integer, intent(in) :: weight
+        if (weight > 7) then
+            sum_weight = total + weight
+            print *, weight
+        else
+            sum_weight = total
+        end if
+    end function sum_weight
+
+    subroutine report_sample_index(values, length)
+        implicit none
+        integer, intent(in) :: length
+        integer, intent(in) :: values(length)
+        integer :: i
+        integer :: total
+        total = 0
+        do i = 1, length
+            total = sum_level(total, values(i))
+            total = sum_width(total, values(i))
+            total = sum_limit(total, values(i))
+            total = sum_height(total, values(i))
+            total = sum_weight(total, values(i))
+        end do
+        print *, total
+    end subroutine report_sample_index
+end module sample_index
+
+program run_sample_index
+    use sample_index
+    implicit none
+    integer :: values(4)
+    integer :: i
+    do i = 1, 4
+        values(i) = i
+    end do
+    call report_sample_index(values, 4)
+end program run_sample_index
+
+---
+module entry_batch
+    implicit none
+contains
+    integer function sum_total(total, total)
+        implicit none
+        integer, intent(in) :: total
+        integer, intent(in) :: total
+        if (total > 4) then
+            sum_total = total + total
+            print *, total
+        else
+            sum_total = total
+        end if
+    end function sum_total
+
+    integer function sum_width(total, width)
+        implicit none
+        integer, intent(in) :: total
+        integer, intent(in) :: width
+        if (width > 5) then
+            sum_width = total + width
+            print *, width
+        else
+            sum_width = total
+        end if
+    end function sum_width
+
+    integer function sum_score(total, score)
+        implicit none
+        integer, intent(in) :: total
+        integer, intent(in) :: score
+        if (score > 6) then
+            sum_score = total + score
+            print *, score
+        else
+            sum_score = total
+        end if
+    end function sum_score
+
+    subroutine report_entry_batch(values, length)
+        implicit none
+        integer, intent(in) :: length
+        integer, intent(in) :: values(length)
+        integer :: i
+        integer :: total
+        total = 0
+        do i = 1, length
+            total = sum_total(total, values(i))
+            total = sum_width(total, values(i))
+            total = sum_score(total, values(i))
+        end do
+        print *, total
+    end subroutine report_entry_batch
+end module entry_batch
+
+program run_entry_batch
+    use entry_batch
+    implicit none
+    integer :: values(4)
+    integer :: i
+    do i = 1, 4
+        values(i) = i
+    end do
+    call report_entry_batch(values, 4)
+end program run_entry_batch
+
+---
+module item_ledger
+    implicit none
+contains
+    integer function sum_limit(total, limit)
+        implicit none
+        integer, intent(in) :: total
+        integer, intent(in) :: limit
+        if (limit > 5) then
+            sum_limit = total + limit
+            print *, limit
+        else
+            sum_limit = total
+        end if
+    end function sum_limit
+
+    integer function sum_total(total, total)
+        implicit none
+        integer, intent(in) :: total
+        integer, intent(in) :: total
+        if (total > 6) then
+            sum_total = total + total
+            print *, total
+        else
+            sum_total = total
+        end if
+    end function sum_total
+
+    integer function sum_index(total, index)
+        implicit none
+        integer, intent(in) :: total
+        integer, intent(in) :: index
+        if (index > 7) then
+            sum_index = total + index
+            print *, index
+        else
+            sum_index = total
+        end if
+    end function sum_index
+
+    integer function sum_height(total, height)
+        implicit none
+        integer, intent(in) :: total
+        integer, intent(in) :: height
+        if (height > 8) then
+            sum_height = total + height
+            print *, height
+        else
+            sum_height = total
+        end if
+    end function sum_height
+
+    subroutine report_item_ledger(values, length)
+        implicit none
+        integer, intent(in) :: length
+        integer, intent(in) :: values(length)
+        integer :: i
+        integer :: total
+        total = 0
+        do i = 1, length
+            total = sum_limit(total, values(i))
+            total = sum_total(total, values(i))
+            total = sum_index(total, values(i))
+            total = sum_height(total, values(i))
+        end do
+        print *, total
+    end subroutine report_item_ledger
+end module item_ledger
+
+program run_item_ledger
+    use item_ledger
+    implicit none
+    integer :: values(4)
+    integer :: i
+    do i = 1, 4
+        values(i) = i
+    end do
+    call report_item_ledger(values, 4)
+end program run_item_ledger
+
+---
+module node_queue
+    implicit none
+contains
+    integer function sum_width(total, width)
+        implicit none
+        integer, intent(in) :: total
+        integer, intent(in) :: width
+        if (width > 6) then
+            sum_width = total + width
+            print *, width
+        else
+            sum_width = total
+        end if
+    end function sum_width
+
+    integer function sum_index(total, index)
+        implicit none
+        integer, intent(in) :: total
+        integer, intent(in) :: index
+        if (index > 7) then
+            sum_index = total + index
+            print *, index
+        else
+            sum_index = total
+        end if
+    end function sum_index
+
+    integer function sum_height(total, height)
+        implicit none
+        integer, intent(in) :: total
+        integer, intent(in) :: height
+        if (height > 8) then
+            sum_height = total + height
+            print *, height
+        else
+            sum_height = total
+        end if
+    end function sum_height
+
+    integer function sum_amount(total, amount)
+        implicit none
+        integer, intent(in) :: total
+        integer, intent(in) :: amount
+        if (amount > 9) then
+            sum_amount = total + amount
+            print *, amount
+        else
+            sum_amount = total
+        end if
+    end function sum_amount
+
+    integer function sum_count(total, count)
+        implicit none
+        integer, intent(in) :: total
+        integer, intent(in) :: count
+        if (count > 10) then
+            sum_count = total + count
+            print *, count
+        else
+            sum_count = total
+        end if
+    end function sum_count
+
+    subroutine report_node_queue(values, length)
+        implicit none
+        integer, intent(in) :: length
+        integer, intent(in) :: values(length)
+        integer :: i
+        integer :: total
+        total = 0
+        do i = 1, length
+            total = sum_width(total, values(i))
+            total = sum_index(total, values(i))
+            total = sum_height(total, values(i))
+            total = sum_amount(total, values(i))
+            total = sum_count(total, values(i))
+        end do
+        print *, total
+    end subroutine report_node_queue
+end module node_queue
+
+program run_node_queue
+    use node_queue
+    implicit none
+    integer :: values(4)
+    integer :: i
+    do i = 1, 4
+        values(i) = i
+    end do
+    call report_node_queue(values, 4)
+end program run_node_queue
+
+---
+module row_store
+    implicit none
+contains
+    integer function sum_total(total, total)
+        implicit none
+        integer, intent(in) :: total
+        integer, intent(in) :: total
+        if (total > 7) then
+            sum_total = total + total
+            print *, total
+        else
+            sum_total = total
+        end if
+    end function sum_total
+
+    integer function sum_limit(total, limit)
+        implicit none
+        integer, intent(in) :: total
+        integer, intent(in) :: limit
+        if (limit > 8) then
+            sum_limit = total + limit
+            print *, limit
+        else
+            sum_limit = total
+        end if
+    end function sum_limit
+
+    integer function sum_height(total, height)
+        implicit none
+        integer, intent(in) :: total
+        integer, intent(in) :: height
+        if (height > 9) then
+            sum_height = total + height
+            print *, height
+        else
+            sum_height = total
+        end if
+    end function sum_height
+
+    subroutine report_row_store(values, length)
+        implicit none
+        integer, intent(in) :: length
+        integer, intent(in) :: values(length)
+        integer :: i
+        integer :: total
+        total = 0
+        do i = 1, length
+            total = sum_total(total, values(i))
+            total = sum_limit(total, values(i))
+            total = sum_height(total, values(i))
+        end do
+        print *, total
+    end subroutine report_row_store
+end module row_store
+
+program run_row_store
+    use row_store
+    implicit none
+    integer :: values(4)
+    integer :: i
+    do i = 1, 4
+        values(i) = i
+    end do
+    call report_row_store(values, 4)
+end program run_row_store
+
+---
+module unit_table
+    implicit none
+contains
+    integer function sum_count(total, count)
+        implicit none
+        integer, intent(in) :: total
+        integer, intent(in) :: count
+        if (count > 1) then
+            sum_count = total + count
+            print *, count
+        else
+            sum_count = total
+        end if
+    end function sum_count
+
+    integer function sum_level(total, level)
+        implicit none
+        integer, intent(in) :: total
+        integer, intent(in) :: level
+        if (level > 2) then
+            sum_level = total + level
+            print *, level
+        else
+            sum_level = total
+        end if
+    end function sum_level
+
+    integer function sum_height(total, height)
+        implicit none
+        integer, intent(in) :: total
+        integer, intent(in) :: height
+        if (height > 3) then
+            sum_height = total + height
+            print *, height
+        else
+            sum_height = total
+        end if
+    end function sum_height
+
+    integer function sum_total(total, total)
+        implicit none
+        integer, intent(in) :: total
+        integer, intent(in) :: total
+        if (total > 4) then
+            sum_total = total + total
+            print *, total
+        else
+            sum_total = total
+        end if
+    end function sum_total
+
+    subroutine report_unit_table(values, length)
+        implicit none
+        integer, intent(in) :: length
+        integer, intent(in) :: values(length)
+        integer :: i
+        integer :: total
+        total = 0
+        do i = 1, length
+            total = sum_count(total, values(i))
+            total = sum_level(total, values(i))
+            total = sum_height(total, values(i))
+            total = sum_total(total, values(i))
+        end do
+        print *, total
+    end subroutine report_unit_table
+end module unit_table
+
+program run_unit_table
+    use unit_table
+    implicit none
+    integer :: values(4)
+    integer :: i
+    do i = 1, 4
+        values(i) = i
+    end do
+    call report_unit_table(values, 4)
+end program run_unit_table
+
+---
+module record_index
+    implicit none
+contains
+    integer function sum_total(total, total)
+        implicit none
+        integer, intent(in) :: total
+        integer, intent(in) :: total
+        if (total > 2) then
+            sum_total = total + total
+            print *, total
+        else
+            sum_total = total
+        end if
+    end function sum_total
+
+    integer function sum_amount(total, amount)
+        implicit none
+        integer, intent(in) :: total
+        integer, intent(in) :: amount
+        if (amount > 3) then
+            sum_amount = total + amount
+            print *, amount
+        else
+            sum_amount = total
+        end if
+    end function sum_amount
+
+    integer function sum_limit(total, limit)
+        implicit none
+        integer, intent(in) :: total
+        integer, intent(in) :: limit
+        if (limit > 4) then
+            sum_limit = total + limit
+            print *, limit
+        else
+            sum_limit = total
+        end if
+    end function sum_limit
+
+    integer function sum_width(total, width)
+        implicit none
+        integer, intent(in) :: total
+        integer, intent(in) :: width
+        if (width > 5) then
+            sum_width = total + width
+            print *, width
+        else
+            sum_width = total
+        end if
+    end function sum_width
+
+    integer function sum_score(total, score)
+        implicit none
+        integer, intent(in) :: total
+        integer, intent(in) :: score
+        if (score > 6) then
+            sum_score = total + score
+            print *, score
+        else
+            sum_score = total
+        end if
+    end function sum_score
+
+    subroutine report_record_index(values, length)
+        implicit none
+        integer, intent(in) :: length
+        integer, intent(in) :: values(length)
+        integer :: i
+        integer :: total
+        total = 0
+        do i = 1, length
+            total = sum_total(total, values(i))
+            total = sum_amount(total, values(i))
+            total = sum_limit(total, values(i))
+            total = sum_width(total, values(i))
+            total = sum_score(total, values(i))
+        end do
+        print *, total
+    end subroutine report_record_index
+end module record_index
+
+program run_record_index
+    use record_index
+    implicit none
+    integer :: values(4)
+    integer :: i
+    do i = 1, 4
+        values(i) = i
+    end do
+    call report_record_index(values, 4)
+end program run_record_index
+
+---
+module batch_batch
+    implicit none
+contains
+    integer function sum_index(total, index)
+        implicit none
+        integer, intent(in) :: total
+        integer, intent(in) :: index
+        if (index > 3) then
+            sum_index = total + index
+            print *, index
+        else
+            sum_index = total
+        end if
+    end function sum_index
+
+    integer function sum_amount(total, amount)
+        implicit none
+        integer, intent(in) :: total
+        integer, intent(in) :: amount
+        if (amount > 4) then
+            sum_amount = total + amount
+            print *, amount
+        else
+            sum_amount = total
+        end if
+    end function sum_amount
+
+    integer function sum_weight(total, weight)
+        implicit none
+        integer, intent(in) :: total
+        integer, intent(in) :: weight
+        if (weight > 5) then
+            sum_weight = total + weight
+            print *, weight
+        else
+            sum_weight = total
+        end if
+    end function sum_weight
+
+    subroutine report_batch_batch(values, length)
+        implicit none
+        integer, intent(in) :: length
+        integer, intent(in) :: values(length)
+        integer :: i
+        integer :: total
+        total = 0
+        do i = 1, length
+            total = sum_index(total, values(i))
+            total = sum_amount(total, values(i))
+            total = sum_weight(total, values(i))
+        end do
+        print *, total
+    end subroutine report_batch_batch
+end module batch_batch
+
+program run_batch_batch
+    use batch_batch
+    implicit none
+    integer :: values(4)
+    integer :: i
+    do i = 1, 4
+        values(i) = i
+    end do
+    call report_batch_batch(values, 4)
+end program run_batch_batch
+
+---
+module sample_ledger
+    implicit none
+contains
+    integer function sum_count(total, count)
+        implicit none
+        integer, intent(in) :: total
+        integer, intent(in) :: count
+        if (count > 4) then
+            sum_count = total + count
+            print *, count
+        else
+            sum_count = total
+        end if
+    end function sum_count
+
+    integer function sum_width(total, width)
+        implicit none
+        integer, intent(in) :: total
+        integer, intent(in) :: width
+        if (width > 5) then
+            sum_width = total + width
+            print *, width
+        else
+            sum_width = total
+        end if
+    end function sum_width
+
+    integer function sum_height(total, height)
+        implicit none
+        integer, intent(in) :: total
+        integer, intent(in) :: height
+        if (height > 6) then
+            sum_height = total + height
+            print *, height
+        else
+            sum_height = total
+        end if
+    end function sum_height
+
+    integer function sum_total(total, total)
+        implicit none
+        integer, intent(in) :: total
+        integer, intent(in) :: total
+        if (total > 7) then
+            sum_total = total + total
+            print *, total
+        else
+            sum_total = total
+        end if
+    end function sum_total
+
+    subroutine report_sample_ledger(values, length)
+        implicit none
+        integer, intent(in) :: length
+        integer, intent(in) :: values(length)
+        integer :: i
+        integer :: total
+        total = 0
+        do i = 1, length
+            total = sum_count(total, values(i))
+            total = sum_width(total, values(i))
+            total = sum_height(total, values(i))
+            total = sum_total(total, values(i))
+        end do
+        print *, total
+    end subroutine report_sample_ledger
+end module sample_ledger
+
+program run_sample_ledger
+    use sample_ledger
+    implicit none
+    integer :: values(4)
+    integer :: i
+    do i = 1, 4
+        values(i) = i
+    end do
+    call report_sample_ledger(values, 4)
+end program run_sample_ledger
+
+---
+module entry_queue
+    implicit none
+contains
+    integer function sum_count(total, count)
+        implicit none
+        integer, intent(in) :: total
+        integer, intent(in) :: count
+        if (count > 5) then
+            sum_count = total + count
+            print *, count
+        else
+            sum_count = total
+        end if
+    end function sum_count
+
+    integer function sum_level(total, level)
+        implicit none
+        integer, intent(in) :: total
+        integer, intent(in) :: level
+        if (level > 6) then
+            sum_level = total + level
+            print *, level
+        else
+            sum_level = total
+        end if
+    end function sum_level
+
+    integer function sum_limit(total, limit)
+        implicit none
+        integer, intent(in) :: total
+        integer, intent(in) :: limit
+        if (limit > 7) then
+            sum_limit = total + limit
+            print *, limit
+        else
+            sum_limit = total
+        end if
+    end function sum_limit
+
+    integer function sum_total(total, total)
+        implicit none
+        integer, intent(in) :: total
+        integer, intent(in) :: total
+        if (total > 8) then
+            sum_total = total + total
+            print *, total
+        else
+            sum_total = total
+        end if
+    end function sum_total
+
+    integer function sum_weight(total, weight)
+        implicit none
+        integer, intent(in) :: total
+        integer, intent(in) :: weight
+        if (weight > 9) then
+            sum_weight = total + weight
+            print *, weight
+        else
+            sum_weight = total
+        end if
+    end function sum_weight
+
+    subroutine report_entry_queue(values, length)
+        implicit none
+        integer, intent(in) :: length
+        integer, intent(in) :: values(length)
+        integer :: i
+        integer :: total
+        total = 0
+        do i = 1, length
+            total = sum_count(total, values(i))
+            total = sum_level(total, values(i))
+            total = sum_limit(total, values(i))
+            total = sum_total(total, values(i))
+            total = sum_weight(total, values(i))
+        end do
+        print *, total
+    end subroutine report_entry_queue
+end module entry_queue
+
+program run_entry_queue
+    use entry_queue
+    implicit none
+    integer :: values(4)
+    integer :: i
+    do i = 1, 4
+        values(i) = i
+    end do
+    call report_entry_queue(values, 4)
+end program run_entry_queue
+
+---
+module item_store
+    implicit none
+contains
+    integer function sum_amount(total, amount)
+        implicit none
+        integer, intent(in) :: total
+        integer, intent(in) :: amount
+        if (amount > 6) then
+            sum_amount = total + amount
+            print *, amount
+        else
+            sum_amount = total
+        end if
+    end function sum_amount
+
+    integer function sum_height(total, height)
+        implicit none
+        integer, intent(in) :: total
+        integer, intent(in) :: height
+        if (height > 7) then
+            sum_height = total + height
+            print *, height
+        else
+            sum_height = total
+        end if
+    end function sum_height
+
+    integer function sum_total(total, total)
+        implicit none
+        integer, intent(in) :: total
+        integer, intent(in) :: total
+        if (total > 8) then
+            sum_total = total + total
+            print *, total
+        else
+            sum_total = total
+        end if
+    end function sum_total
+
+    subroutine report_item_store(values, length)
+        implicit none
+        integer, intent(in) :: length
+        integer, intent(in) :: values(length)
+        integer :: i
+        integer :: total
+        total = 0
+        do i = 1, length
+            total = sum_amount(total, values(i))
+            total = sum_height(total, values(i))
+            total = sum_total(total, values(i))
+        end do
+        print *, total
+    end subroutine report_item_store
+end module item_store
+
+program run_item_store
+    use item_store
+    implicit none
+    integer :: values(4)
+    integer :: i
+    do i = 1, 4
+        values(i) = i
+    end do
+    call report_item_store(values, 4)
+end program run_item_store
