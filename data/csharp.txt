@@ -135,3 +135,1067 @@ namespace Demo
         }
     }
 }
+
+---
+using System;
+using System.Collections.Generic;
+
+namespace RecordBatchDemo
+{
+    public class RecordBatch
+    {
+        private readonly List<int> rows = new List<int>();
+
+        public int Amount { get; private set; }
+
+        public void AddAmount(int amount)
+        {
+            if (amount > 1)
+            {
+                Amount += amount;
+                rows.Add(amount);
+            }
+            else
+            {
+                Console.WriteLine(amount);
+            }
+        }
+
+        public int Height { get; private set; }
+
+        public void AddHeight(int height)
+        {
+            if (height > 2)
+            {
+                Height += height;
+                rows.Add(height);
+            }
+            else
+            {
+                Console.WriteLine(height);
+            }
+        }
+
+        public int Limit { get; private set; }
+
+        public void AddLimit(int limit)
+        {
+            if (limit > 3)
+            {
+                Limit += limit;
+                rows.Add(limit);
+            }
+            else
+            {
+                Console.WriteLine(limit);
+            }
+        }
+
+        public int Total()
+        {
+            int sum = 0;
+            foreach (int value in rows)
+            {
+                sum += value;
+            }
+            Console.WriteLine(sum);
+            return sum;
+        }
+    }
+}
+
+---
+using System;
+using System.Collections.Generic;
+
+namespace BatchLedgerDemo
+{
+    public class BatchLedger
+    {
+        private readonly List<int> rows = new List<int>();
+
+        public int Weight { get; private set; }
+
+        public void AddWeight(int weight)
+        {
+            if (weight > 2)
+            {
+                Weight += weight;
+                rows.Add(weight);
+            }
+            else
+            {
+                Console.WriteLine(weight);
+            }
+        }
+
+        public int Amount { get; private set; }
+
+        public void AddAmount(int amount)
+        {
+            if (amount > 3)
+            {
+                Amount += amount;
+                rows.Add(amount);
+            }
+            else
+            {
+                Console.WriteLine(amount);
+            }
+        }
+
+        public int Width { get; private set; }
+
+        public void AddWidth(int width)
+        {
+            if (width > 4)
+            {
+                Width += width;
+                rows.Add(width);
+            }
+            else
+            {
+                Console.WriteLine(width);
+            }
+        }
+
+        public int Score { get; private set; }
+
+        public void AddScore(int score)
+        {
+            if (score > 5)
+            {
+                Score += score;
+                rows.Add(score);
+            }
+            else
+            {
+                Console.WriteLine(score);
+            }
+        }
+
+        public int Total()
+        {
+            int sum = 0;
+            foreach (int value in rows)
+            {
+                sum += value;
+            }
+            Console.WriteLine(sum);
+            return sum;
+        }
+    }
+}
+
+---
+using System;
+using System.Collections.Generic;
+
+namespace SampleQueueDemo
+{
+    public class SampleQueue
+    {
+        private readonly List<int> rows = new List<int>();
+
+        public int Level { get; private set; }
+
+        public void AddLevel(int level)
+        {
+            if (level > 3)
+            {
+                Level += level;
+                rows.Add(level);
+            }
+            else
+            {
+                Console.WriteLine(level);
+            }
+        }
+
+        public int Total { get; private set; }
+
+        public void AddTotal(int total)
+        {
+            if (total > 4)
+            {
+                Total += total;
+                rows.Add(total);
+            }
+            else
+            {
+                Console.WriteLine(total);
+            }
+        }
+
+        public int Count { get; private set; }
+
+        public void AddCount(int count)
+        {
+            if (count > 5)
+            {
+                Count += count;
+                rows.Add(count);
+            }
+            else
+            {
+                Console.WriteLine(count);
+            }
+        }
+
+        public int Height { get; private set; }
+
+        public void AddHeight(int height)
+        {
+            if (height > 6)
+            {
+                Height += height;
+                rows.Add(height);
+            }
+            else
+            {
+                Console.WriteLine(height);
+            }
+        }
+
+        public int Score { get; private set; }
+
+        public void AddScore(int score)
+        {
+            if (score > 7)
+            {
+                Score += score;
+                rows.Add(score);
+            }
+            else
+            {
+                Console.WriteLine(score);
+            }
+        }
+
+        public int Total()
+        {
+            int sum = 0;
+            foreach (int value in rows)
+            {
+                sum += value;
+            }
+            Console.WriteLine(sum);
+            return sum;
+        }
+    }
+}
+
+---
+using System;
+using System.Collections.Generic;
+
+namespace EntryStoreDemo
+{
+    public class EntryStore
+    {
+        private readonly List<int> rows = new List<int>();
+
+        public int Index { get; private set; }
+
+        public void AddIndex(int index)
+        {
+            if (index > 4)
+            {
+                Index += index;
+                rows.Add(index);
+            }
+            else
+            {
+                Console.WriteLine(index);
+            }
+        }
+
+        public int Width { get; private set; }
+
+        public void AddWidth(int width)
+        {
+            if (width > 5)
+            {
+                Width += width;
+                rows.Add(width);
+            }
+            else
+            {
+                Console.WriteLine(width);
+            }
+        }
+
+        public int Weight { get; private set; }
+
+        public void AddWeight(int weight)
+        {
+            if (weight > 6)
+            {
+                Weight += weight;
+                rows.Add(weight);
+            }
+            else
+            {
+                Console.WriteLine(weight);
+            }
+        }
+
+        public int Total()
+        {
+            int sum = 0;
+            foreach (int value in rows)
+            {
+                sum += value;
+            }
+            Console.WriteLine(sum);
+            return sum;
+        }
+    }
+}
+
+---
+using System;
+using System.Collections.Generic;
+
+namespace ItemTableDemo
+{
+    public class ItemTable
+    {
+        private readonly List<int> rows = new List<int>();
+
+        public int Height { get; private set; }
+
+        public void AddHeight(int height)
+        {
+            if (height > 5)
+            {
+                Height += height;
+                rows.Add(height);
+            }
+            else
+            {
+                Console.WriteLine(height);
+            }
+        }
+
+        public int Index { get; private set; }
+
+        public void AddIndex(int index)
+        {
+            if (index > 6)
+            {
+                Index += index;
+                rows.Add(index);
+            }
+            else
+            {
+                Console.WriteLine(index);
+            }
+        }
+
+        public int Amount { get; private set; }
+
+        public void AddAmount(int amount)
+        {
+            if (amount > 7)
+            {
+                Amount += amount;
+                rows.Add(amount);
+            }
+            else
+            {
+                Console.WriteLine(amount);
+            }
+        }
+
+        public int Score { get; private set; }
+
+        public void AddScore(int score)
+        {
+            if (score > 8)
+            {
+                Score += score;
+                rows.Add(score);
+            }
+            else
+            {
+                Console.WriteLine(score);
+            }
+        }
+
+        public int Total()
+        {
+            int sum = 0;
+            foreach (int value in rows)
+            {
+                sum += value;
+            }
+            Console.WriteLine(sum);
+            return sum;
+        }
+    }
+}
+
+---
+using System;
+using System.Collections.Generic;
+
+namespace NodeIndexDemo
+{
+    public class NodeIndex
+    {
+        private readonly List<int> rows = new List<int>();
+
+        public int Total { get; private set; }
+
+        public void AddTotal(int total)
+        {
+            if (total > 6)
+            {
+                Total += total;
+                rows.Add(total);
+            }
+            else
+            {
+                Console.WriteLine(total);
+            }
+        }
+
+        public int Width { get; private set; }
+
+        public void AddWidth(int width)
+        {
+            if (width > 7)
+            {
+                Width += width;
+                rows.Add(width);
+            }
+            else
+            {
+                Console.WriteLine(width);
+            }
+        }
+
+        public int Amount { get; private set; }
+
+        public void AddAmount(int amount)
+        {
+            if (amount > 8)
+            {
+                Amount += amount;
+                rows.Add(amount);
+            }
+            else
+            {
+                Console.WriteLine(amount);
+            }
+        }
+
+        public int Level { get; private set; }
+
+        public void AddLevel(int level)
+        {
+            if (level > 9)
+            {
+                Level += level;
+                rows.Add(level);
+            }
+            else
+            {
+                Console.WriteLine(level);
+            }
+        }
+
+        public int Count { get; private set; }
+
+        public void AddCount(int count)
+        {
+            if (count > 10)
+            {
+                Count += count;
+                rows.Add(count);
+            }
+            else
+            {
+                Console.WriteLine(count);
+            }
+        }
+
+        public int Total()
+        {
+            int sum = 0;
+            foreach (int value in rows)
+            {
+                sum += value;
+            }
+            Console.WriteLine(sum);
+            return sum;
+        }
+    }
+}
+
+---
+using System;
+using System.Collections.Generic;
+
+namespace RowBatchDemo
+{
+    public class RowBatch
+    {
+        private readonly List<int> rows = new List<int>();
+
+        public int Count { get; private set; }
+
+        public void AddCount(int count)
+        {
+            if (count > 7)
+            {
+                Count += count;
+                rows.Add(count);
+            }
+            else
+            {
+                Console.WriteLine(count);
+            }
+        }
+
+        public int Height { get; private set; }
+
+        public void AddHeight(int height)
+        {
+            if (height > 8)
+            {
+                Height += height;
+                rows.Add(height);
+            }
+            else
+            {
+                Console.WriteLine(height);
+            }
+        }
+
+        public int Score { get; private set; }
+
+        public void AddScore(int score)
+        {
+            if (score > 9)
+            {
+                Score += score;
+                rows.Add(score);
+            }
+            else
+            {
+                Console.WriteLine(score);
+            }
+        }
+
+        public int Total()
+        {
+            int sum = 0;
+            foreach (int value in rows)
+            {
+                sum += value;
+            }
+            Console.WriteLine(sum);
+            return sum;
+        }
+    }
+}
+
+---
+using System;
+using System.Collections.Generic;
+
+namespace UnitLedgerDemo
+{
+    public class UnitLedger
+    {
+        private readonly List<int> rows = new List<int>();
+
+        public int Index { get; private set; }
+
+        public void AddIndex(int index)
+        {
+            if (index > 1)
+            {
+                Index += index;
+                rows.Add(index);
+            }
+            else
+            {
+                Console.WriteLine(index);
+            }
+        }
+
+        public int Total { get; private set; }
+
+        public void AddTotal(int total)
+        {
+            if (total > 2)
+            {
+                Total += total;
+                rows.Add(total);
+            }
+            else
+            {
+                Console.WriteLine(total);
+            }
+        }
+
+        public int Weight { get; private set; }
+
+        public void AddWeight(int weight)
+        {
+            if (weight > 3)
+            {
+                Weight += weight;
+                rows.Add(weight);
+            }
+            else
+            {
+                Console.WriteLine(weight);
+            }
+        }
+
+        public int Score { get; private set; }
+
+        public void AddScore(int score)
+        {
+            if (score > 4)
+            {
+                Score += score;
+                rows.Add(score);
+            }
+            else
+            {
+                Console.WriteLine(score);
+            }
+        }
+
+        public int Total()
+        {
+            int sum = 0;
+            foreach (int value in rows)
+            {
+                sum += value;
+            }
+            Console.WriteLine(sum);
+            return sum;
+        }
+    }
+}
+
+---
+using System;
+using System.Collections.Generic;
+
+namespace RecordQueueDemo
+{
+    public class RecordQueue
+    {
+        private readonly List<int> rows = new List<int>();
+
+        public int Level { get; private set; }
+
+        public void AddLevel(int level)
+        {
+            if (level > 2)
+            {
+                Level += level;
+                rows.Add(level);
+            }
+            else
+            {
+                Console.WriteLine(level);
+            }
+        }
+
+        public int Count { get; private set; }
+
+        public void AddCount(int count)
+        {
+            if (count > 3)
+            {
+                Count += count;
+                rows.Add(count);
+            }
+            else
+            {
+                Console.WriteLine(count);
+            }
+        }
+
+        public int Amount { get; private set; }
+
+        public void AddAmount(int amount)
+        {
+            if (amount > 4)
+            {
+                Amount += amount;
+                rows.Add(amount);
+            }
+            else
+            {
+                Console.WriteLine(amount);
+            }
+        }
+
+        public int Score { get; private set; }
+
+        public void AddScore(int score)
+        {
+            if (score > 5)
+            {
+                Score += score;
+                rows.Add(score);
+            }
+            else
+            {
+                Console.WriteLine(score);
+            }
+        }
+
+        public int Total { get; private set; }
+
+        public void AddTotal(int total)
+        {
+            if (total > 6)
+            {
+                Total += total;
+                rows.Add(total);
+            }
+            else
+            {
+                Console.WriteLine(total);
+            }
+        }
+
+        public int Total()
+        {
+            int sum = 0;
+            foreach (int value in rows)
+            {
+                sum += value;
+            }
+            Console.WriteLine(sum);
+            return sum;
+        }
+    }
+}
+
+---
+using System;
+using System.Collections.Generic;
+
+namespace BatchStoreDemo
+{
+    public class BatchStore
+    {
+        private readonly List<int> rows = new List<int>();
+
+        public int Height { get; private set; }
+
+        public void AddHeight(int height)
+        {
+            if (height > 3)
+            {
+                Height += height;
+                rows.Add(height);
+            }
+            else
+            {
+                Console.WriteLine(height);
+            }
+        }
+
+        public int Limit { get; private set; }
+
+        public void AddLimit(int limit)
+        {
+            if (limit > 4)
+            {
+                Limit += limit;
+                rows.Add(limit);
+            }
+            else
+            {
+                Console.WriteLine(limit);
+            }
+        }
+
+        public int Index { get; private set; }
+
+        public void AddIndex(int index)
+        {
+            if (index > 5)
+            {
+                Index += index;
+                rows.Add(index);
+            }
+            else
+            {
+                Console.WriteLine(index);
+            }
+        }
+
+        public int Total()
+        {
+            int sum = 0;
+            foreach (int value in rows)
+            {
+                sum += value;
+            }
+            Console.WriteLine(sum);
+            return sum;
+        }
+    }
+}
+
+---
+using System;
+using System.Collections.Generic;
+
+namespace SampleTableDemo
+{
+    public class SampleTable
+    {
+        private readonly List<int> rows = new List<int>();
+
+        public int Count { get; private set; }
+
+        public void AddCount(int count)
+        {
+            if (count > 4)
+            {
+                Count += count;
+                rows.Add(count);
+            }
+            else
+            {
+                Console.WriteLine(count);
+            }
+        }
+
+        public int Height { get; private set; }
+
+        public void AddHeight(int height)
+        {
+            if (height > 5)
+            {
+                Height += height;
+                rows.Add(height);
+            }
+            else
+            {
+                Console.WriteLine(height);
+            }
+        }
+
+        public int Limit { get; private set; }
+
+        public void AddLimit(int limit)
+        {
+            if (limit > 6)
+            {
+                Limit += limit;
+                rows.Add(limit);
+            }
+            else
+            {
+                Console.WriteLine(limit);
+            }
+        }
+
+        public int Amount { get; private set; }
+
+        public void AddAmount(int amount)
+        {
+            if (amount > 7)
+            {
+                Amount += amount;
+                rows.Add(amount);
+            }
+            else
+            {
+                Console.WriteLine(amount);
+            }
+        }
+
+        public int Total()
+        {
+            int sum = 0;
+            foreach (int value in rows)
+            {
+                sum += value;
+            }
+            Console.WriteLine(sum);
+            return sum;
+        }
+    }
+}
+
+---
+using System;
+using System.Collections.Generic;
+
+namespace EntryIndexDemo
+{
+    public class EntryIndex
+    {
+        private readonly List<int> rows = new List<int>();
+
+        public int Index { get; private set; }
+
+        public void AddIndex(int index)
+        {
+            if (index > 5)
+            {
+                Index += index;
+                rows.Add(index);
+            }
+            else
+            {
+                Console.WriteLine(index);
+            }
+        }
+
+        public int Height { get; private set; }
+
+        public void AddHeight(int height)
+        {
+            if (height > 6)
+            {
+                Height += height;
+                rows.Add(height);
+            }
+            else
+            {
+                Console.WriteLine(height);
+            }
+        }
+
+        public int Level { get; private set; }
+
+        public void AddLevel(int level)
+        {
+            if (level > 7)
+            {
+                Level += level;
+                rows.Add(level);
+            }
+            else
+            {
+                Console.WriteLine(level);
+            }
+        }
+
+        public int Score { get; private set; }
+
+        public void AddScore(int score)
+        {
+            if (score > 8)
+            {
+                Score += score;
+                rows.Add(score);
+            }
+            else
+            {
+                Console.WriteLine(score);
+            }
+        }
+
+        public int Count { get; private set; }
+
+        public void AddCount(int count)
+        {
+            if (count > 9)
+            {
+                Count += count;
+                rows.Add(count);
+            }
+            else
+            {
+                Console.WriteLine(count);
+            }
+        }
+
+        public int Total()
+        {
+            int sum = 0;
+            foreach (int value in rows)
+            {
+                sum += value;
+            }
+            Console.WriteLine(sum);
+            return sum;
+        }
+    }
+}
+
+---
+using System;
+using System.Collections.Generic;
+
+namespace ItemBatchDemo
+{
+    public class ItemBatch
+    {
+        private readonly List<int> rows = new List<int>();
+
+        public int Height { get; private set; }
+
+        public void AddHeight(int height)
+        {
+            if (height > 6)
+            {
+                Height += height;
+                rows.Add(height);
+            }
+            else
+            {
+                Console.WriteLine(height);
+            }
+        }
+
+        public int Weight { get; private set; }
+
+        public void AddWeight(int weight)
+        {
+            if (weight > 7)
+            {
+                Weight += weight;
+                rows.Add(weight);
+            }
+            else
+            {
+                Console.WriteLine(weight);
+            }
+        }
+
+        public int Total { get; private set; }
+
+        public void AddTotal(int total)
+        {
+            if (total > 8)
+            {
+                Total += total;
+                rows.Add(total);
+            }
+            else
+            {
+                Console.WriteLine(total);
+            }
+        }
+
+        public int Total()
+        {
+            int sum = 0;
+            foreach (int value in rows)
+            {
+                sum += value;
+            }
+            Console.WriteLine(sum);
+            return sum;
+        }
+    }
+}
