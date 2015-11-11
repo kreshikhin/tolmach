@@ -104,3 +104,1132 @@ func main() {
     }
     fmt.Printf("count=%d\n", count)
 }
+
+---
+package record_store
+
+import "fmt"
+
+type RecordBatch struct {
+    Height int
+    Total int
+    Limit int
+}
+
+func (row *RecordBatch) AddHeight(height int) {
+    if height > 1 {
+        row.Height += height
+        fmt.Println(row.Height)
+        return
+    }
+    fmt.Printf("skip %d\n", height)
+}
+
+func (row *RecordBatch) AddTotal(total int) {
+    if total > 2 {
+        row.Total += total
+        fmt.Println(row.Total)
+        return
+    }
+    fmt.Printf("skip %d\n", total)
+}
+
+func (row *RecordBatch) AddLimit(limit int) {
+    if limit > 3 {
+        row.Limit += limit
+        fmt.Println(row.Limit)
+        return
+    }
+    fmt.Printf("skip %d\n", limit)
+}
+
+func Total(rows []RecordBatch) int {
+    total := 0
+    for _, row := range rows {
+        total += row.Height
+        total += row.Total
+        total += row.Limit
+    }
+    fmt.Println(total)
+    return total
+}
+
+---
+package batch_table
+
+import "fmt"
+
+type BatchLedger struct {
+    Weight int
+    Limit int
+    Score int
+    Index int
+}
+
+func (row *BatchLedger) AddWeight(weight int) {
+    if weight > 2 {
+        row.Weight += weight
+        fmt.Println(row.Weight)
+        return
+    }
+    fmt.Printf("skip %d\n", weight)
+}
+
+func (row *BatchLedger) AddLimit(limit int) {
+    if limit > 3 {
+        row.Limit += limit
+        fmt.Println(row.Limit)
+        return
+    }
+    fmt.Printf("skip %d\n", limit)
+}
+
+func (row *BatchLedger) AddScore(score int) {
+    if score > 4 {
+        row.Score += score
+        fmt.Println(row.Score)
+        return
+    }
+    fmt.Printf("skip %d\n", score)
+}
+
+func (row *BatchLedger) AddIndex(index int) {
+    if index > 5 {
+        row.Index += index
+        fmt.Println(row.Index)
+        return
+    }
+    fmt.Printf("skip %d\n", index)
+}
+
+func Total(rows []BatchLedger) int {
+    total := 0
+    for _, row := range rows {
+        total += row.Weight
+        total += row.Limit
+        total += row.Score
+        total += row.Index
+    }
+    fmt.Println(total)
+    return total
+}
+
+---
+package sample_index
+
+import "fmt"
+
+type SampleQueue struct {
+    Level int
+    Index int
+    Height int
+    Total int
+    Limit int
+}
+
+func (row *SampleQueue) AddLevel(level int) {
+    if level > 3 {
+        row.Level += level
+        fmt.Println(row.Level)
+        return
+    }
+    fmt.Printf("skip %d\n", level)
+}
+
+func (row *SampleQueue) AddIndex(index int) {
+    if index > 4 {
+        row.Index += index
+        fmt.Println(row.Index)
+        return
+    }
+    fmt.Printf("skip %d\n", index)
+}
+
+func (row *SampleQueue) AddHeight(height int) {
+    if height > 5 {
+        row.Height += height
+        fmt.Println(row.Height)
+        return
+    }
+    fmt.Printf("skip %d\n", height)
+}
+
+func (row *SampleQueue) AddTotal(total int) {
+    if total > 6 {
+        row.Total += total
+        fmt.Println(row.Total)
+        return
+    }
+    fmt.Printf("skip %d\n", total)
+}
+
+func (row *SampleQueue) AddLimit(limit int) {
+    if limit > 7 {
+        row.Limit += limit
+        fmt.Println(row.Limit)
+        return
+    }
+    fmt.Printf("skip %d\n", limit)
+}
+
+func Total(rows []SampleQueue) int {
+    total := 0
+    for _, row := range rows {
+        total += row.Level
+        total += row.Index
+        total += row.Height
+        total += row.Total
+        total += row.Limit
+    }
+    fmt.Println(total)
+    return total
+}
+
+---
+package entry_batch
+
+import "fmt"
+
+type EntryStore struct {
+    Weight int
+    Index int
+    Height int
+}
+
+func (row *EntryStore) AddWeight(weight int) {
+    if weight > 4 {
+        row.Weight += weight
+        fmt.Println(row.Weight)
+        return
+    }
+    fmt.Printf("skip %d\n", weight)
+}
+
+func (row *EntryStore) AddIndex(index int) {
+    if index > 5 {
+        row.Index += index
+        fmt.Println(row.Index)
+        return
+    }
+    fmt.Printf("skip %d\n", index)
+}
+
+func (row *EntryStore) AddHeight(height int) {
+    if height > 6 {
+        row.Height += height
+        fmt.Println(row.Height)
+        return
+    }
+    fmt.Printf("skip %d\n", height)
+}
+
+func Total(rows []EntryStore) int {
+    total := 0
+    for _, row := range rows {
+        total += row.Weight
+        total += row.Index
+        total += row.Height
+    }
+    fmt.Println(total)
+    return total
+}
+
+---
+package item_ledger
+
+import "fmt"
+
+type ItemTable struct {
+    Amount int
+    Score int
+    Index int
+    Count int
+}
+
+func (row *ItemTable) AddAmount(amount int) {
+    if amount > 5 {
+        row.Amount += amount
+        fmt.Println(row.Amount)
+        return
+    }
+    fmt.Printf("skip %d\n", amount)
+}
+
+func (row *ItemTable) AddScore(score int) {
+    if score > 6 {
+        row.Score += score
+        fmt.Println(row.Score)
+        return
+    }
+    fmt.Printf("skip %d\n", score)
+}
+
+func (row *ItemTable) AddIndex(index int) {
+    if index > 7 {
+        row.Index += index
+        fmt.Println(row.Index)
+        return
+    }
+    fmt.Printf("skip %d\n", index)
+}
+
+func (row *ItemTable) AddCount(count int) {
+    if count > 8 {
+        row.Count += count
+        fmt.Println(row.Count)
+        return
+    }
+    fmt.Printf("skip %d\n", count)
+}
+
+func Total(rows []ItemTable) int {
+    total := 0
+    for _, row := range rows {
+        total += row.Amount
+        total += row.Score
+        total += row.Index
+        total += row.Count
+    }
+    fmt.Println(total)
+    return total
+}
+
+---
+package node_queue
+
+import "fmt"
+
+type NodeIndex struct {
+    Score int
+    Height int
+    Count int
+    Index int
+    Amount int
+}
+
+func (row *NodeIndex) AddScore(score int) {
+    if score > 6 {
+        row.Score += score
+        fmt.Println(row.Score)
+        return
+    }
+    fmt.Printf("skip %d\n", score)
+}
+
+func (row *NodeIndex) AddHeight(height int) {
+    if height > 7 {
+        row.Height += height
+        fmt.Println(row.Height)
+        return
+    }
+    fmt.Printf("skip %d\n", height)
+}
+
+func (row *NodeIndex) AddCount(count int) {
+    if count > 8 {
+        row.Count += count
+        fmt.Println(row.Count)
+        return
+    }
+    fmt.Printf("skip %d\n", count)
+}
+
+func (row *NodeIndex) AddIndex(index int) {
+    if index > 9 {
+        row.Index += index
+        fmt.Println(row.Index)
+        return
+    }
+    fmt.Printf("skip %d\n", index)
+}
+
+func (row *NodeIndex) AddAmount(amount int) {
+    if amount > 10 {
+        row.Amount += amount
+        fmt.Println(row.Amount)
+        return
+    }
+    fmt.Printf("skip %d\n", amount)
+}
+
+func Total(rows []NodeIndex) int {
+    total := 0
+    for _, row := range rows {
+        total += row.Score
+        total += row.Height
+        total += row.Count
+        total += row.Index
+        total += row.Amount
+    }
+    fmt.Println(total)
+    return total
+}
+
+---
+package row_store
+
+import "fmt"
+
+type RowBatch struct {
+    Index int
+    Count int
+    Width int
+}
+
+func (row *RowBatch) AddIndex(index int) {
+    if index > 7 {
+        row.Index += index
+        fmt.Println(row.Index)
+        return
+    }
+    fmt.Printf("skip %d\n", index)
+}
+
+func (row *RowBatch) AddCount(count int) {
+    if count > 8 {
+        row.Count += count
+        fmt.Println(row.Count)
+        return
+    }
+    fmt.Printf("skip %d\n", count)
+}
+
+func (row *RowBatch) AddWidth(width int) {
+    if width > 9 {
+        row.Width += width
+        fmt.Println(row.Width)
+        return
+    }
+    fmt.Printf("skip %d\n", width)
+}
+
+func Total(rows []RowBatch) int {
+    total := 0
+    for _, row := range rows {
+        total += row.Index
+        total += row.Count
+        total += row.Width
+    }
+    fmt.Println(total)
+    return total
+}
+
+---
+package unit_table
+
+import "fmt"
+
+type UnitLedger struct {
+    Level int
+    Weight int
+    Height int
+    Count int
+}
+
+func (row *UnitLedger) AddLevel(level int) {
+    if level > 1 {
+        row.Level += level
+        fmt.Println(row.Level)
+        return
+    }
+    fmt.Printf("skip %d\n", level)
+}
+
+func (row *UnitLedger) AddWeight(weight int) {
+    if weight > 2 {
+        row.Weight += weight
+        fmt.Println(row.Weight)
+        return
+    }
+    fmt.Printf("skip %d\n", weight)
+}
+
+func (row *UnitLedger) AddHeight(height int) {
+    if height > 3 {
+        row.Height += height
+        fmt.Println(row.Height)
+        return
+    }
+    fmt.Printf("skip %d\n", height)
+}
+
+func (row *UnitLedger) AddCount(count int) {
+    if count > 4 {
+        row.Count += count
+        fmt.Println(row.Count)
+        return
+    }
+    fmt.Printf("skip %d\n", count)
+}
+
+func Total(rows []UnitLedger) int {
+    total := 0
+    for _, row := range rows {
+        total += row.Level
+        total += row.Weight
+        total += row.Height
+        total += row.Count
+    }
+    fmt.Println(total)
+    return total
+}
+
+---
+package record_index
+
+import "fmt"
+
+type RecordQueue struct {
+    Width int
+    Index int
+    Amount int
+    Level int
+    Count int
+}
+
+func (row *RecordQueue) AddWidth(width int) {
+    if width > 2 {
+        row.Width += width
+        fmt.Println(row.Width)
+        return
+    }
+    fmt.Printf("skip %d\n", width)
+}
+
+func (row *RecordQueue) AddIndex(index int) {
+    if index > 3 {
+        row.Index += index
+        fmt.Println(row.Index)
+        return
+    }
+    fmt.Printf("skip %d\n", index)
+}
+
+func (row *RecordQueue) AddAmount(amount int) {
+    if amount > 4 {
+        row.Amount += amount
+        fmt.Println(row.Amount)
+        return
+    }
+    fmt.Printf("skip %d\n", amount)
+}
+
+func (row *RecordQueue) AddLevel(level int) {
+    if level > 5 {
+        row.Level += level
+        fmt.Println(row.Level)
+        return
+    }
+    fmt.Printf("skip %d\n", level)
+}
+
+func (row *RecordQueue) AddCount(count int) {
+    if count > 6 {
+        row.Count += count
+        fmt.Println(row.Count)
+        return
+    }
+    fmt.Printf("skip %d\n", count)
+}
+
+func Total(rows []RecordQueue) int {
+    total := 0
+    for _, row := range rows {
+        total += row.Width
+        total += row.Index
+        total += row.Amount
+        total += row.Level
+        total += row.Count
+    }
+    fmt.Println(total)
+    return total
+}
+
+---
+package batch_batch
+
+import "fmt"
+
+type BatchStore struct {
+    Total int
+    Amount int
+    Count int
+}
+
+func (row *BatchStore) AddTotal(total int) {
+    if total > 3 {
+        row.Total += total
+        fmt.Println(row.Total)
+        return
+    }
+    fmt.Printf("skip %d\n", total)
+}
+
+func (row *BatchStore) AddAmount(amount int) {
+    if amount > 4 {
+        row.Amount += amount
+        fmt.Println(row.Amount)
+        return
+    }
+    fmt.Printf("skip %d\n", amount)
+}
+
+func (row *BatchStore) AddCount(count int) {
+    if count > 5 {
+        row.Count += count
+        fmt.Println(row.Count)
+        return
+    }
+    fmt.Printf("skip %d\n", count)
+}
+
+func Total(rows []BatchStore) int {
+    total := 0
+    for _, row := range rows {
+        total += row.Total
+        total += row.Amount
+        total += row.Count
+    }
+    fmt.Println(total)
+    return total
+}
+
+---
+package sample_ledger
+
+import "fmt"
+
+type SampleTable struct {
+    Index int
+    Score int
+    Count int
+    Amount int
+}
+
+func (row *SampleTable) AddIndex(index int) {
+    if index > 4 {
+        row.Index += index
+        fmt.Println(row.Index)
+        return
+    }
+    fmt.Printf("skip %d\n", index)
+}
+
+func (row *SampleTable) AddScore(score int) {
+    if score > 5 {
+        row.Score += score
+        fmt.Println(row.Score)
+        return
+    }
+    fmt.Printf("skip %d\n", score)
+}
+
+func (row *SampleTable) AddCount(count int) {
+    if count > 6 {
+        row.Count += count
+        fmt.Println(row.Count)
+        return
+    }
+    fmt.Printf("skip %d\n", count)
+}
+
+func (row *SampleTable) AddAmount(amount int) {
+    if amount > 7 {
+        row.Amount += amount
+        fmt.Println(row.Amount)
+        return
+    }
+    fmt.Printf("skip %d\n", amount)
+}
+
+func Total(rows []SampleTable) int {
+    total := 0
+    for _, row := range rows {
+        total += row.Index
+        total += row.Score
+        total += row.Count
+        total += row.Amount
+    }
+    fmt.Println(total)
+    return total
+}
+
+---
+package entry_queue
+
+import "fmt"
+
+type EntryIndex struct {
+    Total int
+    Limit int
+    Height int
+    Width int
+    Count int
+}
+
+func (row *EntryIndex) AddTotal(total int) {
+    if total > 5 {
+        row.Total += total
+        fmt.Println(row.Total)
+        return
+    }
+    fmt.Printf("skip %d\n", total)
+}
+
+func (row *EntryIndex) AddLimit(limit int) {
+    if limit > 6 {
+        row.Limit += limit
+        fmt.Println(row.Limit)
+        return
+    }
+    fmt.Printf("skip %d\n", limit)
+}
+
+func (row *EntryIndex) AddHeight(height int) {
+    if height > 7 {
+        row.Height += height
+        fmt.Println(row.Height)
+        return
+    }
+    fmt.Printf("skip %d\n", height)
+}
+
+func (row *EntryIndex) AddWidth(width int) {
+    if width > 8 {
+        row.Width += width
+        fmt.Println(row.Width)
+        return
+    }
+    fmt.Printf("skip %d\n", width)
+}
+
+func (row *EntryIndex) AddCount(count int) {
+    if count > 9 {
+        row.Count += count
+        fmt.Println(row.Count)
+        return
+    }
+    fmt.Printf("skip %d\n", count)
+}
+
+func Total(rows []EntryIndex) int {
+    total := 0
+    for _, row := range rows {
+        total += row.Total
+        total += row.Limit
+        total += row.Height
+        total += row.Width
+        total += row.Count
+    }
+    fmt.Println(total)
+    return total
+}
+
+---
+package item_store
+
+import "fmt"
+
+type ItemBatch struct {
+    Weight int
+    Width int
+    Total int
+}
+
+func (row *ItemBatch) AddWeight(weight int) {
+    if weight > 6 {
+        row.Weight += weight
+        fmt.Println(row.Weight)
+        return
+    }
+    fmt.Printf("skip %d\n", weight)
+}
+
+func (row *ItemBatch) AddWidth(width int) {
+    if width > 7 {
+        row.Width += width
+        fmt.Println(row.Width)
+        return
+    }
+    fmt.Printf("skip %d\n", width)
+}
+
+func (row *ItemBatch) AddTotal(total int) {
+    if total > 8 {
+        row.Total += total
+        fmt.Println(row.Total)
+        return
+    }
+    fmt.Printf("skip %d\n", total)
+}
+
+func Total(rows []ItemBatch) int {
+    total := 0
+    for _, row := range rows {
+        total += row.Weight
+        total += row.Width
+        total += row.Total
+    }
+    fmt.Println(total)
+    return total
+}
+
+---
+package node_table
+
+import "fmt"
+
+type NodeLedger struct {
+    Level int
+    Total int
+    Amount int
+    Index int
+}
+
+func (row *NodeLedger) AddLevel(level int) {
+    if level > 7 {
+        row.Level += level
+        fmt.Println(row.Level)
+        return
+    }
+    fmt.Printf("skip %d\n", level)
+}
+
+func (row *NodeLedger) AddTotal(total int) {
+    if total > 8 {
+        row.Total += total
+        fmt.Println(row.Total)
+        return
+    }
+    fmt.Printf("skip %d\n", total)
+}
+
+func (row *NodeLedger) AddAmount(amount int) {
+    if amount > 9 {
+        row.Amount += amount
+        fmt.Println(row.Amount)
+        return
+    }
+    fmt.Printf("skip %d\n", amount)
+}
+
+func (row *NodeLedger) AddIndex(index int) {
+    if index > 10 {
+        row.Index += index
+        fmt.Println(row.Index)
+        return
+    }
+    fmt.Printf("skip %d\n", index)
+}
+
+func Total(rows []NodeLedger) int {
+    total := 0
+    for _, row := range rows {
+        total += row.Level
+        total += row.Total
+        total += row.Amount
+        total += row.Index
+    }
+    fmt.Println(total)
+    return total
+}
+
+---
+package row_index
+
+import "fmt"
+
+type RowQueue struct {
+    Total int
+    Limit int
+    Index int
+    Width int
+    Level int
+}
+
+func (row *RowQueue) AddTotal(total int) {
+    if total > 1 {
+        row.Total += total
+        fmt.Println(row.Total)
+        return
+    }
+    fmt.Printf("skip %d\n", total)
+}
+
+func (row *RowQueue) AddLimit(limit int) {
+    if limit > 2 {
+        row.Limit += limit
+        fmt.Println(row.Limit)
+        return
+    }
+    fmt.Printf("skip %d\n", limit)
+}
+
+func (row *RowQueue) AddIndex(index int) {
+    if index > 3 {
+        row.Index += index
+        fmt.Println(row.Index)
+        return
+    }
+    fmt.Printf("skip %d\n", index)
+}
+
+func (row *RowQueue) AddWidth(width int) {
+    if width > 4 {
+        row.Width += width
+        fmt.Println(row.Width)
+        return
+    }
+    fmt.Printf("skip %d\n", width)
+}
+
+func (row *RowQueue) AddLevel(level int) {
+    if level > 5 {
+        row.Level += level
+        fmt.Println(row.Level)
+        return
+    }
+    fmt.Printf("skip %d\n", level)
+}
+
+func Total(rows []RowQueue) int {
+    total := 0
+    for _, row := range rows {
+        total += row.Total
+        total += row.Limit
+        total += row.Index
+        total += row.Width
+        total += row.Level
+    }
+    fmt.Println(total)
+    return total
+}
+
+---
+package unit_batch
+
+import "fmt"
+
+type UnitStore struct {
+    Width int
+    Weight int
+    Score int
+}
+
+func (row *UnitStore) AddWidth(width int) {
+    if width > 2 {
+        row.Width += width
+        fmt.Println(row.Width)
+        return
+    }
+    fmt.Printf("skip %d\n", width)
+}
+
+func (row *UnitStore) AddWeight(weight int) {
+    if weight > 3 {
+        row.Weight += weight
+        fmt.Println(row.Weight)
+        return
+    }
+    fmt.Printf("skip %d\n", weight)
+}
+
+func (row *UnitStore) AddScore(score int) {
+    if score > 4 {
+        row.Score += score
+        fmt.Println(row.Score)
+        return
+    }
+    fmt.Printf("skip %d\n", score)
+}
+
+func Total(rows []UnitStore) int {
+    total := 0
+    for _, row := range rows {
+        total += row.Width
+        total += row.Weight
+        total += row.Score
+    }
+    fmt.Println(total)
+    return total
+}
+
+---
+package record_ledger
+
+import "fmt"
+
+type RecordTable struct {
+    Amount int
+    Level int
+    Height int
+    Width int
+}
+
+func (row *RecordTable) AddAmount(amount int) {
+    if amount > 3 {
+        row.Amount += amount
+        fmt.Println(row.Amount)
+        return
+    }
+    fmt.Printf("skip %d\n", amount)
+}
+
+func (row *RecordTable) AddLevel(level int) {
+    if level > 4 {
+        row.Level += level
+        fmt.Println(row.Level)
+        return
+    }
+    fmt.Printf("skip %d\n", level)
+}
+
+func (row *RecordTable) AddHeight(height int) {
+    if height > 5 {
+        row.Height += height
+        fmt.Println(row.Height)
+        return
+    }
+    fmt.Printf("skip %d\n", height)
+}
+
+func (row *RecordTable) AddWidth(width int) {
+    if width > 6 {
+        row.Width += width
+        fmt.Println(row.Width)
+        return
+    }
+    fmt.Printf("skip %d\n", width)
+}
+
+func Total(rows []RecordTable) int {
+    total := 0
+    for _, row := range rows {
+        total += row.Amount
+        total += row.Level
+        total += row.Height
+        total += row.Width
+    }
+    fmt.Println(total)
+    return total
+}
+
+---
+package batch_queue
+
+import "fmt"
+
+type BatchIndex struct {
+    Count int
+    Index int
+    Level int
+    Score int
+    Total int
+}
+
+func (row *BatchIndex) AddCount(count int) {
+    if count > 4 {
+        row.Count += count
+        fmt.Println(row.Count)
+        return
+    }
+    fmt.Printf("skip %d\n", count)
+}
+
+func (row *BatchIndex) AddIndex(index int) {
+    if index > 5 {
+        row.Index += index
+        fmt.Println(row.Index)
+        return
+    }
+    fmt.Printf("skip %d\n", index)
+}
+
+func (row *BatchIndex) AddLevel(level int) {
+    if level > 6 {
+        row.Level += level
+        fmt.Println(row.Level)
+        return
+    }
+    fmt.Printf("skip %d\n", level)
+}
+
+func (row *BatchIndex) AddScore(score int) {
+    if score > 7 {
+        row.Score += score
+        fmt.Println(row.Score)
+        return
+    }
+    fmt.Printf("skip %d\n", score)
+}
+
+func (row *BatchIndex) AddTotal(total int) {
+    if total > 8 {
+        row.Total += total
+        fmt.Println(row.Total)
+        return
+    }
+    fmt.Printf("skip %d\n", total)
+}
+
+func Total(rows []BatchIndex) int {
+    total := 0
+    for _, row := range rows {
+        total += row.Count
+        total += row.Index
+        total += row.Level
+        total += row.Score
+        total += row.Total
+    }
+    fmt.Println(total)
+    return total
+}
+
+---
+package sample_store
+
+import "fmt"
+
+type SampleBatch struct {
+    Index int
+    Total int
+    Amount int
+}
+
+func (row *SampleBatch) AddIndex(index int) {
+    if index > 5 {
+        row.Index += index
+        fmt.Println(row.Index)
+        return
+    }
+    fmt.Printf("skip %d\n", index)
+}
+
+func (row *SampleBatch) AddTotal(total int) {
+    if total > 6 {
+        row.Total += total
+        fmt.Println(row.Total)
+        return
+    }
+    fmt.Printf("skip %d\n", total)
+}
+
+func (row *SampleBatch) AddAmount(amount int) {
+    if amount > 7 {
+        row.Amount += amount
+        fmt.Println(row.Amount)
+        return
+    }
+    fmt.Printf("skip %d\n", amount)
+}
+
+func Total(rows []SampleBatch) int {
+    total := 0
+    for _, row := range rows {
+        total += row.Index
+        total += row.Total
+        total += row.Amount
+    }
+    fmt.Println(total)
+    return total
+}
