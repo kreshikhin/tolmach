@@ -47,3 +47,1326 @@ type Price = Double
 
 discount :: Price -> Price
 discount price = price * 0.9
+
+---
+module RecordBatch where
+
+data RecordBatch = RecordBatch
+    { weight :: Int
+    , total :: Int
+    , level :: Int
+    } deriving (Show, Eq)
+
+addWeight :: RecordBatch -> Int -> RecordBatch
+addWeight row value
+    | value > 1 = row { weight = weight row + value }
+    | otherwise = row
+
+readWeight :: RecordBatch -> Int
+readWeight row = weight row
+
+addTotal :: RecordBatch -> Int -> RecordBatch
+addTotal row value
+    | value > 2 = row { total = total row + value }
+    | otherwise = row
+
+readTotal :: RecordBatch -> Int
+readTotal row = total row
+
+addLevel :: RecordBatch -> Int -> RecordBatch
+addLevel row value
+    | value > 3 = row { level = level row + value }
+    | otherwise = row
+
+readLevel :: RecordBatch -> Int
+readLevel row = level row
+
+total :: [RecordBatch] -> Int
+total [] = 0
+total (row:rest) = weight row + total row + level row + total rest
+
+keep :: Int -> [Int] -> [Int]
+keep limit rows = filter (\value -> value > limit) rows
+
+---
+module BatchLedger where
+
+data BatchLedger = BatchLedger
+    { weight :: Int
+    , count :: Int
+    , width :: Int
+    , total :: Int
+    } deriving (Show, Eq)
+
+addWeight :: BatchLedger -> Int -> BatchLedger
+addWeight row value
+    | value > 2 = row { weight = weight row + value }
+    | otherwise = row
+
+readWeight :: BatchLedger -> Int
+readWeight row = weight row
+
+addCount :: BatchLedger -> Int -> BatchLedger
+addCount row value
+    | value > 3 = row { count = count row + value }
+    | otherwise = row
+
+readCount :: BatchLedger -> Int
+readCount row = count row
+
+addWidth :: BatchLedger -> Int -> BatchLedger
+addWidth row value
+    | value > 4 = row { width = width row + value }
+    | otherwise = row
+
+readWidth :: BatchLedger -> Int
+readWidth row = width row
+
+addTotal :: BatchLedger -> Int -> BatchLedger
+addTotal row value
+    | value > 5 = row { total = total row + value }
+    | otherwise = row
+
+readTotal :: BatchLedger -> Int
+readTotal row = total row
+
+total :: [BatchLedger] -> Int
+total [] = 0
+total (row:rest) = weight row + count row + width row + total row + total rest
+
+keep :: Int -> [Int] -> [Int]
+keep limit rows = filter (\value -> value > limit) rows
+
+---
+module SampleQueue where
+
+data SampleQueue = SampleQueue
+    { limit :: Int
+    , total :: Int
+    , level :: Int
+    , amount :: Int
+    , count :: Int
+    } deriving (Show, Eq)
+
+addLimit :: SampleQueue -> Int -> SampleQueue
+addLimit row value
+    | value > 3 = row { limit = limit row + value }
+    | otherwise = row
+
+readLimit :: SampleQueue -> Int
+readLimit row = limit row
+
+addTotal :: SampleQueue -> Int -> SampleQueue
+addTotal row value
+    | value > 4 = row { total = total row + value }
+    | otherwise = row
+
+readTotal :: SampleQueue -> Int
+readTotal row = total row
+
+addLevel :: SampleQueue -> Int -> SampleQueue
+addLevel row value
+    | value > 5 = row { level = level row + value }
+    | otherwise = row
+
+readLevel :: SampleQueue -> Int
+readLevel row = level row
+
+addAmount :: SampleQueue -> Int -> SampleQueue
+addAmount row value
+    | value > 6 = row { amount = amount row + value }
+    | otherwise = row
+
+readAmount :: SampleQueue -> Int
+readAmount row = amount row
+
+addCount :: SampleQueue -> Int -> SampleQueue
+addCount row value
+    | value > 7 = row { count = count row + value }
+    | otherwise = row
+
+readCount :: SampleQueue -> Int
+readCount row = count row
+
+total :: [SampleQueue] -> Int
+total [] = 0
+total (row:rest) = limit row + total row + level row + amount row + count row + total rest
+
+keep :: Int -> [Int] -> [Int]
+keep limit rows = filter (\value -> value > limit) rows
+
+---
+module EntryStore where
+
+data EntryStore = EntryStore
+    { amount :: Int
+    , index :: Int
+    , level :: Int
+    } deriving (Show, Eq)
+
+addAmount :: EntryStore -> Int -> EntryStore
+addAmount row value
+    | value > 4 = row { amount = amount row + value }
+    | otherwise = row
+
+readAmount :: EntryStore -> Int
+readAmount row = amount row
+
+addIndex :: EntryStore -> Int -> EntryStore
+addIndex row value
+    | value > 5 = row { index = index row + value }
+    | otherwise = row
+
+readIndex :: EntryStore -> Int
+readIndex row = index row
+
+addLevel :: EntryStore -> Int -> EntryStore
+addLevel row value
+    | value > 6 = row { level = level row + value }
+    | otherwise = row
+
+readLevel :: EntryStore -> Int
+readLevel row = level row
+
+total :: [EntryStore] -> Int
+total [] = 0
+total (row:rest) = amount row + index row + level row + total rest
+
+keep :: Int -> [Int] -> [Int]
+keep limit rows = filter (\value -> value > limit) rows
+
+---
+module ItemTable where
+
+data ItemTable = ItemTable
+    { score :: Int
+    , height :: Int
+    , limit :: Int
+    , width :: Int
+    } deriving (Show, Eq)
+
+addScore :: ItemTable -> Int -> ItemTable
+addScore row value
+    | value > 5 = row { score = score row + value }
+    | otherwise = row
+
+readScore :: ItemTable -> Int
+readScore row = score row
+
+addHeight :: ItemTable -> Int -> ItemTable
+addHeight row value
+    | value > 6 = row { height = height row + value }
+    | otherwise = row
+
+readHeight :: ItemTable -> Int
+readHeight row = height row
+
+addLimit :: ItemTable -> Int -> ItemTable
+addLimit row value
+    | value > 7 = row { limit = limit row + value }
+    | otherwise = row
+
+readLimit :: ItemTable -> Int
+readLimit row = limit row
+
+addWidth :: ItemTable -> Int -> ItemTable
+addWidth row value
+    | value > 8 = row { width = width row + value }
+    | otherwise = row
+
+readWidth :: ItemTable -> Int
+readWidth row = width row
+
+total :: [ItemTable] -> Int
+total [] = 0
+total (row:rest) = score row + height row + limit row + width row + total rest
+
+keep :: Int -> [Int] -> [Int]
+keep limit rows = filter (\value -> value > limit) rows
+
+---
+module NodeIndex where
+
+data NodeIndex = NodeIndex
+    { amount :: Int
+    , width :: Int
+    , total :: Int
+    , height :: Int
+    , index :: Int
+    } deriving (Show, Eq)
+
+addAmount :: NodeIndex -> Int -> NodeIndex
+addAmount row value
+    | value > 6 = row { amount = amount row + value }
+    | otherwise = row
+
+readAmount :: NodeIndex -> Int
+readAmount row = amount row
+
+addWidth :: NodeIndex -> Int -> NodeIndex
+addWidth row value
+    | value > 7 = row { width = width row + value }
+    | otherwise = row
+
+readWidth :: NodeIndex -> Int
+readWidth row = width row
+
+addTotal :: NodeIndex -> Int -> NodeIndex
+addTotal row value
+    | value > 8 = row { total = total row + value }
+    | otherwise = row
+
+readTotal :: NodeIndex -> Int
+readTotal row = total row
+
+addHeight :: NodeIndex -> Int -> NodeIndex
+addHeight row value
+    | value > 9 = row { height = height row + value }
+    | otherwise = row
+
+readHeight :: NodeIndex -> Int
+readHeight row = height row
+
+addIndex :: NodeIndex -> Int -> NodeIndex
+addIndex row value
+    | value > 10 = row { index = index row + value }
+    | otherwise = row
+
+readIndex :: NodeIndex -> Int
+readIndex row = index row
+
+total :: [NodeIndex] -> Int
+total [] = 0
+total (row:rest) = amount row + width row + total row + height row + index row + total rest
+
+keep :: Int -> [Int] -> [Int]
+keep limit rows = filter (\value -> value > limit) rows
+
+---
+module RowBatch where
+
+data RowBatch = RowBatch
+    { height :: Int
+    , width :: Int
+    , limit :: Int
+    } deriving (Show, Eq)
+
+addHeight :: RowBatch -> Int -> RowBatch
+addHeight row value
+    | value > 7 = row { height = height row + value }
+    | otherwise = row
+
+readHeight :: RowBatch -> Int
+readHeight row = height row
+
+addWidth :: RowBatch -> Int -> RowBatch
+addWidth row value
+    | value > 8 = row { width = width row + value }
+    | otherwise = row
+
+readWidth :: RowBatch -> Int
+readWidth row = width row
+
+addLimit :: RowBatch -> Int -> RowBatch
+addLimit row value
+    | value > 9 = row { limit = limit row + value }
+    | otherwise = row
+
+readLimit :: RowBatch -> Int
+readLimit row = limit row
+
+total :: [RowBatch] -> Int
+total [] = 0
+total (row:rest) = height row + width row + limit row + total rest
+
+keep :: Int -> [Int] -> [Int]
+keep limit rows = filter (\value -> value > limit) rows
+
+---
+module UnitLedger where
+
+data UnitLedger = UnitLedger
+    { limit :: Int
+    , score :: Int
+    , width :: Int
+    , index :: Int
+    } deriving (Show, Eq)
+
+addLimit :: UnitLedger -> Int -> UnitLedger
+addLimit row value
+    | value > 1 = row { limit = limit row + value }
+    | otherwise = row
+
+readLimit :: UnitLedger -> Int
+readLimit row = limit row
+
+addScore :: UnitLedger -> Int -> UnitLedger
+addScore row value
+    | value > 2 = row { score = score row + value }
+    | otherwise = row
+
+readScore :: UnitLedger -> Int
+readScore row = score row
+
+addWidth :: UnitLedger -> Int -> UnitLedger
+addWidth row value
+    | value > 3 = row { width = width row + value }
+    | otherwise = row
+
+readWidth :: UnitLedger -> Int
+readWidth row = width row
+
+addIndex :: UnitLedger -> Int -> UnitLedger
+addIndex row value
+    | value > 4 = row { index = index row + value }
+    | otherwise = row
+
+readIndex :: UnitLedger -> Int
+readIndex row = index row
+
+total :: [UnitLedger] -> Int
+total [] = 0
+total (row:rest) = limit row + score row + width row + index row + total rest
+
+keep :: Int -> [Int] -> [Int]
+keep limit rows = filter (\value -> value > limit) rows
+
+---
+module RecordQueue where
+
+data RecordQueue = RecordQueue
+    { total :: Int
+    , level :: Int
+    , width :: Int
+    , height :: Int
+    , count :: Int
+    } deriving (Show, Eq)
+
+addTotal :: RecordQueue -> Int -> RecordQueue
+addTotal row value
+    | value > 2 = row { total = total row + value }
+    | otherwise = row
+
+readTotal :: RecordQueue -> Int
+readTotal row = total row
+
+addLevel :: RecordQueue -> Int -> RecordQueue
+addLevel row value
+    | value > 3 = row { level = level row + value }
+    | otherwise = row
+
+readLevel :: RecordQueue -> Int
+readLevel row = level row
+
+addWidth :: RecordQueue -> Int -> RecordQueue
+addWidth row value
+    | value > 4 = row { width = width row + value }
+    | otherwise = row
+
+readWidth :: RecordQueue -> Int
+readWidth row = width row
+
+addHeight :: RecordQueue -> Int -> RecordQueue
+addHeight row value
+    | value > 5 = row { height = height row + value }
+    | otherwise = row
+
+readHeight :: RecordQueue -> Int
+readHeight row = height row
+
+addCount :: RecordQueue -> Int -> RecordQueue
+addCount row value
+    | value > 6 = row { count = count row + value }
+    | otherwise = row
+
+readCount :: RecordQueue -> Int
+readCount row = count row
+
+total :: [RecordQueue] -> Int
+total [] = 0
+total (row:rest) = total row + level row + width row + height row + count row + total rest
+
+keep :: Int -> [Int] -> [Int]
+keep limit rows = filter (\value -> value > limit) rows
+
+---
+module BatchStore where
+
+data BatchStore = BatchStore
+    { limit :: Int
+    , total :: Int
+    , score :: Int
+    } deriving (Show, Eq)
+
+addLimit :: BatchStore -> Int -> BatchStore
+addLimit row value
+    | value > 3 = row { limit = limit row + value }
+    | otherwise = row
+
+readLimit :: BatchStore -> Int
+readLimit row = limit row
+
+addTotal :: BatchStore -> Int -> BatchStore
+addTotal row value
+    | value > 4 = row { total = total row + value }
+    | otherwise = row
+
+readTotal :: BatchStore -> Int
+readTotal row = total row
+
+addScore :: BatchStore -> Int -> BatchStore
+addScore row value
+    | value > 5 = row { score = score row + value }
+    | otherwise = row
+
+readScore :: BatchStore -> Int
+readScore row = score row
+
+total :: [BatchStore] -> Int
+total [] = 0
+total (row:rest) = limit row + total row + score row + total rest
+
+keep :: Int -> [Int] -> [Int]
+keep limit rows = filter (\value -> value > limit) rows
+
+---
+module SampleTable where
+
+data SampleTable = SampleTable
+    { limit :: Int
+    , amount :: Int
+    , score :: Int
+    , count :: Int
+    } deriving (Show, Eq)
+
+addLimit :: SampleTable -> Int -> SampleTable
+addLimit row value
+    | value > 4 = row { limit = limit row + value }
+    | otherwise = row
+
+readLimit :: SampleTable -> Int
+readLimit row = limit row
+
+addAmount :: SampleTable -> Int -> SampleTable
+addAmount row value
+    | value > 5 = row { amount = amount row + value }
+    | otherwise = row
+
+readAmount :: SampleTable -> Int
+readAmount row = amount row
+
+addScore :: SampleTable -> Int -> SampleTable
+addScore row value
+    | value > 6 = row { score = score row + value }
+    | otherwise = row
+
+readScore :: SampleTable -> Int
+readScore row = score row
+
+addCount :: SampleTable -> Int -> SampleTable
+addCount row value
+    | value > 7 = row { count = count row + value }
+    | otherwise = row
+
+readCount :: SampleTable -> Int
+readCount row = count row
+
+total :: [SampleTable] -> Int
+total [] = 0
+total (row:rest) = limit row + amount row + score row + count row + total rest
+
+keep :: Int -> [Int] -> [Int]
+keep limit rows = filter (\value -> value > limit) rows
+
+---
+module EntryIndex where
+
+data EntryIndex = EntryIndex
+    { level :: Int
+    , height :: Int
+    , amount :: Int
+    , width :: Int
+    , count :: Int
+    } deriving (Show, Eq)
+
+addLevel :: EntryIndex -> Int -> EntryIndex
+addLevel row value
+    | value > 5 = row { level = level row + value }
+    | otherwise = row
+
+readLevel :: EntryIndex -> Int
+readLevel row = level row
+
+addHeight :: EntryIndex -> Int -> EntryIndex
+addHeight row value
+    | value > 6 = row { height = height row + value }
+    | otherwise = row
+
+readHeight :: EntryIndex -> Int
+readHeight row = height row
+
+addAmount :: EntryIndex -> Int -> EntryIndex
+addAmount row value
+    | value > 7 = row { amount = amount row + value }
+    | otherwise = row
+
+readAmount :: EntryIndex -> Int
+readAmount row = amount row
+
+addWidth :: EntryIndex -> Int -> EntryIndex
+addWidth row value
+    | value > 8 = row { width = width row + value }
+    | otherwise = row
+
+readWidth :: EntryIndex -> Int
+readWidth row = width row
+
+addCount :: EntryIndex -> Int -> EntryIndex
+addCount row value
+    | value > 9 = row { count = count row + value }
+    | otherwise = row
+
+readCount :: EntryIndex -> Int
+readCount row = count row
+
+total :: [EntryIndex] -> Int
+total [] = 0
+total (row:rest) = level row + height row + amount row + width row + count row + total rest
+
+keep :: Int -> [Int] -> [Int]
+keep limit rows = filter (\value -> value > limit) rows
+
+---
+module ItemBatch where
+
+data ItemBatch = ItemBatch
+    { count :: Int
+    , amount :: Int
+    , height :: Int
+    } deriving (Show, Eq)
+
+addCount :: ItemBatch -> Int -> ItemBatch
+addCount row value
+    | value > 6 = row { count = count row + value }
+    | otherwise = row
+
+readCount :: ItemBatch -> Int
+readCount row = count row
+
+addAmount :: ItemBatch -> Int -> ItemBatch
+addAmount row value
+    | value > 7 = row { amount = amount row + value }
+    | otherwise = row
+
+readAmount :: ItemBatch -> Int
+readAmount row = amount row
+
+addHeight :: ItemBatch -> Int -> ItemBatch
+addHeight row value
+    | value > 8 = row { height = height row + value }
+    | otherwise = row
+
+readHeight :: ItemBatch -> Int
+readHeight row = height row
+
+total :: [ItemBatch] -> Int
+total [] = 0
+total (row:rest) = count row + amount row + height row + total rest
+
+keep :: Int -> [Int] -> [Int]
+keep limit rows = filter (\value -> value > limit) rows
+
+---
+module NodeLedger where
+
+data NodeLedger = NodeLedger
+    { score :: Int
+    , weight :: Int
+    , height :: Int
+    , total :: Int
+    } deriving (Show, Eq)
+
+addScore :: NodeLedger -> Int -> NodeLedger
+addScore row value
+    | value > 7 = row { score = score row + value }
+    | otherwise = row
+
+readScore :: NodeLedger -> Int
+readScore row = score row
+
+addWeight :: NodeLedger -> Int -> NodeLedger
+addWeight row value
+    | value > 8 = row { weight = weight row + value }
+    | otherwise = row
+
+readWeight :: NodeLedger -> Int
+readWeight row = weight row
+
+addHeight :: NodeLedger -> Int -> NodeLedger
+addHeight row value
+    | value > 9 = row { height = height row + value }
+    | otherwise = row
+
+readHeight :: NodeLedger -> Int
+readHeight row = height row
+
+addTotal :: NodeLedger -> Int -> NodeLedger
+addTotal row value
+    | value > 10 = row { total = total row + value }
+    | otherwise = row
+
+readTotal :: NodeLedger -> Int
+readTotal row = total row
+
+total :: [NodeLedger] -> Int
+total [] = 0
+total (row:rest) = score row + weight row + height row + total row + total rest
+
+keep :: Int -> [Int] -> [Int]
+keep limit rows = filter (\value -> value > limit) rows
+
+---
+module RowQueue where
+
+data RowQueue = RowQueue
+    { limit :: Int
+    , amount :: Int
+    , level :: Int
+    , total :: Int
+    , index :: Int
+    } deriving (Show, Eq)
+
+addLimit :: RowQueue -> Int -> RowQueue
+addLimit row value
+    | value > 1 = row { limit = limit row + value }
+    | otherwise = row
+
+readLimit :: RowQueue -> Int
+readLimit row = limit row
+
+addAmount :: RowQueue -> Int -> RowQueue
+addAmount row value
+    | value > 2 = row { amount = amount row + value }
+    | otherwise = row
+
+readAmount :: RowQueue -> Int
+readAmount row = amount row
+
+addLevel :: RowQueue -> Int -> RowQueue
+addLevel row value
+    | value > 3 = row { level = level row + value }
+    | otherwise = row
+
+readLevel :: RowQueue -> Int
+readLevel row = level row
+
+addTotal :: RowQueue -> Int -> RowQueue
+addTotal row value
+    | value > 4 = row { total = total row + value }
+    | otherwise = row
+
+readTotal :: RowQueue -> Int
+readTotal row = total row
+
+addIndex :: RowQueue -> Int -> RowQueue
+addIndex row value
+    | value > 5 = row { index = index row + value }
+    | otherwise = row
+
+readIndex :: RowQueue -> Int
+readIndex row = index row
+
+total :: [RowQueue] -> Int
+total [] = 0
+total (row:rest) = limit row + amount row + level row + total row + index row + total rest
+
+keep :: Int -> [Int] -> [Int]
+keep limit rows = filter (\value -> value > limit) rows
+
+---
+module UnitStore where
+
+data UnitStore = UnitStore
+    { level :: Int
+    , amount :: Int
+    , index :: Int
+    } deriving (Show, Eq)
+
+addLevel :: UnitStore -> Int -> UnitStore
+addLevel row value
+    | value > 2 = row { level = level row + value }
+    | otherwise = row
+
+readLevel :: UnitStore -> Int
+readLevel row = level row
+
+addAmount :: UnitStore -> Int -> UnitStore
+addAmount row value
+    | value > 3 = row { amount = amount row + value }
+    | otherwise = row
+
+readAmount :: UnitStore -> Int
+readAmount row = amount row
+
+addIndex :: UnitStore -> Int -> UnitStore
+addIndex row value
+    | value > 4 = row { index = index row + value }
+    | otherwise = row
+
+readIndex :: UnitStore -> Int
+readIndex row = index row
+
+total :: [UnitStore] -> Int
+total [] = 0
+total (row:rest) = level row + amount row + index row + total rest
+
+keep :: Int -> [Int] -> [Int]
+keep limit rows = filter (\value -> value > limit) rows
+
+---
+module RecordTable where
+
+data RecordTable = RecordTable
+    { level :: Int
+    , count :: Int
+    , total :: Int
+    , height :: Int
+    } deriving (Show, Eq)
+
+addLevel :: RecordTable -> Int -> RecordTable
+addLevel row value
+    | value > 3 = row { level = level row + value }
+    | otherwise = row
+
+readLevel :: RecordTable -> Int
+readLevel row = level row
+
+addCount :: RecordTable -> Int -> RecordTable
+addCount row value
+    | value > 4 = row { count = count row + value }
+    | otherwise = row
+
+readCount :: RecordTable -> Int
+readCount row = count row
+
+addTotal :: RecordTable -> Int -> RecordTable
+addTotal row value
+    | value > 5 = row { total = total row + value }
+    | otherwise = row
+
+readTotal :: RecordTable -> Int
+readTotal row = total row
+
+addHeight :: RecordTable -> Int -> RecordTable
+addHeight row value
+    | value > 6 = row { height = height row + value }
+    | otherwise = row
+
+readHeight :: RecordTable -> Int
+readHeight row = height row
+
+total :: [RecordTable] -> Int
+total [] = 0
+total (row:rest) = level row + count row + total row + height row + total rest
+
+keep :: Int -> [Int] -> [Int]
+keep limit rows = filter (\value -> value > limit) rows
+
+---
+module BatchIndex where
+
+data BatchIndex = BatchIndex
+    { weight :: Int
+    , width :: Int
+    , limit :: Int
+    , index :: Int
+    , height :: Int
+    } deriving (Show, Eq)
+
+addWeight :: BatchIndex -> Int -> BatchIndex
+addWeight row value
+    | value > 4 = row { weight = weight row + value }
+    | otherwise = row
+
+readWeight :: BatchIndex -> Int
+readWeight row = weight row
+
+addWidth :: BatchIndex -> Int -> BatchIndex
+addWidth row value
+    | value > 5 = row { width = width row + value }
+    | otherwise = row
+
+readWidth :: BatchIndex -> Int
+readWidth row = width row
+
+addLimit :: BatchIndex -> Int -> BatchIndex
+addLimit row value
+    | value > 6 = row { limit = limit row + value }
+    | otherwise = row
+
+readLimit :: BatchIndex -> Int
+readLimit row = limit row
+
+addIndex :: BatchIndex -> Int -> BatchIndex
+addIndex row value
+    | value > 7 = row { index = index row + value }
+    | otherwise = row
+
+readIndex :: BatchIndex -> Int
+readIndex row = index row
+
+addHeight :: BatchIndex -> Int -> BatchIndex
+addHeight row value
+    | value > 8 = row { height = height row + value }
+    | otherwise = row
+
+readHeight :: BatchIndex -> Int
+readHeight row = height row
+
+total :: [BatchIndex] -> Int
+total [] = 0
+total (row:rest) = weight row + width row + limit row + index row + height row + total rest
+
+keep :: Int -> [Int] -> [Int]
+keep limit rows = filter (\value -> value > limit) rows
+
+---
+module SampleBatch where
+
+data SampleBatch = SampleBatch
+    { height :: Int
+    , width :: Int
+    , limit :: Int
+    } deriving (Show, Eq)
+
+addHeight :: SampleBatch -> Int -> SampleBatch
+addHeight row value
+    | value > 5 = row { height = height row + value }
+    | otherwise = row
+
+readHeight :: SampleBatch -> Int
+readHeight row = height row
+
+addWidth :: SampleBatch -> Int -> SampleBatch
+addWidth row value
+    | value > 6 = row { width = width row + value }
+    | otherwise = row
+
+readWidth :: SampleBatch -> Int
+readWidth row = width row
+
+addLimit :: SampleBatch -> Int -> SampleBatch
+addLimit row value
+    | value > 7 = row { limit = limit row + value }
+    | otherwise = row
+
+readLimit :: SampleBatch -> Int
+readLimit row = limit row
+
+total :: [SampleBatch] -> Int
+total [] = 0
+total (row:rest) = height row + width row + limit row + total rest
+
+keep :: Int -> [Int] -> [Int]
+keep limit rows = filter (\value -> value > limit) rows
+
+---
+module EntryLedger where
+
+data EntryLedger = EntryLedger
+    { level :: Int
+    , weight :: Int
+    , index :: Int
+    , width :: Int
+    } deriving (Show, Eq)
+
+addLevel :: EntryLedger -> Int -> EntryLedger
+addLevel row value
+    | value > 6 = row { level = level row + value }
+    | otherwise = row
+
+readLevel :: EntryLedger -> Int
+readLevel row = level row
+
+addWeight :: EntryLedger -> Int -> EntryLedger
+addWeight row value
+    | value > 7 = row { weight = weight row + value }
+    | otherwise = row
+
+readWeight :: EntryLedger -> Int
+readWeight row = weight row
+
+addIndex :: EntryLedger -> Int -> EntryLedger
+addIndex row value
+    | value > 8 = row { index = index row + value }
+    | otherwise = row
+
+readIndex :: EntryLedger -> Int
+readIndex row = index row
+
+addWidth :: EntryLedger -> Int -> EntryLedger
+addWidth row value
+    | value > 9 = row { width = width row + value }
+    | otherwise = row
+
+readWidth :: EntryLedger -> Int
+readWidth row = width row
+
+total :: [EntryLedger] -> Int
+total [] = 0
+total (row:rest) = level row + weight row + index row + width row + total rest
+
+keep :: Int -> [Int] -> [Int]
+keep limit rows = filter (\value -> value > limit) rows
+
+---
+module ItemQueue where
+
+data ItemQueue = ItemQueue
+    { count :: Int
+    , weight :: Int
+    , score :: Int
+    , total :: Int
+    , width :: Int
+    } deriving (Show, Eq)
+
+addCount :: ItemQueue -> Int -> ItemQueue
+addCount row value
+    | value > 7 = row { count = count row + value }
+    | otherwise = row
+
+readCount :: ItemQueue -> Int
+readCount row = count row
+
+addWeight :: ItemQueue -> Int -> ItemQueue
+addWeight row value
+    | value > 8 = row { weight = weight row + value }
+    | otherwise = row
+
+readWeight :: ItemQueue -> Int
+readWeight row = weight row
+
+addScore :: ItemQueue -> Int -> ItemQueue
+addScore row value
+    | value > 9 = row { score = score row + value }
+    | otherwise = row
+
+readScore :: ItemQueue -> Int
+readScore row = score row
+
+addTotal :: ItemQueue -> Int -> ItemQueue
+addTotal row value
+    | value > 10 = row { total = total row + value }
+    | otherwise = row
+
+readTotal :: ItemQueue -> Int
+readTotal row = total row
+
+addWidth :: ItemQueue -> Int -> ItemQueue
+addWidth row value
+    | value > 11 = row { width = width row + value }
+    | otherwise = row
+
+readWidth :: ItemQueue -> Int
+readWidth row = width row
+
+total :: [ItemQueue] -> Int
+total [] = 0
+total (row:rest) = count row + weight row + score row + total row + width row + total rest
+
+keep :: Int -> [Int] -> [Int]
+keep limit rows = filter (\value -> value > limit) rows
+
+---
+module NodeStore where
+
+data NodeStore = NodeStore
+    { width :: Int
+    , level :: Int
+    , amount :: Int
+    } deriving (Show, Eq)
+
+addWidth :: NodeStore -> Int -> NodeStore
+addWidth row value
+    | value > 1 = row { width = width row + value }
+    | otherwise = row
+
+readWidth :: NodeStore -> Int
+readWidth row = width row
+
+addLevel :: NodeStore -> Int -> NodeStore
+addLevel row value
+    | value > 2 = row { level = level row + value }
+    | otherwise = row
+
+readLevel :: NodeStore -> Int
+readLevel row = level row
+
+addAmount :: NodeStore -> Int -> NodeStore
+addAmount row value
+    | value > 3 = row { amount = amount row + value }
+    | otherwise = row
+
+readAmount :: NodeStore -> Int
+readAmount row = amount row
+
+total :: [NodeStore] -> Int
+total [] = 0
+total (row:rest) = width row + level row + amount row + total rest
+
+keep :: Int -> [Int] -> [Int]
+keep limit rows = filter (\value -> value > limit) rows
+
+---
+module RowTable where
+
+data RowTable = RowTable
+    { amount :: Int
+    , weight :: Int
+    , count :: Int
+    , score :: Int
+    } deriving (Show, Eq)
+
+addAmount :: RowTable -> Int -> RowTable
+addAmount row value
+    | value > 2 = row { amount = amount row + value }
+    | otherwise = row
+
+readAmount :: RowTable -> Int
+readAmount row = amount row
+
+addWeight :: RowTable -> Int -> RowTable
+addWeight row value
+    | value > 3 = row { weight = weight row + value }
+    | otherwise = row
+
+readWeight :: RowTable -> Int
+readWeight row = weight row
+
+addCount :: RowTable -> Int -> RowTable
+addCount row value
+    | value > 4 = row { count = count row + value }
+    | otherwise = row
+
+readCount :: RowTable -> Int
+readCount row = count row
+
+addScore :: RowTable -> Int -> RowTable
+addScore row value
+    | value > 5 = row { score = score row + value }
+    | otherwise = row
+
+readScore :: RowTable -> Int
+readScore row = score row
+
+total :: [RowTable] -> Int
+total [] = 0
+total (row:rest) = amount row + weight row + count row + score row + total rest
+
+keep :: Int -> [Int] -> [Int]
+keep limit rows = filter (\value -> value > limit) rows
+
+---
+module UnitIndex where
+
+data UnitIndex = UnitIndex
+    { weight :: Int
+    , amount :: Int
+    , level :: Int
+    , index :: Int
+    , score :: Int
+    } deriving (Show, Eq)
+
+addWeight :: UnitIndex -> Int -> UnitIndex
+addWeight row value
+    | value > 3 = row { weight = weight row + value }
+    | otherwise = row
+
+readWeight :: UnitIndex -> Int
+readWeight row = weight row
+
+addAmount :: UnitIndex -> Int -> UnitIndex
+addAmount row value
+    | value > 4 = row { amount = amount row + value }
+    | otherwise = row
+
+readAmount :: UnitIndex -> Int
+readAmount row = amount row
+
+addLevel :: UnitIndex -> Int -> UnitIndex
+addLevel row value
+    | value > 5 = row { level = level row + value }
+    | otherwise = row
+
+readLevel :: UnitIndex -> Int
+readLevel row = level row
+
+addIndex :: UnitIndex -> Int -> UnitIndex
+addIndex row value
+    | value > 6 = row { index = index row + value }
+    | otherwise = row
+
+readIndex :: UnitIndex -> Int
+readIndex row = index row
+
+addScore :: UnitIndex -> Int -> UnitIndex
+addScore row value
+    | value > 7 = row { score = score row + value }
+    | otherwise = row
+
+readScore :: UnitIndex -> Int
+readScore row = score row
+
+total :: [UnitIndex] -> Int
+total [] = 0
+total (row:rest) = weight row + amount row + level row + index row + score row + total rest
+
+keep :: Int -> [Int] -> [Int]
+keep limit rows = filter (\value -> value > limit) rows
+
+---
+module RecordBatch where
+
+data RecordBatch = RecordBatch
+    { weight :: Int
+    , index :: Int
+    , count :: Int
+    } deriving (Show, Eq)
+
+addWeight :: RecordBatch -> Int -> RecordBatch
+addWeight row value
+    | value > 4 = row { weight = weight row + value }
+    | otherwise = row
+
+readWeight :: RecordBatch -> Int
+readWeight row = weight row
+
+addIndex :: RecordBatch -> Int -> RecordBatch
+addIndex row value
+    | value > 5 = row { index = index row + value }
+    | otherwise = row
+
+readIndex :: RecordBatch -> Int
+readIndex row = index row
+
+addCount :: RecordBatch -> Int -> RecordBatch
+addCount row value
+    | value > 6 = row { count = count row + value }
+    | otherwise = row
+
+readCount :: RecordBatch -> Int
+readCount row = count row
+
+total :: [RecordBatch] -> Int
+total [] = 0
+total (row:rest) = weight row + index row + count row + total rest
+
+keep :: Int -> [Int] -> [Int]
+keep limit rows = filter (\value -> value > limit) rows
+
+---
+module BatchLedger where
+
+data BatchLedger = BatchLedger
+    { score :: Int
+    , height :: Int
+    , level :: Int
+    , weight :: Int
+    } deriving (Show, Eq)
+
+addScore :: BatchLedger -> Int -> BatchLedger
+addScore row value
+    | value > 5 = row { score = score row + value }
+    | otherwise = row
+
+readScore :: BatchLedger -> Int
+readScore row = score row
+
+addHeight :: BatchLedger -> Int -> BatchLedger
+addHeight row value
+    | value > 6 = row { height = height row + value }
+    | otherwise = row
+
+readHeight :: BatchLedger -> Int
+readHeight row = height row
+
+addLevel :: BatchLedger -> Int -> BatchLedger
+addLevel row value
+    | value > 7 = row { level = level row + value }
+    | otherwise = row
+
+readLevel :: BatchLedger -> Int
+readLevel row = level row
+
+addWeight :: BatchLedger -> Int -> BatchLedger
+addWeight row value
+    | value > 8 = row { weight = weight row + value }
+    | otherwise = row
+
+readWeight :: BatchLedger -> Int
+readWeight row = weight row
+
+total :: [BatchLedger] -> Int
+total [] = 0
+total (row:rest) = score row + height row + level row + weight row + total rest
+
+keep :: Int -> [Int] -> [Int]
+keep limit rows = filter (\value -> value > limit) rows
+
+---
+module SampleQueue where
+
+data SampleQueue = SampleQueue
+    { limit :: Int
+    , height :: Int
+    , width :: Int
+    , score :: Int
+    , amount :: Int
+    } deriving (Show, Eq)
+
+addLimit :: SampleQueue -> Int -> SampleQueue
+addLimit row value
+    | value > 6 = row { limit = limit row + value }
+    | otherwise = row
+
+readLimit :: SampleQueue -> Int
+readLimit row = limit row
+
+addHeight :: SampleQueue -> Int -> SampleQueue
+addHeight row value
+    | value > 7 = row { height = height row + value }
+    | otherwise = row
+
+readHeight :: SampleQueue -> Int
+readHeight row = height row
+
+addWidth :: SampleQueue -> Int -> SampleQueue
+addWidth row value
+    | value > 8 = row { width = width row + value }
+    | otherwise = row
+
+readWidth :: SampleQueue -> Int
+readWidth row = width row
+
+addScore :: SampleQueue -> Int -> SampleQueue
+addScore row value
+    | value > 9 = row { score = score row + value }
+    | otherwise = row
+
+readScore :: SampleQueue -> Int
+readScore row = score row
+
+addAmount :: SampleQueue -> Int -> SampleQueue
+addAmount row value
+    | value > 10 = row { amount = amount row + value }
+    | otherwise = row
+
+readAmount :: SampleQueue -> Int
+readAmount row = amount row
+
+total :: [SampleQueue] -> Int
+total [] = 0
+total (row:rest) = limit row + height row + width row + score row + amount row + total rest
+
+keep :: Int -> [Int] -> [Int]
+keep limit rows = filter (\value -> value > limit) rows
