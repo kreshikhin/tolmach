@@ -91,3 +91,1188 @@ public class Status {
         System.out.println(level.name());
     }
 }
+
+---
+import java.util.ArrayList;
+import java.util.List;
+
+public class RecordBatch {
+    private final List<Integer> rows = new ArrayList<Integer>();
+
+    private int weight;
+
+    public void addWeight(int weight) {
+        if (weight > 1) {
+            this.weight += weight;
+            rows.add(weight);
+        } else {
+            System.out.println(weight);
+        }
+    }
+
+    public int getWeight() {
+        return weight;
+    }
+
+    private int index;
+
+    public void addIndex(int index) {
+        if (index > 2) {
+            this.index += index;
+            rows.add(index);
+        } else {
+            System.out.println(index);
+        }
+    }
+
+    public int getIndex() {
+        return index;
+    }
+
+    private int width;
+
+    public void addWidth(int width) {
+        if (width > 3) {
+            this.width += width;
+            rows.add(width);
+        } else {
+            System.out.println(width);
+        }
+    }
+
+    public int getWidth() {
+        return width;
+    }
+
+    public int total() {
+        int sum = 0;
+        for (Integer value : rows) {
+            if (value != null) {
+                sum += value;
+            }
+        }
+        System.out.println(sum);
+        return sum;
+    }
+}
+
+---
+import java.util.ArrayList;
+import java.util.List;
+
+public class BatchLedger {
+    private final List<Integer> rows = new ArrayList<Integer>();
+
+    private int height;
+
+    public void addHeight(int height) {
+        if (height > 2) {
+            this.height += height;
+            rows.add(height);
+        } else {
+            System.out.println(height);
+        }
+    }
+
+    public int getHeight() {
+        return height;
+    }
+
+    private int limit;
+
+    public void addLimit(int limit) {
+        if (limit > 3) {
+            this.limit += limit;
+            rows.add(limit);
+        } else {
+            System.out.println(limit);
+        }
+    }
+
+    public int getLimit() {
+        return limit;
+    }
+
+    private int width;
+
+    public void addWidth(int width) {
+        if (width > 4) {
+            this.width += width;
+            rows.add(width);
+        } else {
+            System.out.println(width);
+        }
+    }
+
+    public int getWidth() {
+        return width;
+    }
+
+    private int amount;
+
+    public void addAmount(int amount) {
+        if (amount > 5) {
+            this.amount += amount;
+            rows.add(amount);
+        } else {
+            System.out.println(amount);
+        }
+    }
+
+    public int getAmount() {
+        return amount;
+    }
+
+    public int total() {
+        int sum = 0;
+        for (Integer value : rows) {
+            if (value != null) {
+                sum += value;
+            }
+        }
+        System.out.println(sum);
+        return sum;
+    }
+}
+
+---
+import java.util.ArrayList;
+import java.util.List;
+
+public class SampleQueue {
+    private final List<Integer> rows = new ArrayList<Integer>();
+
+    private int amount;
+
+    public void addAmount(int amount) {
+        if (amount > 3) {
+            this.amount += amount;
+            rows.add(amount);
+        } else {
+            System.out.println(amount);
+        }
+    }
+
+    public int getAmount() {
+        return amount;
+    }
+
+    private int score;
+
+    public void addScore(int score) {
+        if (score > 4) {
+            this.score += score;
+            rows.add(score);
+        } else {
+            System.out.println(score);
+        }
+    }
+
+    public int getScore() {
+        return score;
+    }
+
+    private int total;
+
+    public void addTotal(int total) {
+        if (total > 5) {
+            this.total += total;
+            rows.add(total);
+        } else {
+            System.out.println(total);
+        }
+    }
+
+    public int getTotal() {
+        return total;
+    }
+
+    private int index;
+
+    public void addIndex(int index) {
+        if (index > 6) {
+            this.index += index;
+            rows.add(index);
+        } else {
+            System.out.println(index);
+        }
+    }
+
+    public int getIndex() {
+        return index;
+    }
+
+    private int limit;
+
+    public void addLimit(int limit) {
+        if (limit > 7) {
+            this.limit += limit;
+            rows.add(limit);
+        } else {
+            System.out.println(limit);
+        }
+    }
+
+    public int getLimit() {
+        return limit;
+    }
+
+    public int total() {
+        int sum = 0;
+        for (Integer value : rows) {
+            if (value != null) {
+                sum += value;
+            }
+        }
+        System.out.println(sum);
+        return sum;
+    }
+}
+
+---
+import java.util.ArrayList;
+import java.util.List;
+
+public class EntryStore {
+    private final List<Integer> rows = new ArrayList<Integer>();
+
+    private int index;
+
+    public void addIndex(int index) {
+        if (index > 4) {
+            this.index += index;
+            rows.add(index);
+        } else {
+            System.out.println(index);
+        }
+    }
+
+    public int getIndex() {
+        return index;
+    }
+
+    private int total;
+
+    public void addTotal(int total) {
+        if (total > 5) {
+            this.total += total;
+            rows.add(total);
+        } else {
+            System.out.println(total);
+        }
+    }
+
+    public int getTotal() {
+        return total;
+    }
+
+    private int height;
+
+    public void addHeight(int height) {
+        if (height > 6) {
+            this.height += height;
+            rows.add(height);
+        } else {
+            System.out.println(height);
+        }
+    }
+
+    public int getHeight() {
+        return height;
+    }
+
+    public int total() {
+        int sum = 0;
+        for (Integer value : rows) {
+            if (value != null) {
+                sum += value;
+            }
+        }
+        System.out.println(sum);
+        return sum;
+    }
+}
+
+---
+import java.util.ArrayList;
+import java.util.List;
+
+public class ItemTable {
+    private final List<Integer> rows = new ArrayList<Integer>();
+
+    private int score;
+
+    public void addScore(int score) {
+        if (score > 5) {
+            this.score += score;
+            rows.add(score);
+        } else {
+            System.out.println(score);
+        }
+    }
+
+    public int getScore() {
+        return score;
+    }
+
+    private int level;
+
+    public void addLevel(int level) {
+        if (level > 6) {
+            this.level += level;
+            rows.add(level);
+        } else {
+            System.out.println(level);
+        }
+    }
+
+    public int getLevel() {
+        return level;
+    }
+
+    private int index;
+
+    public void addIndex(int index) {
+        if (index > 7) {
+            this.index += index;
+            rows.add(index);
+        } else {
+            System.out.println(index);
+        }
+    }
+
+    public int getIndex() {
+        return index;
+    }
+
+    private int total;
+
+    public void addTotal(int total) {
+        if (total > 8) {
+            this.total += total;
+            rows.add(total);
+        } else {
+            System.out.println(total);
+        }
+    }
+
+    public int getTotal() {
+        return total;
+    }
+
+    public int total() {
+        int sum = 0;
+        for (Integer value : rows) {
+            if (value != null) {
+                sum += value;
+            }
+        }
+        System.out.println(sum);
+        return sum;
+    }
+}
+
+---
+import java.util.ArrayList;
+import java.util.List;
+
+public class NodeIndex {
+    private final List<Integer> rows = new ArrayList<Integer>();
+
+    private int width;
+
+    public void addWidth(int width) {
+        if (width > 6) {
+            this.width += width;
+            rows.add(width);
+        } else {
+            System.out.println(width);
+        }
+    }
+
+    public int getWidth() {
+        return width;
+    }
+
+    private int height;
+
+    public void addHeight(int height) {
+        if (height > 7) {
+            this.height += height;
+            rows.add(height);
+        } else {
+            System.out.println(height);
+        }
+    }
+
+    public int getHeight() {
+        return height;
+    }
+
+    private int limit;
+
+    public void addLimit(int limit) {
+        if (limit > 8) {
+            this.limit += limit;
+            rows.add(limit);
+        } else {
+            System.out.println(limit);
+        }
+    }
+
+    public int getLimit() {
+        return limit;
+    }
+
+    private int count;
+
+    public void addCount(int count) {
+        if (count > 9) {
+            this.count += count;
+            rows.add(count);
+        } else {
+            System.out.println(count);
+        }
+    }
+
+    public int getCount() {
+        return count;
+    }
+
+    private int score;
+
+    public void addScore(int score) {
+        if (score > 10) {
+            this.score += score;
+            rows.add(score);
+        } else {
+            System.out.println(score);
+        }
+    }
+
+    public int getScore() {
+        return score;
+    }
+
+    public int total() {
+        int sum = 0;
+        for (Integer value : rows) {
+            if (value != null) {
+                sum += value;
+            }
+        }
+        System.out.println(sum);
+        return sum;
+    }
+}
+
+---
+import java.util.ArrayList;
+import java.util.List;
+
+public class RowBatch {
+    private final List<Integer> rows = new ArrayList<Integer>();
+
+    private int limit;
+
+    public void addLimit(int limit) {
+        if (limit > 7) {
+            this.limit += limit;
+            rows.add(limit);
+        } else {
+            System.out.println(limit);
+        }
+    }
+
+    public int getLimit() {
+        return limit;
+    }
+
+    private int height;
+
+    public void addHeight(int height) {
+        if (height > 8) {
+            this.height += height;
+            rows.add(height);
+        } else {
+            System.out.println(height);
+        }
+    }
+
+    public int getHeight() {
+        return height;
+    }
+
+    private int index;
+
+    public void addIndex(int index) {
+        if (index > 9) {
+            this.index += index;
+            rows.add(index);
+        } else {
+            System.out.println(index);
+        }
+    }
+
+    public int getIndex() {
+        return index;
+    }
+
+    public int total() {
+        int sum = 0;
+        for (Integer value : rows) {
+            if (value != null) {
+                sum += value;
+            }
+        }
+        System.out.println(sum);
+        return sum;
+    }
+}
+
+---
+import java.util.ArrayList;
+import java.util.List;
+
+public class UnitLedger {
+    private final List<Integer> rows = new ArrayList<Integer>();
+
+    private int count;
+
+    public void addCount(int count) {
+        if (count > 1) {
+            this.count += count;
+            rows.add(count);
+        } else {
+            System.out.println(count);
+        }
+    }
+
+    public int getCount() {
+        return count;
+    }
+
+    private int limit;
+
+    public void addLimit(int limit) {
+        if (limit > 2) {
+            this.limit += limit;
+            rows.add(limit);
+        } else {
+            System.out.println(limit);
+        }
+    }
+
+    public int getLimit() {
+        return limit;
+    }
+
+    private int level;
+
+    public void addLevel(int level) {
+        if (level > 3) {
+            this.level += level;
+            rows.add(level);
+        } else {
+            System.out.println(level);
+        }
+    }
+
+    public int getLevel() {
+        return level;
+    }
+
+    private int amount;
+
+    public void addAmount(int amount) {
+        if (amount > 4) {
+            this.amount += amount;
+            rows.add(amount);
+        } else {
+            System.out.println(amount);
+        }
+    }
+
+    public int getAmount() {
+        return amount;
+    }
+
+    public int total() {
+        int sum = 0;
+        for (Integer value : rows) {
+            if (value != null) {
+                sum += value;
+            }
+        }
+        System.out.println(sum);
+        return sum;
+    }
+}
+
+---
+import java.util.ArrayList;
+import java.util.List;
+
+public class RecordQueue {
+    private final List<Integer> rows = new ArrayList<Integer>();
+
+    private int height;
+
+    public void addHeight(int height) {
+        if (height > 2) {
+            this.height += height;
+            rows.add(height);
+        } else {
+            System.out.println(height);
+        }
+    }
+
+    public int getHeight() {
+        return height;
+    }
+
+    private int total;
+
+    public void addTotal(int total) {
+        if (total > 3) {
+            this.total += total;
+            rows.add(total);
+        } else {
+            System.out.println(total);
+        }
+    }
+
+    public int getTotal() {
+        return total;
+    }
+
+    private int limit;
+
+    public void addLimit(int limit) {
+        if (limit > 4) {
+            this.limit += limit;
+            rows.add(limit);
+        } else {
+            System.out.println(limit);
+        }
+    }
+
+    public int getLimit() {
+        return limit;
+    }
+
+    private int index;
+
+    public void addIndex(int index) {
+        if (index > 5) {
+            this.index += index;
+            rows.add(index);
+        } else {
+            System.out.println(index);
+        }
+    }
+
+    public int getIndex() {
+        return index;
+    }
+
+    private int score;
+
+    public void addScore(int score) {
+        if (score > 6) {
+            this.score += score;
+            rows.add(score);
+        } else {
+            System.out.println(score);
+        }
+    }
+
+    public int getScore() {
+        return score;
+    }
+
+    public int total() {
+        int sum = 0;
+        for (Integer value : rows) {
+            if (value != null) {
+                sum += value;
+            }
+        }
+        System.out.println(sum);
+        return sum;
+    }
+}
+
+---
+import java.util.ArrayList;
+import java.util.List;
+
+public class BatchStore {
+    private final List<Integer> rows = new ArrayList<Integer>();
+
+    private int weight;
+
+    public void addWeight(int weight) {
+        if (weight > 3) {
+            this.weight += weight;
+            rows.add(weight);
+        } else {
+            System.out.println(weight);
+        }
+    }
+
+    public int getWeight() {
+        return weight;
+    }
+
+    private int score;
+
+    public void addScore(int score) {
+        if (score > 4) {
+            this.score += score;
+            rows.add(score);
+        } else {
+            System.out.println(score);
+        }
+    }
+
+    public int getScore() {
+        return score;
+    }
+
+    private int count;
+
+    public void addCount(int count) {
+        if (count > 5) {
+            this.count += count;
+            rows.add(count);
+        } else {
+            System.out.println(count);
+        }
+    }
+
+    public int getCount() {
+        return count;
+    }
+
+    public int total() {
+        int sum = 0;
+        for (Integer value : rows) {
+            if (value != null) {
+                sum += value;
+            }
+        }
+        System.out.println(sum);
+        return sum;
+    }
+}
+
+---
+import java.util.ArrayList;
+import java.util.List;
+
+public class SampleTable {
+    private final List<Integer> rows = new ArrayList<Integer>();
+
+    private int height;
+
+    public void addHeight(int height) {
+        if (height > 4) {
+            this.height += height;
+            rows.add(height);
+        } else {
+            System.out.println(height);
+        }
+    }
+
+    public int getHeight() {
+        return height;
+    }
+
+    private int width;
+
+    public void addWidth(int width) {
+        if (width > 5) {
+            this.width += width;
+            rows.add(width);
+        } else {
+            System.out.println(width);
+        }
+    }
+
+    public int getWidth() {
+        return width;
+    }
+
+    private int amount;
+
+    public void addAmount(int amount) {
+        if (amount > 6) {
+            this.amount += amount;
+            rows.add(amount);
+        } else {
+            System.out.println(amount);
+        }
+    }
+
+    public int getAmount() {
+        return amount;
+    }
+
+    private int weight;
+
+    public void addWeight(int weight) {
+        if (weight > 7) {
+            this.weight += weight;
+            rows.add(weight);
+        } else {
+            System.out.println(weight);
+        }
+    }
+
+    public int getWeight() {
+        return weight;
+    }
+
+    public int total() {
+        int sum = 0;
+        for (Integer value : rows) {
+            if (value != null) {
+                sum += value;
+            }
+        }
+        System.out.println(sum);
+        return sum;
+    }
+}
+
+---
+import java.util.ArrayList;
+import java.util.List;
+
+public class EntryIndex {
+    private final List<Integer> rows = new ArrayList<Integer>();
+
+    private int index;
+
+    public void addIndex(int index) {
+        if (index > 5) {
+            this.index += index;
+            rows.add(index);
+        } else {
+            System.out.println(index);
+        }
+    }
+
+    public int getIndex() {
+        return index;
+    }
+
+    private int total;
+
+    public void addTotal(int total) {
+        if (total > 6) {
+            this.total += total;
+            rows.add(total);
+        } else {
+            System.out.println(total);
+        }
+    }
+
+    public int getTotal() {
+        return total;
+    }
+
+    private int weight;
+
+    public void addWeight(int weight) {
+        if (weight > 7) {
+            this.weight += weight;
+            rows.add(weight);
+        } else {
+            System.out.println(weight);
+        }
+    }
+
+    public int getWeight() {
+        return weight;
+    }
+
+    private int count;
+
+    public void addCount(int count) {
+        if (count > 8) {
+            this.count += count;
+            rows.add(count);
+        } else {
+            System.out.println(count);
+        }
+    }
+
+    public int getCount() {
+        return count;
+    }
+
+    private int amount;
+
+    public void addAmount(int amount) {
+        if (amount > 9) {
+            this.amount += amount;
+            rows.add(amount);
+        } else {
+            System.out.println(amount);
+        }
+    }
+
+    public int getAmount() {
+        return amount;
+    }
+
+    public int total() {
+        int sum = 0;
+        for (Integer value : rows) {
+            if (value != null) {
+                sum += value;
+            }
+        }
+        System.out.println(sum);
+        return sum;
+    }
+}
+
+---
+import java.util.ArrayList;
+import java.util.List;
+
+public class ItemBatch {
+    private final List<Integer> rows = new ArrayList<Integer>();
+
+    private int amount;
+
+    public void addAmount(int amount) {
+        if (amount > 6) {
+            this.amount += amount;
+            rows.add(amount);
+        } else {
+            System.out.println(amount);
+        }
+    }
+
+    public int getAmount() {
+        return amount;
+    }
+
+    private int total;
+
+    public void addTotal(int total) {
+        if (total > 7) {
+            this.total += total;
+            rows.add(total);
+        } else {
+            System.out.println(total);
+        }
+    }
+
+    public int getTotal() {
+        return total;
+    }
+
+    private int level;
+
+    public void addLevel(int level) {
+        if (level > 8) {
+            this.level += level;
+            rows.add(level);
+        } else {
+            System.out.println(level);
+        }
+    }
+
+    public int getLevel() {
+        return level;
+    }
+
+    public int total() {
+        int sum = 0;
+        for (Integer value : rows) {
+            if (value != null) {
+                sum += value;
+            }
+        }
+        System.out.println(sum);
+        return sum;
+    }
+}
+
+---
+import java.util.ArrayList;
+import java.util.List;
+
+public class NodeLedger {
+    private final List<Integer> rows = new ArrayList<Integer>();
+
+    private int total;
+
+    public void addTotal(int total) {
+        if (total > 7) {
+            this.total += total;
+            rows.add(total);
+        } else {
+            System.out.println(total);
+        }
+    }
+
+    public int getTotal() {
+        return total;
+    }
+
+    private int amount;
+
+    public void addAmount(int amount) {
+        if (amount > 8) {
+            this.amount += amount;
+            rows.add(amount);
+        } else {
+            System.out.println(amount);
+        }
+    }
+
+    public int getAmount() {
+        return amount;
+    }
+
+    private int height;
+
+    public void addHeight(int height) {
+        if (height > 9) {
+            this.height += height;
+            rows.add(height);
+        } else {
+            System.out.println(height);
+        }
+    }
+
+    public int getHeight() {
+        return height;
+    }
+
+    private int level;
+
+    public void addLevel(int level) {
+        if (level > 10) {
+            this.level += level;
+            rows.add(level);
+        } else {
+            System.out.println(level);
+        }
+    }
+
+    public int getLevel() {
+        return level;
+    }
+
+    public int total() {
+        int sum = 0;
+        for (Integer value : rows) {
+            if (value != null) {
+                sum += value;
+            }
+        }
+        System.out.println(sum);
+        return sum;
+    }
+}
+
+---
+import java.util.ArrayList;
+import java.util.List;
+
+public class RowQueue {
+    private final List<Integer> rows = new ArrayList<Integer>();
+
+    private int amount;
+
+    public void addAmount(int amount) {
+        if (amount > 1) {
+            this.amount += amount;
+            rows.add(amount);
+        } else {
+            System.out.println(amount);
+        }
+    }
+
+    public int getAmount() {
+        return amount;
+    }
+
+    private int index;
+
+    public void addIndex(int index) {
+        if (index > 2) {
+            this.index += index;
+            rows.add(index);
+        } else {
+            System.out.println(index);
+        }
+    }
+
+    public int getIndex() {
+        return index;
+    }
+
+    private int score;
+
+    public void addScore(int score) {
+        if (score > 3) {
+            this.score += score;
+            rows.add(score);
+        } else {
+            System.out.println(score);
+        }
+    }
+
+    public int getScore() {
+        return score;
+    }
+
+    private int limit;
+
+    public void addLimit(int limit) {
+        if (limit > 4) {
+            this.limit += limit;
+            rows.add(limit);
+        } else {
+            System.out.println(limit);
+        }
+    }
+
+    public int getLimit() {
+        return limit;
+    }
+
+    private int total;
+
+    public void addTotal(int total) {
+        if (total > 5) {
+            this.total += total;
+            rows.add(total);
+        } else {
+            System.out.println(total);
+        }
+    }
+
+    public int getTotal() {
+        return total;
+    }
+
+    public int total() {
+        int sum = 0;
+        for (Integer value : rows) {
+            if (value != null) {
+                sum += value;
+            }
+        }
+        System.out.println(sum);
+        return sum;
+    }
+}
