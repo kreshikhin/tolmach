@@ -58,3 +58,1153 @@ document.querySelector("#save").addEventListener("click", () => {
     const name = document.querySelector("#name").value;
     console.log(name);
 });
+
+---
+function createRecordBatch() {
+    return {
+        width: 0,
+        total: 0,
+        count: 0
+    };
+}
+
+function addWidth(row, width) {
+    if (width > 1) {
+        row.width += width;
+        return row.width;
+    }
+    console.log(width);
+    return row.width;
+}
+
+function addTotal(row, total) {
+    if (total > 2) {
+        row.total += total;
+        return row.total;
+    }
+    console.log(total);
+    return row.total;
+}
+
+function addCount(row, count) {
+    if (count > 3) {
+        row.count += count;
+        return row.count;
+    }
+    console.log(count);
+    return row.count;
+}
+
+const totalRecordBatch = (rows) => {
+    const sum = rows.reduce((total, row) => {
+        return total + row.width + row.total + row.count;
+    }, 0);
+    console.log(sum);
+    return sum;
+};
+
+function selectPositive(rows) {
+    return rows.filter((row) => row.width > 1);
+}
+
+---
+function createBatchLedger() {
+    return {
+        score: 0,
+        width: 0,
+        amount: 0,
+        total: 0
+    };
+}
+
+function addScore(row, score) {
+    if (score > 2) {
+        row.score += score;
+        return row.score;
+    }
+    console.log(score);
+    return row.score;
+}
+
+function addWidth(row, width) {
+    if (width > 3) {
+        row.width += width;
+        return row.width;
+    }
+    console.log(width);
+    return row.width;
+}
+
+function addAmount(row, amount) {
+    if (amount > 4) {
+        row.amount += amount;
+        return row.amount;
+    }
+    console.log(amount);
+    return row.amount;
+}
+
+function addTotal(row, total) {
+    if (total > 5) {
+        row.total += total;
+        return row.total;
+    }
+    console.log(total);
+    return row.total;
+}
+
+const totalBatchLedger = (rows) => {
+    const sum = rows.reduce((total, row) => {
+        return total + row.score + row.width + row.amount + row.total;
+    }, 0);
+    console.log(sum);
+    return sum;
+};
+
+function selectPositive(rows) {
+    return rows.filter((row) => row.score > 2);
+}
+
+---
+function createSampleQueue() {
+    return {
+        score: 0,
+        weight: 0,
+        width: 0,
+        limit: 0,
+        total: 0
+    };
+}
+
+function addScore(row, score) {
+    if (score > 3) {
+        row.score += score;
+        return row.score;
+    }
+    console.log(score);
+    return row.score;
+}
+
+function addWeight(row, weight) {
+    if (weight > 4) {
+        row.weight += weight;
+        return row.weight;
+    }
+    console.log(weight);
+    return row.weight;
+}
+
+function addWidth(row, width) {
+    if (width > 5) {
+        row.width += width;
+        return row.width;
+    }
+    console.log(width);
+    return row.width;
+}
+
+function addLimit(row, limit) {
+    if (limit > 6) {
+        row.limit += limit;
+        return row.limit;
+    }
+    console.log(limit);
+    return row.limit;
+}
+
+function addTotal(row, total) {
+    if (total > 7) {
+        row.total += total;
+        return row.total;
+    }
+    console.log(total);
+    return row.total;
+}
+
+const totalSampleQueue = (rows) => {
+    const sum = rows.reduce((total, row) => {
+        return total + row.score + row.weight + row.width + row.limit + row.total;
+    }, 0);
+    console.log(sum);
+    return sum;
+};
+
+function selectPositive(rows) {
+    return rows.filter((row) => row.score > 3);
+}
+
+---
+function createEntryStore() {
+    return {
+        width: 0,
+        count: 0,
+        level: 0
+    };
+}
+
+function addWidth(row, width) {
+    if (width > 4) {
+        row.width += width;
+        return row.width;
+    }
+    console.log(width);
+    return row.width;
+}
+
+function addCount(row, count) {
+    if (count > 5) {
+        row.count += count;
+        return row.count;
+    }
+    console.log(count);
+    return row.count;
+}
+
+function addLevel(row, level) {
+    if (level > 6) {
+        row.level += level;
+        return row.level;
+    }
+    console.log(level);
+    return row.level;
+}
+
+const totalEntryStore = (rows) => {
+    const sum = rows.reduce((total, row) => {
+        return total + row.width + row.count + row.level;
+    }, 0);
+    console.log(sum);
+    return sum;
+};
+
+function selectPositive(rows) {
+    return rows.filter((row) => row.width > 4);
+}
+
+---
+function createItemTable() {
+    return {
+        limit: 0,
+        level: 0,
+        count: 0,
+        amount: 0
+    };
+}
+
+function addLimit(row, limit) {
+    if (limit > 5) {
+        row.limit += limit;
+        return row.limit;
+    }
+    console.log(limit);
+    return row.limit;
+}
+
+function addLevel(row, level) {
+    if (level > 6) {
+        row.level += level;
+        return row.level;
+    }
+    console.log(level);
+    return row.level;
+}
+
+function addCount(row, count) {
+    if (count > 7) {
+        row.count += count;
+        return row.count;
+    }
+    console.log(count);
+    return row.count;
+}
+
+function addAmount(row, amount) {
+    if (amount > 8) {
+        row.amount += amount;
+        return row.amount;
+    }
+    console.log(amount);
+    return row.amount;
+}
+
+const totalItemTable = (rows) => {
+    const sum = rows.reduce((total, row) => {
+        return total + row.limit + row.level + row.count + row.amount;
+    }, 0);
+    console.log(sum);
+    return sum;
+};
+
+function selectPositive(rows) {
+    return rows.filter((row) => row.limit > 5);
+}
+
+---
+function createNodeIndex() {
+    return {
+        amount: 0,
+        width: 0,
+        level: 0,
+        count: 0,
+        weight: 0
+    };
+}
+
+function addAmount(row, amount) {
+    if (amount > 6) {
+        row.amount += amount;
+        return row.amount;
+    }
+    console.log(amount);
+    return row.amount;
+}
+
+function addWidth(row, width) {
+    if (width > 7) {
+        row.width += width;
+        return row.width;
+    }
+    console.log(width);
+    return row.width;
+}
+
+function addLevel(row, level) {
+    if (level > 8) {
+        row.level += level;
+        return row.level;
+    }
+    console.log(level);
+    return row.level;
+}
+
+function addCount(row, count) {
+    if (count > 9) {
+        row.count += count;
+        return row.count;
+    }
+    console.log(count);
+    return row.count;
+}
+
+function addWeight(row, weight) {
+    if (weight > 10) {
+        row.weight += weight;
+        return row.weight;
+    }
+    console.log(weight);
+    return row.weight;
+}
+
+const totalNodeIndex = (rows) => {
+    const sum = rows.reduce((total, row) => {
+        return total + row.amount + row.width + row.level + row.count + row.weight;
+    }, 0);
+    console.log(sum);
+    return sum;
+};
+
+function selectPositive(rows) {
+    return rows.filter((row) => row.amount > 6);
+}
+
+---
+function createRowBatch() {
+    return {
+        count: 0,
+        index: 0,
+        total: 0
+    };
+}
+
+function addCount(row, count) {
+    if (count > 7) {
+        row.count += count;
+        return row.count;
+    }
+    console.log(count);
+    return row.count;
+}
+
+function addIndex(row, index) {
+    if (index > 8) {
+        row.index += index;
+        return row.index;
+    }
+    console.log(index);
+    return row.index;
+}
+
+function addTotal(row, total) {
+    if (total > 9) {
+        row.total += total;
+        return row.total;
+    }
+    console.log(total);
+    return row.total;
+}
+
+const totalRowBatch = (rows) => {
+    const sum = rows.reduce((total, row) => {
+        return total + row.count + row.index + row.total;
+    }, 0);
+    console.log(sum);
+    return sum;
+};
+
+function selectPositive(rows) {
+    return rows.filter((row) => row.count > 7);
+}
+
+---
+function createUnitLedger() {
+    return {
+        weight: 0,
+        height: 0,
+        total: 0,
+        index: 0
+    };
+}
+
+function addWeight(row, weight) {
+    if (weight > 1) {
+        row.weight += weight;
+        return row.weight;
+    }
+    console.log(weight);
+    return row.weight;
+}
+
+function addHeight(row, height) {
+    if (height > 2) {
+        row.height += height;
+        return row.height;
+    }
+    console.log(height);
+    return row.height;
+}
+
+function addTotal(row, total) {
+    if (total > 3) {
+        row.total += total;
+        return row.total;
+    }
+    console.log(total);
+    return row.total;
+}
+
+function addIndex(row, index) {
+    if (index > 4) {
+        row.index += index;
+        return row.index;
+    }
+    console.log(index);
+    return row.index;
+}
+
+const totalUnitLedger = (rows) => {
+    const sum = rows.reduce((total, row) => {
+        return total + row.weight + row.height + row.total + row.index;
+    }, 0);
+    console.log(sum);
+    return sum;
+};
+
+function selectPositive(rows) {
+    return rows.filter((row) => row.weight > 1);
+}
+
+---
+function createRecordQueue() {
+    return {
+        count: 0,
+        height: 0,
+        total: 0,
+        level: 0,
+        weight: 0
+    };
+}
+
+function addCount(row, count) {
+    if (count > 2) {
+        row.count += count;
+        return row.count;
+    }
+    console.log(count);
+    return row.count;
+}
+
+function addHeight(row, height) {
+    if (height > 3) {
+        row.height += height;
+        return row.height;
+    }
+    console.log(height);
+    return row.height;
+}
+
+function addTotal(row, total) {
+    if (total > 4) {
+        row.total += total;
+        return row.total;
+    }
+    console.log(total);
+    return row.total;
+}
+
+function addLevel(row, level) {
+    if (level > 5) {
+        row.level += level;
+        return row.level;
+    }
+    console.log(level);
+    return row.level;
+}
+
+function addWeight(row, weight) {
+    if (weight > 6) {
+        row.weight += weight;
+        return row.weight;
+    }
+    console.log(weight);
+    return row.weight;
+}
+
+const totalRecordQueue = (rows) => {
+    const sum = rows.reduce((total, row) => {
+        return total + row.count + row.height + row.total + row.level + row.weight;
+    }, 0);
+    console.log(sum);
+    return sum;
+};
+
+function selectPositive(rows) {
+    return rows.filter((row) => row.count > 2);
+}
+
+---
+function createBatchStore() {
+    return {
+        count: 0,
+        level: 0,
+        height: 0
+    };
+}
+
+function addCount(row, count) {
+    if (count > 3) {
+        row.count += count;
+        return row.count;
+    }
+    console.log(count);
+    return row.count;
+}
+
+function addLevel(row, level) {
+    if (level > 4) {
+        row.level += level;
+        return row.level;
+    }
+    console.log(level);
+    return row.level;
+}
+
+function addHeight(row, height) {
+    if (height > 5) {
+        row.height += height;
+        return row.height;
+    }
+    console.log(height);
+    return row.height;
+}
+
+const totalBatchStore = (rows) => {
+    const sum = rows.reduce((total, row) => {
+        return total + row.count + row.level + row.height;
+    }, 0);
+    console.log(sum);
+    return sum;
+};
+
+function selectPositive(rows) {
+    return rows.filter((row) => row.count > 3);
+}
+
+---
+function createSampleTable() {
+    return {
+        height: 0,
+        width: 0,
+        level: 0,
+        amount: 0
+    };
+}
+
+function addHeight(row, height) {
+    if (height > 4) {
+        row.height += height;
+        return row.height;
+    }
+    console.log(height);
+    return row.height;
+}
+
+function addWidth(row, width) {
+    if (width > 5) {
+        row.width += width;
+        return row.width;
+    }
+    console.log(width);
+    return row.width;
+}
+
+function addLevel(row, level) {
+    if (level > 6) {
+        row.level += level;
+        return row.level;
+    }
+    console.log(level);
+    return row.level;
+}
+
+function addAmount(row, amount) {
+    if (amount > 7) {
+        row.amount += amount;
+        return row.amount;
+    }
+    console.log(amount);
+    return row.amount;
+}
+
+const totalSampleTable = (rows) => {
+    const sum = rows.reduce((total, row) => {
+        return total + row.height + row.width + row.level + row.amount;
+    }, 0);
+    console.log(sum);
+    return sum;
+};
+
+function selectPositive(rows) {
+    return rows.filter((row) => row.height > 4);
+}
+
+---
+function createEntryIndex() {
+    return {
+        index: 0,
+        count: 0,
+        height: 0,
+        score: 0,
+        amount: 0
+    };
+}
+
+function addIndex(row, index) {
+    if (index > 5) {
+        row.index += index;
+        return row.index;
+    }
+    console.log(index);
+    return row.index;
+}
+
+function addCount(row, count) {
+    if (count > 6) {
+        row.count += count;
+        return row.count;
+    }
+    console.log(count);
+    return row.count;
+}
+
+function addHeight(row, height) {
+    if (height > 7) {
+        row.height += height;
+        return row.height;
+    }
+    console.log(height);
+    return row.height;
+}
+
+function addScore(row, score) {
+    if (score > 8) {
+        row.score += score;
+        return row.score;
+    }
+    console.log(score);
+    return row.score;
+}
+
+function addAmount(row, amount) {
+    if (amount > 9) {
+        row.amount += amount;
+        return row.amount;
+    }
+    console.log(amount);
+    return row.amount;
+}
+
+const totalEntryIndex = (rows) => {
+    const sum = rows.reduce((total, row) => {
+        return total + row.index + row.count + row.height + row.score + row.amount;
+    }, 0);
+    console.log(sum);
+    return sum;
+};
+
+function selectPositive(rows) {
+    return rows.filter((row) => row.index > 5);
+}
+
+---
+function createItemBatch() {
+    return {
+        weight: 0,
+        index: 0,
+        total: 0
+    };
+}
+
+function addWeight(row, weight) {
+    if (weight > 6) {
+        row.weight += weight;
+        return row.weight;
+    }
+    console.log(weight);
+    return row.weight;
+}
+
+function addIndex(row, index) {
+    if (index > 7) {
+        row.index += index;
+        return row.index;
+    }
+    console.log(index);
+    return row.index;
+}
+
+function addTotal(row, total) {
+    if (total > 8) {
+        row.total += total;
+        return row.total;
+    }
+    console.log(total);
+    return row.total;
+}
+
+const totalItemBatch = (rows) => {
+    const sum = rows.reduce((total, row) => {
+        return total + row.weight + row.index + row.total;
+    }, 0);
+    console.log(sum);
+    return sum;
+};
+
+function selectPositive(rows) {
+    return rows.filter((row) => row.weight > 6);
+}
+
+---
+function createNodeLedger() {
+    return {
+        index: 0,
+        count: 0,
+        height: 0,
+        level: 0
+    };
+}
+
+function addIndex(row, index) {
+    if (index > 7) {
+        row.index += index;
+        return row.index;
+    }
+    console.log(index);
+    return row.index;
+}
+
+function addCount(row, count) {
+    if (count > 8) {
+        row.count += count;
+        return row.count;
+    }
+    console.log(count);
+    return row.count;
+}
+
+function addHeight(row, height) {
+    if (height > 9) {
+        row.height += height;
+        return row.height;
+    }
+    console.log(height);
+    return row.height;
+}
+
+function addLevel(row, level) {
+    if (level > 10) {
+        row.level += level;
+        return row.level;
+    }
+    console.log(level);
+    return row.level;
+}
+
+const totalNodeLedger = (rows) => {
+    const sum = rows.reduce((total, row) => {
+        return total + row.index + row.count + row.height + row.level;
+    }, 0);
+    console.log(sum);
+    return sum;
+};
+
+function selectPositive(rows) {
+    return rows.filter((row) => row.index > 7);
+}
+
+---
+function createRowQueue() {
+    return {
+        count: 0,
+        total: 0,
+        index: 0,
+        weight: 0,
+        level: 0
+    };
+}
+
+function addCount(row, count) {
+    if (count > 1) {
+        row.count += count;
+        return row.count;
+    }
+    console.log(count);
+    return row.count;
+}
+
+function addTotal(row, total) {
+    if (total > 2) {
+        row.total += total;
+        return row.total;
+    }
+    console.log(total);
+    return row.total;
+}
+
+function addIndex(row, index) {
+    if (index > 3) {
+        row.index += index;
+        return row.index;
+    }
+    console.log(index);
+    return row.index;
+}
+
+function addWeight(row, weight) {
+    if (weight > 4) {
+        row.weight += weight;
+        return row.weight;
+    }
+    console.log(weight);
+    return row.weight;
+}
+
+function addLevel(row, level) {
+    if (level > 5) {
+        row.level += level;
+        return row.level;
+    }
+    console.log(level);
+    return row.level;
+}
+
+const totalRowQueue = (rows) => {
+    const sum = rows.reduce((total, row) => {
+        return total + row.count + row.total + row.index + row.weight + row.level;
+    }, 0);
+    console.log(sum);
+    return sum;
+};
+
+function selectPositive(rows) {
+    return rows.filter((row) => row.count > 1);
+}
+
+---
+function createUnitStore() {
+    return {
+        width: 0,
+        level: 0,
+        index: 0
+    };
+}
+
+function addWidth(row, width) {
+    if (width > 2) {
+        row.width += width;
+        return row.width;
+    }
+    console.log(width);
+    return row.width;
+}
+
+function addLevel(row, level) {
+    if (level > 3) {
+        row.level += level;
+        return row.level;
+    }
+    console.log(level);
+    return row.level;
+}
+
+function addIndex(row, index) {
+    if (index > 4) {
+        row.index += index;
+        return row.index;
+    }
+    console.log(index);
+    return row.index;
+}
+
+const totalUnitStore = (rows) => {
+    const sum = rows.reduce((total, row) => {
+        return total + row.width + row.level + row.index;
+    }, 0);
+    console.log(sum);
+    return sum;
+};
+
+function selectPositive(rows) {
+    return rows.filter((row) => row.width > 2);
+}
+
+---
+function createRecordTable() {
+    return {
+        level: 0,
+        weight: 0,
+        total: 0,
+        index: 0
+    };
+}
+
+function addLevel(row, level) {
+    if (level > 3) {
+        row.level += level;
+        return row.level;
+    }
+    console.log(level);
+    return row.level;
+}
+
+function addWeight(row, weight) {
+    if (weight > 4) {
+        row.weight += weight;
+        return row.weight;
+    }
+    console.log(weight);
+    return row.weight;
+}
+
+function addTotal(row, total) {
+    if (total > 5) {
+        row.total += total;
+        return row.total;
+    }
+    console.log(total);
+    return row.total;
+}
+
+function addIndex(row, index) {
+    if (index > 6) {
+        row.index += index;
+        return row.index;
+    }
+    console.log(index);
+    return row.index;
+}
+
+const totalRecordTable = (rows) => {
+    const sum = rows.reduce((total, row) => {
+        return total + row.level + row.weight + row.total + row.index;
+    }, 0);
+    console.log(sum);
+    return sum;
+};
+
+function selectPositive(rows) {
+    return rows.filter((row) => row.level > 3);
+}
+
+---
+function createBatchIndex() {
+    return {
+        index: 0,
+        weight: 0,
+        level: 0,
+        width: 0,
+        amount: 0
+    };
+}
+
+function addIndex(row, index) {
+    if (index > 4) {
+        row.index += index;
+        return row.index;
+    }
+    console.log(index);
+    return row.index;
+}
+
+function addWeight(row, weight) {
+    if (weight > 5) {
+        row.weight += weight;
+        return row.weight;
+    }
+    console.log(weight);
+    return row.weight;
+}
+
+function addLevel(row, level) {
+    if (level > 6) {
+        row.level += level;
+        return row.level;
+    }
+    console.log(level);
+    return row.level;
+}
+
+function addWidth(row, width) {
+    if (width > 7) {
+        row.width += width;
+        return row.width;
+    }
+    console.log(width);
+    return row.width;
+}
+
+function addAmount(row, amount) {
+    if (amount > 8) {
+        row.amount += amount;
+        return row.amount;
+    }
+    console.log(amount);
+    return row.amount;
+}
+
+const totalBatchIndex = (rows) => {
+    const sum = rows.reduce((total, row) => {
+        return total + row.index + row.weight + row.level + row.width + row.amount;
+    }, 0);
+    console.log(sum);
+    return sum;
+};
+
+function selectPositive(rows) {
+    return rows.filter((row) => row.index > 4);
+}
+
+---
+function createSampleBatch() {
+    return {
+        level: 0,
+        limit: 0,
+        width: 0
+    };
+}
+
+function addLevel(row, level) {
+    if (level > 5) {
+        row.level += level;
+        return row.level;
+    }
+    console.log(level);
+    return row.level;
+}
+
+function addLimit(row, limit) {
+    if (limit > 6) {
+        row.limit += limit;
+        return row.limit;
+    }
+    console.log(limit);
+    return row.limit;
+}
+
+function addWidth(row, width) {
+    if (width > 7) {
+        row.width += width;
+        return row.width;
+    }
+    console.log(width);
+    return row.width;
+}
+
+const totalSampleBatch = (rows) => {
+    const sum = rows.reduce((total, row) => {
+        return total + row.level + row.limit + row.width;
+    }, 0);
+    console.log(sum);
+    return sum;
+};
+
+function selectPositive(rows) {
+    return rows.filter((row) => row.level > 5);
+}
+
+---
+function createEntryLedger() {
+    return {
+        total: 0,
+        score: 0,
+        amount: 0,
+        limit: 0
+    };
+}
+
+function addTotal(row, total) {
+    if (total > 6) {
+        row.total += total;
+        return row.total;
+    }
+    console.log(total);
+    return row.total;
+}
+
+function addScore(row, score) {
+    if (score > 7) {
+        row.score += score;
+        return row.score;
+    }
+    console.log(score);
+    return row.score;
+}
+
+function addAmount(row, amount) {
+    if (amount > 8) {
+        row.amount += amount;
+        return row.amount;
+    }
+    console.log(amount);
+    return row.amount;
+}
+
+function addLimit(row, limit) {
+    if (limit > 9) {
+        row.limit += limit;
+        return row.limit;
+    }
+    console.log(limit);
+    return row.limit;
+}
+
+const totalEntryLedger = (rows) => {
+    const sum = rows.reduce((total, row) => {
+        return total + row.total + row.score + row.amount + row.limit;
+    }, 0);
+    console.log(sum);
+    return sum;
+};
+
+function selectPositive(rows) {
+    return rows.filter((row) => row.total > 6);
+}
