@@ -38,5 +38,1349 @@
   (car pair))
 
 ---
-(loop for item in '(a b c)
-      collect (symbol-name item))
+(defun names (symbols)
+  (loop for symbol in symbols
+        collect (symbol-name symbol)))
+
+---
+(defun add-count (total count)
+  (if (> count 1)
+      (+ total count)
+      total))
+
+(defun read-count (row)
+  (getf row :count 0))
+
+(defun add-level (total level)
+  (if (> level 2)
+      (+ total level)
+      total))
+
+(defun read-level (row)
+  (getf row :level 0))
+
+(defun add-weight (total weight)
+  (if (> weight 3)
+      (+ total weight)
+      total))
+
+(defun read-weight (row)
+  (getf row :weight 0))
+
+(defun total-record-store (rows)
+  (let ((total 0))
+    (dolist (row rows)
+      (setf total (add-count total (read-count row)))
+      (setf total (add-level total (read-level row)))
+      (setf total (add-weight total (read-weight row)))
+    total))
+
+(defun keep-positive (rows)
+  (remove-if-not (lambda (value) (plusp value)) rows))
+
+(defun describe-record-store (rows)
+  (format t "~a~%" (total-record-store rows)))
+
+(defun names-of (rows)
+  (loop for row in rows
+        collect (symbol-name row)))
+
+---
+(defun add-weight (total weight)
+  (if (> weight 2)
+      (+ total weight)
+      total))
+
+(defun read-weight (row)
+  (getf row :weight 0))
+
+(defun add-width (total width)
+  (if (> width 3)
+      (+ total width)
+      total))
+
+(defun read-width (row)
+  (getf row :width 0))
+
+(defun add-amount (total amount)
+  (if (> amount 4)
+      (+ total amount)
+      total))
+
+(defun read-amount (row)
+  (getf row :amount 0))
+
+(defun add-total (total total)
+  (if (> total 5)
+      (+ total total)
+      total))
+
+(defun read-total (row)
+  (getf row :total 0))
+
+(defun total-batch-table (rows)
+  (let ((total 0))
+    (dolist (row rows)
+      (setf total (add-weight total (read-weight row)))
+      (setf total (add-width total (read-width row)))
+      (setf total (add-amount total (read-amount row)))
+      (setf total (add-total total (read-total row)))
+    total))
+
+(defun keep-positive (rows)
+  (remove-if-not (lambda (value) (plusp value)) rows))
+
+(defun describe-batch-table (rows)
+  (format t "~a~%" (total-batch-table rows)))
+
+(defun names-of (rows)
+  (loop for row in rows
+        collect (symbol-name row)))
+
+---
+(defun add-count (total count)
+  (if (> count 3)
+      (+ total count)
+      total))
+
+(defun read-count (row)
+  (getf row :count 0))
+
+(defun add-height (total height)
+  (if (> height 4)
+      (+ total height)
+      total))
+
+(defun read-height (row)
+  (getf row :height 0))
+
+(defun add-total (total total)
+  (if (> total 5)
+      (+ total total)
+      total))
+
+(defun read-total (row)
+  (getf row :total 0))
+
+(defun add-width (total width)
+  (if (> width 6)
+      (+ total width)
+      total))
+
+(defun read-width (row)
+  (getf row :width 0))
+
+(defun add-score (total score)
+  (if (> score 7)
+      (+ total score)
+      total))
+
+(defun read-score (row)
+  (getf row :score 0))
+
+(defun total-sample-index (rows)
+  (let ((total 0))
+    (dolist (row rows)
+      (setf total (add-count total (read-count row)))
+      (setf total (add-height total (read-height row)))
+      (setf total (add-total total (read-total row)))
+      (setf total (add-width total (read-width row)))
+      (setf total (add-score total (read-score row)))
+    total))
+
+(defun keep-positive (rows)
+  (remove-if-not (lambda (value) (plusp value)) rows))
+
+(defun describe-sample-index (rows)
+  (format t "~a~%" (total-sample-index rows)))
+
+(defun names-of (rows)
+  (loop for row in rows
+        collect (symbol-name row)))
+
+---
+(defun add-width (total width)
+  (if (> width 4)
+      (+ total width)
+      total))
+
+(defun read-width (row)
+  (getf row :width 0))
+
+(defun add-limit (total limit)
+  (if (> limit 5)
+      (+ total limit)
+      total))
+
+(defun read-limit (row)
+  (getf row :limit 0))
+
+(defun add-count (total count)
+  (if (> count 6)
+      (+ total count)
+      total))
+
+(defun read-count (row)
+  (getf row :count 0))
+
+(defun total-entry-batch (rows)
+  (let ((total 0))
+    (dolist (row rows)
+      (setf total (add-width total (read-width row)))
+      (setf total (add-limit total (read-limit row)))
+      (setf total (add-count total (read-count row)))
+    total))
+
+(defun keep-positive (rows)
+  (remove-if-not (lambda (value) (plusp value)) rows))
+
+(defun describe-entry-batch (rows)
+  (format t "~a~%" (total-entry-batch rows)))
+
+(defun names-of (rows)
+  (loop for row in rows
+        collect (symbol-name row)))
+
+---
+(defun add-total (total total)
+  (if (> total 5)
+      (+ total total)
+      total))
+
+(defun read-total (row)
+  (getf row :total 0))
+
+(defun add-count (total count)
+  (if (> count 6)
+      (+ total count)
+      total))
+
+(defun read-count (row)
+  (getf row :count 0))
+
+(defun add-width (total width)
+  (if (> width 7)
+      (+ total width)
+      total))
+
+(defun read-width (row)
+  (getf row :width 0))
+
+(defun add-height (total height)
+  (if (> height 8)
+      (+ total height)
+      total))
+
+(defun read-height (row)
+  (getf row :height 0))
+
+(defun total-item-ledger (rows)
+  (let ((total 0))
+    (dolist (row rows)
+      (setf total (add-total total (read-total row)))
+      (setf total (add-count total (read-count row)))
+      (setf total (add-width total (read-width row)))
+      (setf total (add-height total (read-height row)))
+    total))
+
+(defun keep-positive (rows)
+  (remove-if-not (lambda (value) (plusp value)) rows))
+
+(defun describe-item-ledger (rows)
+  (format t "~a~%" (total-item-ledger rows)))
+
+(defun names-of (rows)
+  (loop for row in rows
+        collect (symbol-name row)))
+
+---
+(defun add-total (total total)
+  (if (> total 6)
+      (+ total total)
+      total))
+
+(defun read-total (row)
+  (getf row :total 0))
+
+(defun add-height (total height)
+  (if (> height 7)
+      (+ total height)
+      total))
+
+(defun read-height (row)
+  (getf row :height 0))
+
+(defun add-amount (total amount)
+  (if (> amount 8)
+      (+ total amount)
+      total))
+
+(defun read-amount (row)
+  (getf row :amount 0))
+
+(defun add-score (total score)
+  (if (> score 9)
+      (+ total score)
+      total))
+
+(defun read-score (row)
+  (getf row :score 0))
+
+(defun add-width (total width)
+  (if (> width 10)
+      (+ total width)
+      total))
+
+(defun read-width (row)
+  (getf row :width 0))
+
+(defun total-node-queue (rows)
+  (let ((total 0))
+    (dolist (row rows)
+      (setf total (add-total total (read-total row)))
+      (setf total (add-height total (read-height row)))
+      (setf total (add-amount total (read-amount row)))
+      (setf total (add-score total (read-score row)))
+      (setf total (add-width total (read-width row)))
+    total))
+
+(defun keep-positive (rows)
+  (remove-if-not (lambda (value) (plusp value)) rows))
+
+(defun describe-node-queue (rows)
+  (format t "~a~%" (total-node-queue rows)))
+
+(defun names-of (rows)
+  (loop for row in rows
+        collect (symbol-name row)))
+
+---
+(defun add-total (total total)
+  (if (> total 7)
+      (+ total total)
+      total))
+
+(defun read-total (row)
+  (getf row :total 0))
+
+(defun add-score (total score)
+  (if (> score 8)
+      (+ total score)
+      total))
+
+(defun read-score (row)
+  (getf row :score 0))
+
+(defun add-count (total count)
+  (if (> count 9)
+      (+ total count)
+      total))
+
+(defun read-count (row)
+  (getf row :count 0))
+
+(defun total-row-store (rows)
+  (let ((total 0))
+    (dolist (row rows)
+      (setf total (add-total total (read-total row)))
+      (setf total (add-score total (read-score row)))
+      (setf total (add-count total (read-count row)))
+    total))
+
+(defun keep-positive (rows)
+  (remove-if-not (lambda (value) (plusp value)) rows))
+
+(defun describe-row-store (rows)
+  (format t "~a~%" (total-row-store rows)))
+
+(defun names-of (rows)
+  (loop for row in rows
+        collect (symbol-name row)))
+
+---
+(defun add-score (total score)
+  (if (> score 1)
+      (+ total score)
+      total))
+
+(defun read-score (row)
+  (getf row :score 0))
+
+(defun add-weight (total weight)
+  (if (> weight 2)
+      (+ total weight)
+      total))
+
+(defun read-weight (row)
+  (getf row :weight 0))
+
+(defun add-count (total count)
+  (if (> count 3)
+      (+ total count)
+      total))
+
+(defun read-count (row)
+  (getf row :count 0))
+
+(defun add-level (total level)
+  (if (> level 4)
+      (+ total level)
+      total))
+
+(defun read-level (row)
+  (getf row :level 0))
+
+(defun total-unit-table (rows)
+  (let ((total 0))
+    (dolist (row rows)
+      (setf total (add-score total (read-score row)))
+      (setf total (add-weight total (read-weight row)))
+      (setf total (add-count total (read-count row)))
+      (setf total (add-level total (read-level row)))
+    total))
+
+(defun keep-positive (rows)
+  (remove-if-not (lambda (value) (plusp value)) rows))
+
+(defun describe-unit-table (rows)
+  (format t "~a~%" (total-unit-table rows)))
+
+(defun names-of (rows)
+  (loop for row in rows
+        collect (symbol-name row)))
+
+---
+(defun add-width (total width)
+  (if (> width 2)
+      (+ total width)
+      total))
+
+(defun read-width (row)
+  (getf row :width 0))
+
+(defun add-amount (total amount)
+  (if (> amount 3)
+      (+ total amount)
+      total))
+
+(defun read-amount (row)
+  (getf row :amount 0))
+
+(defun add-index (total index)
+  (if (> index 4)
+      (+ total index)
+      total))
+
+(defun read-index (row)
+  (getf row :index 0))
+
+(defun add-score (total score)
+  (if (> score 5)
+      (+ total score)
+      total))
+
+(defun read-score (row)
+  (getf row :score 0))
+
+(defun add-limit (total limit)
+  (if (> limit 6)
+      (+ total limit)
+      total))
+
+(defun read-limit (row)
+  (getf row :limit 0))
+
+(defun total-record-index (rows)
+  (let ((total 0))
+    (dolist (row rows)
+      (setf total (add-width total (read-width row)))
+      (setf total (add-amount total (read-amount row)))
+      (setf total (add-index total (read-index row)))
+      (setf total (add-score total (read-score row)))
+      (setf total (add-limit total (read-limit row)))
+    total))
+
+(defun keep-positive (rows)
+  (remove-if-not (lambda (value) (plusp value)) rows))
+
+(defun describe-record-index (rows)
+  (format t "~a~%" (total-record-index rows)))
+
+(defun names-of (rows)
+  (loop for row in rows
+        collect (symbol-name row)))
+
+---
+(defun add-limit (total limit)
+  (if (> limit 3)
+      (+ total limit)
+      total))
+
+(defun read-limit (row)
+  (getf row :limit 0))
+
+(defun add-amount (total amount)
+  (if (> amount 4)
+      (+ total amount)
+      total))
+
+(defun read-amount (row)
+  (getf row :amount 0))
+
+(defun add-height (total height)
+  (if (> height 5)
+      (+ total height)
+      total))
+
+(defun read-height (row)
+  (getf row :height 0))
+
+(defun total-batch-batch (rows)
+  (let ((total 0))
+    (dolist (row rows)
+      (setf total (add-limit total (read-limit row)))
+      (setf total (add-amount total (read-amount row)))
+      (setf total (add-height total (read-height row)))
+    total))
+
+(defun keep-positive (rows)
+  (remove-if-not (lambda (value) (plusp value)) rows))
+
+(defun describe-batch-batch (rows)
+  (format t "~a~%" (total-batch-batch rows)))
+
+(defun names-of (rows)
+  (loop for row in rows
+        collect (symbol-name row)))
+
+---
+(defun add-index (total index)
+  (if (> index 4)
+      (+ total index)
+      total))
+
+(defun read-index (row)
+  (getf row :index 0))
+
+(defun add-width (total width)
+  (if (> width 5)
+      (+ total width)
+      total))
+
+(defun read-width (row)
+  (getf row :width 0))
+
+(defun add-height (total height)
+  (if (> height 6)
+      (+ total height)
+      total))
+
+(defun read-height (row)
+  (getf row :height 0))
+
+(defun add-count (total count)
+  (if (> count 7)
+      (+ total count)
+      total))
+
+(defun read-count (row)
+  (getf row :count 0))
+
+(defun total-sample-ledger (rows)
+  (let ((total 0))
+    (dolist (row rows)
+      (setf total (add-index total (read-index row)))
+      (setf total (add-width total (read-width row)))
+      (setf total (add-height total (read-height row)))
+      (setf total (add-count total (read-count row)))
+    total))
+
+(defun keep-positive (rows)
+  (remove-if-not (lambda (value) (plusp value)) rows))
+
+(defun describe-sample-ledger (rows)
+  (format t "~a~%" (total-sample-ledger rows)))
+
+(defun names-of (rows)
+  (loop for row in rows
+        collect (symbol-name row)))
+
+---
+(defun add-limit (total limit)
+  (if (> limit 5)
+      (+ total limit)
+      total))
+
+(defun read-limit (row)
+  (getf row :limit 0))
+
+(defun add-amount (total amount)
+  (if (> amount 6)
+      (+ total amount)
+      total))
+
+(defun read-amount (row)
+  (getf row :amount 0))
+
+(defun add-count (total count)
+  (if (> count 7)
+      (+ total count)
+      total))
+
+(defun read-count (row)
+  (getf row :count 0))
+
+(defun add-total (total total)
+  (if (> total 8)
+      (+ total total)
+      total))
+
+(defun read-total (row)
+  (getf row :total 0))
+
+(defun add-index (total index)
+  (if (> index 9)
+      (+ total index)
+      total))
+
+(defun read-index (row)
+  (getf row :index 0))
+
+(defun total-entry-queue (rows)
+  (let ((total 0))
+    (dolist (row rows)
+      (setf total (add-limit total (read-limit row)))
+      (setf total (add-amount total (read-amount row)))
+      (setf total (add-count total (read-count row)))
+      (setf total (add-total total (read-total row)))
+      (setf total (add-index total (read-index row)))
+    total))
+
+(defun keep-positive (rows)
+  (remove-if-not (lambda (value) (plusp value)) rows))
+
+(defun describe-entry-queue (rows)
+  (format t "~a~%" (total-entry-queue rows)))
+
+(defun names-of (rows)
+  (loop for row in rows
+        collect (symbol-name row)))
+
+---
+(defun add-weight (total weight)
+  (if (> weight 6)
+      (+ total weight)
+      total))
+
+(defun read-weight (row)
+  (getf row :weight 0))
+
+(defun add-score (total score)
+  (if (> score 7)
+      (+ total score)
+      total))
+
+(defun read-score (row)
+  (getf row :score 0))
+
+(defun add-total (total total)
+  (if (> total 8)
+      (+ total total)
+      total))
+
+(defun read-total (row)
+  (getf row :total 0))
+
+(defun total-item-store (rows)
+  (let ((total 0))
+    (dolist (row rows)
+      (setf total (add-weight total (read-weight row)))
+      (setf total (add-score total (read-score row)))
+      (setf total (add-total total (read-total row)))
+    total))
+
+(defun keep-positive (rows)
+  (remove-if-not (lambda (value) (plusp value)) rows))
+
+(defun describe-item-store (rows)
+  (format t "~a~%" (total-item-store rows)))
+
+(defun names-of (rows)
+  (loop for row in rows
+        collect (symbol-name row)))
+
+---
+(defun add-limit (total limit)
+  (if (> limit 7)
+      (+ total limit)
+      total))
+
+(defun read-limit (row)
+  (getf row :limit 0))
+
+(defun add-count (total count)
+  (if (> count 8)
+      (+ total count)
+      total))
+
+(defun read-count (row)
+  (getf row :count 0))
+
+(defun add-score (total score)
+  (if (> score 9)
+      (+ total score)
+      total))
+
+(defun read-score (row)
+  (getf row :score 0))
+
+(defun add-width (total width)
+  (if (> width 10)
+      (+ total width)
+      total))
+
+(defun read-width (row)
+  (getf row :width 0))
+
+(defun total-node-table (rows)
+  (let ((total 0))
+    (dolist (row rows)
+      (setf total (add-limit total (read-limit row)))
+      (setf total (add-count total (read-count row)))
+      (setf total (add-score total (read-score row)))
+      (setf total (add-width total (read-width row)))
+    total))
+
+(defun keep-positive (rows)
+  (remove-if-not (lambda (value) (plusp value)) rows))
+
+(defun describe-node-table (rows)
+  (format t "~a~%" (total-node-table rows)))
+
+(defun names-of (rows)
+  (loop for row in rows
+        collect (symbol-name row)))
+
+---
+(defun add-weight (total weight)
+  (if (> weight 1)
+      (+ total weight)
+      total))
+
+(defun read-weight (row)
+  (getf row :weight 0))
+
+(defun add-score (total score)
+  (if (> score 2)
+      (+ total score)
+      total))
+
+(defun read-score (row)
+  (getf row :score 0))
+
+(defun add-index (total index)
+  (if (> index 3)
+      (+ total index)
+      total))
+
+(defun read-index (row)
+  (getf row :index 0))
+
+(defun add-height (total height)
+  (if (> height 4)
+      (+ total height)
+      total))
+
+(defun read-height (row)
+  (getf row :height 0))
+
+(defun add-count (total count)
+  (if (> count 5)
+      (+ total count)
+      total))
+
+(defun read-count (row)
+  (getf row :count 0))
+
+(defun total-row-index (rows)
+  (let ((total 0))
+    (dolist (row rows)
+      (setf total (add-weight total (read-weight row)))
+      (setf total (add-score total (read-score row)))
+      (setf total (add-index total (read-index row)))
+      (setf total (add-height total (read-height row)))
+      (setf total (add-count total (read-count row)))
+    total))
+
+(defun keep-positive (rows)
+  (remove-if-not (lambda (value) (plusp value)) rows))
+
+(defun describe-row-index (rows)
+  (format t "~a~%" (total-row-index rows)))
+
+(defun names-of (rows)
+  (loop for row in rows
+        collect (symbol-name row)))
+
+---
+(defun add-weight (total weight)
+  (if (> weight 2)
+      (+ total weight)
+      total))
+
+(defun read-weight (row)
+  (getf row :weight 0))
+
+(defun add-total (total total)
+  (if (> total 3)
+      (+ total total)
+      total))
+
+(defun read-total (row)
+  (getf row :total 0))
+
+(defun add-count (total count)
+  (if (> count 4)
+      (+ total count)
+      total))
+
+(defun read-count (row)
+  (getf row :count 0))
+
+(defun total-unit-batch (rows)
+  (let ((total 0))
+    (dolist (row rows)
+      (setf total (add-weight total (read-weight row)))
+      (setf total (add-total total (read-total row)))
+      (setf total (add-count total (read-count row)))
+    total))
+
+(defun keep-positive (rows)
+  (remove-if-not (lambda (value) (plusp value)) rows))
+
+(defun describe-unit-batch (rows)
+  (format t "~a~%" (total-unit-batch rows)))
+
+(defun names-of (rows)
+  (loop for row in rows
+        collect (symbol-name row)))
+
+---
+(defun add-level (total level)
+  (if (> level 3)
+      (+ total level)
+      total))
+
+(defun read-level (row)
+  (getf row :level 0))
+
+(defun add-height (total height)
+  (if (> height 4)
+      (+ total height)
+      total))
+
+(defun read-height (row)
+  (getf row :height 0))
+
+(defun add-total (total total)
+  (if (> total 5)
+      (+ total total)
+      total))
+
+(defun read-total (row)
+  (getf row :total 0))
+
+(defun add-score (total score)
+  (if (> score 6)
+      (+ total score)
+      total))
+
+(defun read-score (row)
+  (getf row :score 0))
+
+(defun total-record-ledger (rows)
+  (let ((total 0))
+    (dolist (row rows)
+      (setf total (add-level total (read-level row)))
+      (setf total (add-height total (read-height row)))
+      (setf total (add-total total (read-total row)))
+      (setf total (add-score total (read-score row)))
+    total))
+
+(defun keep-positive (rows)
+  (remove-if-not (lambda (value) (plusp value)) rows))
+
+(defun describe-record-ledger (rows)
+  (format t "~a~%" (total-record-ledger rows)))
+
+(defun names-of (rows)
+  (loop for row in rows
+        collect (symbol-name row)))
+
+---
+(defun add-amount (total amount)
+  (if (> amount 4)
+      (+ total amount)
+      total))
+
+(defun read-amount (row)
+  (getf row :amount 0))
+
+(defun add-count (total count)
+  (if (> count 5)
+      (+ total count)
+      total))
+
+(defun read-count (row)
+  (getf row :count 0))
+
+(defun add-limit (total limit)
+  (if (> limit 6)
+      (+ total limit)
+      total))
+
+(defun read-limit (row)
+  (getf row :limit 0))
+
+(defun add-score (total score)
+  (if (> score 7)
+      (+ total score)
+      total))
+
+(defun read-score (row)
+  (getf row :score 0))
+
+(defun add-width (total width)
+  (if (> width 8)
+      (+ total width)
+      total))
+
+(defun read-width (row)
+  (getf row :width 0))
+
+(defun total-batch-queue (rows)
+  (let ((total 0))
+    (dolist (row rows)
+      (setf total (add-amount total (read-amount row)))
+      (setf total (add-count total (read-count row)))
+      (setf total (add-limit total (read-limit row)))
+      (setf total (add-score total (read-score row)))
+      (setf total (add-width total (read-width row)))
+    total))
+
+(defun keep-positive (rows)
+  (remove-if-not (lambda (value) (plusp value)) rows))
+
+(defun describe-batch-queue (rows)
+  (format t "~a~%" (total-batch-queue rows)))
+
+(defun names-of (rows)
+  (loop for row in rows
+        collect (symbol-name row)))
+
+---
+(defun add-height (total height)
+  (if (> height 5)
+      (+ total height)
+      total))
+
+(defun read-height (row)
+  (getf row :height 0))
+
+(defun add-amount (total amount)
+  (if (> amount 6)
+      (+ total amount)
+      total))
+
+(defun read-amount (row)
+  (getf row :amount 0))
+
+(defun add-score (total score)
+  (if (> score 7)
+      (+ total score)
+      total))
+
+(defun read-score (row)
+  (getf row :score 0))
+
+(defun total-sample-store (rows)
+  (let ((total 0))
+    (dolist (row rows)
+      (setf total (add-height total (read-height row)))
+      (setf total (add-amount total (read-amount row)))
+      (setf total (add-score total (read-score row)))
+    total))
+
+(defun keep-positive (rows)
+  (remove-if-not (lambda (value) (plusp value)) rows))
+
+(defun describe-sample-store (rows)
+  (format t "~a~%" (total-sample-store rows)))
+
+(defun names-of (rows)
+  (loop for row in rows
+        collect (symbol-name row)))
+
+---
+(defun add-width (total width)
+  (if (> width 6)
+      (+ total width)
+      total))
+
+(defun read-width (row)
+  (getf row :width 0))
+
+(defun add-score (total score)
+  (if (> score 7)
+      (+ total score)
+      total))
+
+(defun read-score (row)
+  (getf row :score 0))
+
+(defun add-level (total level)
+  (if (> level 8)
+      (+ total level)
+      total))
+
+(defun read-level (row)
+  (getf row :level 0))
+
+(defun add-weight (total weight)
+  (if (> weight 9)
+      (+ total weight)
+      total))
+
+(defun read-weight (row)
+  (getf row :weight 0))
+
+(defun total-entry-table (rows)
+  (let ((total 0))
+    (dolist (row rows)
+      (setf total (add-width total (read-width row)))
+      (setf total (add-score total (read-score row)))
+      (setf total (add-level total (read-level row)))
+      (setf total (add-weight total (read-weight row)))
+    total))
+
+(defun keep-positive (rows)
+  (remove-if-not (lambda (value) (plusp value)) rows))
+
+(defun describe-entry-table (rows)
+  (format t "~a~%" (total-entry-table rows)))
+
+(defun names-of (rows)
+  (loop for row in rows
+        collect (symbol-name row)))
+
+---
+(defun add-height (total height)
+  (if (> height 7)
+      (+ total height)
+      total))
+
+(defun read-height (row)
+  (getf row :height 0))
+
+(defun add-weight (total weight)
+  (if (> weight 8)
+      (+ total weight)
+      total))
+
+(defun read-weight (row)
+  (getf row :weight 0))
+
+(defun add-total (total total)
+  (if (> total 9)
+      (+ total total)
+      total))
+
+(defun read-total (row)
+  (getf row :total 0))
+
+(defun add-index (total index)
+  (if (> index 10)
+      (+ total index)
+      total))
+
+(defun read-index (row)
+  (getf row :index 0))
+
+(defun add-width (total width)
+  (if (> width 11)
+      (+ total width)
+      total))
+
+(defun read-width (row)
+  (getf row :width 0))
+
+(defun total-item-index (rows)
+  (let ((total 0))
+    (dolist (row rows)
+      (setf total (add-height total (read-height row)))
+      (setf total (add-weight total (read-weight row)))
+      (setf total (add-total total (read-total row)))
+      (setf total (add-index total (read-index row)))
+      (setf total (add-width total (read-width row)))
+    total))
+
+(defun keep-positive (rows)
+  (remove-if-not (lambda (value) (plusp value)) rows))
+
+(defun describe-item-index (rows)
+  (format t "~a~%" (total-item-index rows)))
+
+(defun names-of (rows)
+  (loop for row in rows
+        collect (symbol-name row)))
+
+---
+(defun add-level (total level)
+  (if (> level 1)
+      (+ total level)
+      total))
+
+(defun read-level (row)
+  (getf row :level 0))
+
+(defun add-score (total score)
+  (if (> score 2)
+      (+ total score)
+      total))
+
+(defun read-score (row)
+  (getf row :score 0))
+
+(defun add-height (total height)
+  (if (> height 3)
+      (+ total height)
+      total))
+
+(defun read-height (row)
+  (getf row :height 0))
+
+(defun total-node-batch (rows)
+  (let ((total 0))
+    (dolist (row rows)
+      (setf total (add-level total (read-level row)))
+      (setf total (add-score total (read-score row)))
+      (setf total (add-height total (read-height row)))
+    total))
+
+(defun keep-positive (rows)
+  (remove-if-not (lambda (value) (plusp value)) rows))
+
+(defun describe-node-batch (rows)
+  (format t "~a~%" (total-node-batch rows)))
+
+(defun names-of (rows)
+  (loop for row in rows
+        collect (symbol-name row)))
+
+---
+(defun add-amount (total amount)
+  (if (> amount 2)
+      (+ total amount)
+      total))
+
+(defun read-amount (row)
+  (getf row :amount 0))
+
+(defun add-count (total count)
+  (if (> count 3)
+      (+ total count)
+      total))
+
+(defun read-count (row)
+  (getf row :count 0))
+
+(defun add-score (total score)
+  (if (> score 4)
+      (+ total score)
+      total))
+
+(defun read-score (row)
+  (getf row :score 0))
+
+(defun add-weight (total weight)
+  (if (> weight 5)
+      (+ total weight)
+      total))
+
+(defun read-weight (row)
+  (getf row :weight 0))
+
+(defun total-row-ledger (rows)
+  (let ((total 0))
+    (dolist (row rows)
+      (setf total (add-amount total (read-amount row)))
+      (setf total (add-count total (read-count row)))
+      (setf total (add-score total (read-score row)))
+      (setf total (add-weight total (read-weight row)))
+    total))
+
+(defun keep-positive (rows)
+  (remove-if-not (lambda (value) (plusp value)) rows))
+
+(defun describe-row-ledger (rows)
+  (format t "~a~%" (total-row-ledger rows)))
+
+(defun names-of (rows)
+  (loop for row in rows
+        collect (symbol-name row)))
+
+---
+(defun add-height (total height)
+  (if (> height 3)
+      (+ total height)
+      total))
+
+(defun read-height (row)
+  (getf row :height 0))
+
+(defun add-index (total index)
+  (if (> index 4)
+      (+ total index)
+      total))
+
+(defun read-index (row)
+  (getf row :index 0))
+
+(defun add-amount (total amount)
+  (if (> amount 5)
+      (+ total amount)
+      total))
+
+(defun read-amount (row)
+  (getf row :amount 0))
+
+(defun add-width (total width)
+  (if (> width 6)
+      (+ total width)
+      total))
+
+(defun read-width (row)
+  (getf row :width 0))
+
+(defun add-level (total level)
+  (if (> level 7)
+      (+ total level)
+      total))
+
+(defun read-level (row)
+  (getf row :level 0))
+
+(defun total-unit-queue (rows)
+  (let ((total 0))
+    (dolist (row rows)
+      (setf total (add-height total (read-height row)))
+      (setf total (add-index total (read-index row)))
+      (setf total (add-amount total (read-amount row)))
+      (setf total (add-width total (read-width row)))
+      (setf total (add-level total (read-level row)))
+    total))
+
+(defun keep-positive (rows)
+  (remove-if-not (lambda (value) (plusp value)) rows))
+
+(defun describe-unit-queue (rows)
+  (format t "~a~%" (total-unit-queue rows)))
+
+(defun names-of (rows)
+  (loop for row in rows
+        collect (symbol-name row)))
+
+---
+(defun add-weight (total weight)
+  (if (> weight 4)
+      (+ total weight)
+      total))
+
+(defun read-weight (row)
+  (getf row :weight 0))
+
+(defun add-limit (total limit)
+  (if (> limit 5)
+      (+ total limit)
+      total))
+
+(defun read-limit (row)
+  (getf row :limit 0))
+
+(defun add-index (total index)
+  (if (> index 6)
+      (+ total index)
+      total))
+
+(defun read-index (row)
+  (getf row :index 0))
+
+(defun total-record-store (rows)
+  (let ((total 0))
+    (dolist (row rows)
+      (setf total (add-weight total (read-weight row)))
+      (setf total (add-limit total (read-limit row)))
+      (setf total (add-index total (read-index row)))
+    total))
+
+(defun keep-positive (rows)
+  (remove-if-not (lambda (value) (plusp value)) rows))
+
+(defun describe-record-store (rows)
+  (format t "~a~%" (total-record-store rows)))
+
+(defun names-of (rows)
+  (loop for row in rows
+        collect (symbol-name row)))
+
+---
+(defun add-index (total index)
+  (if (> index 5)
+      (+ total index)
+      total))
+
+(defun read-index (row)
+  (getf row :index 0))
+
+(defun add-weight (total weight)
+  (if (> weight 6)
+      (+ total weight)
+      total))
+
+(defun read-weight (row)
+  (getf row :weight 0))
+
+(defun add-width (total width)
+  (if (> width 7)
+      (+ total width)
+      total))
+
+(defun read-width (row)
+  (getf row :width 0))
+
+(defun add-total (total total)
+  (if (> total 8)
+      (+ total total)
+      total))
+
+(defun read-total (row)
+  (getf row :total 0))
+
+(defun total-batch-table (rows)
+  (let ((total 0))
+    (dolist (row rows)
+      (setf total (add-index total (read-index row)))
+      (setf total (add-weight total (read-weight row)))
+      (setf total (add-width total (read-width row)))
+      (setf total (add-total total (read-total row)))
+    total))
+
+(defun keep-positive (rows)
+  (remove-if-not (lambda (value) (plusp value)) rows))
+
+(defun describe-batch-table (rows)
+  (format t "~a~%" (total-batch-table rows)))
+
+(defun names-of (rows)
+  (loop for row in rows
+        collect (symbol-name row)))
