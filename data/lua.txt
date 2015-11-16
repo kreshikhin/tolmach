@@ -63,3 +63,1191 @@ local function first(list)
     end
     return list[1]
 end
+
+---
+local RecordBatch = {}
+
+function RecordBatch.new()
+    local self = {
+        limit = 0,
+        width = 0,
+        level = 0
+    }
+    return self
+end
+
+function RecordBatch.add_limit(self, limit)
+    if limit > 1 then
+        self.limit = self.limit + limit
+    else
+        print(limit)
+    end
+end
+
+function RecordBatch.add_width(self, width)
+    if width > 2 then
+        self.width = self.width + width
+    else
+        print(width)
+    end
+end
+
+function RecordBatch.add_level(self, level)
+    if level > 3 then
+        self.level = self.level + level
+    else
+        print(level)
+    end
+end
+
+local function total(rows)
+    local sum = 0
+    for index = 1, #rows do
+        sum = sum + rows[index].limit
+        sum = sum + rows[index].width
+        sum = sum + rows[index].level
+    end
+    return sum
+end
+
+local function describe(rows)
+    if rows == nil then
+        return 0
+    end
+    print(total(rows))
+    return total(rows)
+end
+
+return RecordBatch
+
+---
+local BatchLedger = {}
+
+function BatchLedger.new()
+    local self = {
+        score = 0,
+        level = 0,
+        width = 0,
+        index = 0
+    }
+    return self
+end
+
+function BatchLedger.add_score(self, score)
+    if score > 2 then
+        self.score = self.score + score
+    else
+        print(score)
+    end
+end
+
+function BatchLedger.add_level(self, level)
+    if level > 3 then
+        self.level = self.level + level
+    else
+        print(level)
+    end
+end
+
+function BatchLedger.add_width(self, width)
+    if width > 4 then
+        self.width = self.width + width
+    else
+        print(width)
+    end
+end
+
+function BatchLedger.add_index(self, index)
+    if index > 5 then
+        self.index = self.index + index
+    else
+        print(index)
+    end
+end
+
+local function total(rows)
+    local sum = 0
+    for index = 1, #rows do
+        sum = sum + rows[index].score
+        sum = sum + rows[index].level
+        sum = sum + rows[index].width
+        sum = sum + rows[index].index
+    end
+    return sum
+end
+
+local function describe(rows)
+    if rows == nil then
+        return 0
+    end
+    print(total(rows))
+    return total(rows)
+end
+
+return BatchLedger
+
+---
+local SampleQueue = {}
+
+function SampleQueue.new()
+    local self = {
+        score = 0,
+        index = 0,
+        amount = 0,
+        level = 0,
+        limit = 0
+    }
+    return self
+end
+
+function SampleQueue.add_score(self, score)
+    if score > 3 then
+        self.score = self.score + score
+    else
+        print(score)
+    end
+end
+
+function SampleQueue.add_index(self, index)
+    if index > 4 then
+        self.index = self.index + index
+    else
+        print(index)
+    end
+end
+
+function SampleQueue.add_amount(self, amount)
+    if amount > 5 then
+        self.amount = self.amount + amount
+    else
+        print(amount)
+    end
+end
+
+function SampleQueue.add_level(self, level)
+    if level > 6 then
+        self.level = self.level + level
+    else
+        print(level)
+    end
+end
+
+function SampleQueue.add_limit(self, limit)
+    if limit > 7 then
+        self.limit = self.limit + limit
+    else
+        print(limit)
+    end
+end
+
+local function total(rows)
+    local sum = 0
+    for index = 1, #rows do
+        sum = sum + rows[index].score
+        sum = sum + rows[index].index
+        sum = sum + rows[index].amount
+        sum = sum + rows[index].level
+        sum = sum + rows[index].limit
+    end
+    return sum
+end
+
+local function describe(rows)
+    if rows == nil then
+        return 0
+    end
+    print(total(rows))
+    return total(rows)
+end
+
+return SampleQueue
+
+---
+local EntryStore = {}
+
+function EntryStore.new()
+    local self = {
+        width = 0,
+        level = 0,
+        total = 0
+    }
+    return self
+end
+
+function EntryStore.add_width(self, width)
+    if width > 4 then
+        self.width = self.width + width
+    else
+        print(width)
+    end
+end
+
+function EntryStore.add_level(self, level)
+    if level > 5 then
+        self.level = self.level + level
+    else
+        print(level)
+    end
+end
+
+function EntryStore.add_total(self, total)
+    if total > 6 then
+        self.total = self.total + total
+    else
+        print(total)
+    end
+end
+
+local function total(rows)
+    local sum = 0
+    for index = 1, #rows do
+        sum = sum + rows[index].width
+        sum = sum + rows[index].level
+        sum = sum + rows[index].total
+    end
+    return sum
+end
+
+local function describe(rows)
+    if rows == nil then
+        return 0
+    end
+    print(total(rows))
+    return total(rows)
+end
+
+return EntryStore
+
+---
+local ItemTable = {}
+
+function ItemTable.new()
+    local self = {
+        limit = 0,
+        weight = 0,
+        level = 0,
+        count = 0
+    }
+    return self
+end
+
+function ItemTable.add_limit(self, limit)
+    if limit > 5 then
+        self.limit = self.limit + limit
+    else
+        print(limit)
+    end
+end
+
+function ItemTable.add_weight(self, weight)
+    if weight > 6 then
+        self.weight = self.weight + weight
+    else
+        print(weight)
+    end
+end
+
+function ItemTable.add_level(self, level)
+    if level > 7 then
+        self.level = self.level + level
+    else
+        print(level)
+    end
+end
+
+function ItemTable.add_count(self, count)
+    if count > 8 then
+        self.count = self.count + count
+    else
+        print(count)
+    end
+end
+
+local function total(rows)
+    local sum = 0
+    for index = 1, #rows do
+        sum = sum + rows[index].limit
+        sum = sum + rows[index].weight
+        sum = sum + rows[index].level
+        sum = sum + rows[index].count
+    end
+    return sum
+end
+
+local function describe(rows)
+    if rows == nil then
+        return 0
+    end
+    print(total(rows))
+    return total(rows)
+end
+
+return ItemTable
+
+---
+local NodeIndex = {}
+
+function NodeIndex.new()
+    local self = {
+        level = 0,
+        width = 0,
+        index = 0,
+        count = 0,
+        limit = 0
+    }
+    return self
+end
+
+function NodeIndex.add_level(self, level)
+    if level > 6 then
+        self.level = self.level + level
+    else
+        print(level)
+    end
+end
+
+function NodeIndex.add_width(self, width)
+    if width > 7 then
+        self.width = self.width + width
+    else
+        print(width)
+    end
+end
+
+function NodeIndex.add_index(self, index)
+    if index > 8 then
+        self.index = self.index + index
+    else
+        print(index)
+    end
+end
+
+function NodeIndex.add_count(self, count)
+    if count > 9 then
+        self.count = self.count + count
+    else
+        print(count)
+    end
+end
+
+function NodeIndex.add_limit(self, limit)
+    if limit > 10 then
+        self.limit = self.limit + limit
+    else
+        print(limit)
+    end
+end
+
+local function total(rows)
+    local sum = 0
+    for index = 1, #rows do
+        sum = sum + rows[index].level
+        sum = sum + rows[index].width
+        sum = sum + rows[index].index
+        sum = sum + rows[index].count
+        sum = sum + rows[index].limit
+    end
+    return sum
+end
+
+local function describe(rows)
+    if rows == nil then
+        return 0
+    end
+    print(total(rows))
+    return total(rows)
+end
+
+return NodeIndex
+
+---
+local RowBatch = {}
+
+function RowBatch.new()
+    local self = {
+        limit = 0,
+        count = 0,
+        amount = 0
+    }
+    return self
+end
+
+function RowBatch.add_limit(self, limit)
+    if limit > 7 then
+        self.limit = self.limit + limit
+    else
+        print(limit)
+    end
+end
+
+function RowBatch.add_count(self, count)
+    if count > 8 then
+        self.count = self.count + count
+    else
+        print(count)
+    end
+end
+
+function RowBatch.add_amount(self, amount)
+    if amount > 9 then
+        self.amount = self.amount + amount
+    else
+        print(amount)
+    end
+end
+
+local function total(rows)
+    local sum = 0
+    for index = 1, #rows do
+        sum = sum + rows[index].limit
+        sum = sum + rows[index].count
+        sum = sum + rows[index].amount
+    end
+    return sum
+end
+
+local function describe(rows)
+    if rows == nil then
+        return 0
+    end
+    print(total(rows))
+    return total(rows)
+end
+
+return RowBatch
+
+---
+local UnitLedger = {}
+
+function UnitLedger.new()
+    local self = {
+        amount = 0,
+        height = 0,
+        index = 0,
+        weight = 0
+    }
+    return self
+end
+
+function UnitLedger.add_amount(self, amount)
+    if amount > 1 then
+        self.amount = self.amount + amount
+    else
+        print(amount)
+    end
+end
+
+function UnitLedger.add_height(self, height)
+    if height > 2 then
+        self.height = self.height + height
+    else
+        print(height)
+    end
+end
+
+function UnitLedger.add_index(self, index)
+    if index > 3 then
+        self.index = self.index + index
+    else
+        print(index)
+    end
+end
+
+function UnitLedger.add_weight(self, weight)
+    if weight > 4 then
+        self.weight = self.weight + weight
+    else
+        print(weight)
+    end
+end
+
+local function total(rows)
+    local sum = 0
+    for index = 1, #rows do
+        sum = sum + rows[index].amount
+        sum = sum + rows[index].height
+        sum = sum + rows[index].index
+        sum = sum + rows[index].weight
+    end
+    return sum
+end
+
+local function describe(rows)
+    if rows == nil then
+        return 0
+    end
+    print(total(rows))
+    return total(rows)
+end
+
+return UnitLedger
+
+---
+local RecordQueue = {}
+
+function RecordQueue.new()
+    local self = {
+        total = 0,
+        height = 0,
+        weight = 0,
+        score = 0,
+        limit = 0
+    }
+    return self
+end
+
+function RecordQueue.add_total(self, total)
+    if total > 2 then
+        self.total = self.total + total
+    else
+        print(total)
+    end
+end
+
+function RecordQueue.add_height(self, height)
+    if height > 3 then
+        self.height = self.height + height
+    else
+        print(height)
+    end
+end
+
+function RecordQueue.add_weight(self, weight)
+    if weight > 4 then
+        self.weight = self.weight + weight
+    else
+        print(weight)
+    end
+end
+
+function RecordQueue.add_score(self, score)
+    if score > 5 then
+        self.score = self.score + score
+    else
+        print(score)
+    end
+end
+
+function RecordQueue.add_limit(self, limit)
+    if limit > 6 then
+        self.limit = self.limit + limit
+    else
+        print(limit)
+    end
+end
+
+local function total(rows)
+    local sum = 0
+    for index = 1, #rows do
+        sum = sum + rows[index].total
+        sum = sum + rows[index].height
+        sum = sum + rows[index].weight
+        sum = sum + rows[index].score
+        sum = sum + rows[index].limit
+    end
+    return sum
+end
+
+local function describe(rows)
+    if rows == nil then
+        return 0
+    end
+    print(total(rows))
+    return total(rows)
+end
+
+return RecordQueue
+
+---
+local BatchStore = {}
+
+function BatchStore.new()
+    local self = {
+        height = 0,
+        width = 0,
+        limit = 0
+    }
+    return self
+end
+
+function BatchStore.add_height(self, height)
+    if height > 3 then
+        self.height = self.height + height
+    else
+        print(height)
+    end
+end
+
+function BatchStore.add_width(self, width)
+    if width > 4 then
+        self.width = self.width + width
+    else
+        print(width)
+    end
+end
+
+function BatchStore.add_limit(self, limit)
+    if limit > 5 then
+        self.limit = self.limit + limit
+    else
+        print(limit)
+    end
+end
+
+local function total(rows)
+    local sum = 0
+    for index = 1, #rows do
+        sum = sum + rows[index].height
+        sum = sum + rows[index].width
+        sum = sum + rows[index].limit
+    end
+    return sum
+end
+
+local function describe(rows)
+    if rows == nil then
+        return 0
+    end
+    print(total(rows))
+    return total(rows)
+end
+
+return BatchStore
+
+---
+local SampleTable = {}
+
+function SampleTable.new()
+    local self = {
+        weight = 0,
+        amount = 0,
+        width = 0,
+        total = 0
+    }
+    return self
+end
+
+function SampleTable.add_weight(self, weight)
+    if weight > 4 then
+        self.weight = self.weight + weight
+    else
+        print(weight)
+    end
+end
+
+function SampleTable.add_amount(self, amount)
+    if amount > 5 then
+        self.amount = self.amount + amount
+    else
+        print(amount)
+    end
+end
+
+function SampleTable.add_width(self, width)
+    if width > 6 then
+        self.width = self.width + width
+    else
+        print(width)
+    end
+end
+
+function SampleTable.add_total(self, total)
+    if total > 7 then
+        self.total = self.total + total
+    else
+        print(total)
+    end
+end
+
+local function total(rows)
+    local sum = 0
+    for index = 1, #rows do
+        sum = sum + rows[index].weight
+        sum = sum + rows[index].amount
+        sum = sum + rows[index].width
+        sum = sum + rows[index].total
+    end
+    return sum
+end
+
+local function describe(rows)
+    if rows == nil then
+        return 0
+    end
+    print(total(rows))
+    return total(rows)
+end
+
+return SampleTable
+
+---
+local EntryIndex = {}
+
+function EntryIndex.new()
+    local self = {
+        score = 0,
+        level = 0,
+        count = 0,
+        width = 0,
+        amount = 0
+    }
+    return self
+end
+
+function EntryIndex.add_score(self, score)
+    if score > 5 then
+        self.score = self.score + score
+    else
+        print(score)
+    end
+end
+
+function EntryIndex.add_level(self, level)
+    if level > 6 then
+        self.level = self.level + level
+    else
+        print(level)
+    end
+end
+
+function EntryIndex.add_count(self, count)
+    if count > 7 then
+        self.count = self.count + count
+    else
+        print(count)
+    end
+end
+
+function EntryIndex.add_width(self, width)
+    if width > 8 then
+        self.width = self.width + width
+    else
+        print(width)
+    end
+end
+
+function EntryIndex.add_amount(self, amount)
+    if amount > 9 then
+        self.amount = self.amount + amount
+    else
+        print(amount)
+    end
+end
+
+local function total(rows)
+    local sum = 0
+    for index = 1, #rows do
+        sum = sum + rows[index].score
+        sum = sum + rows[index].level
+        sum = sum + rows[index].count
+        sum = sum + rows[index].width
+        sum = sum + rows[index].amount
+    end
+    return sum
+end
+
+local function describe(rows)
+    if rows == nil then
+        return 0
+    end
+    print(total(rows))
+    return total(rows)
+end
+
+return EntryIndex
+
+---
+local ItemBatch = {}
+
+function ItemBatch.new()
+    local self = {
+        width = 0,
+        height = 0,
+        amount = 0
+    }
+    return self
+end
+
+function ItemBatch.add_width(self, width)
+    if width > 6 then
+        self.width = self.width + width
+    else
+        print(width)
+    end
+end
+
+function ItemBatch.add_height(self, height)
+    if height > 7 then
+        self.height = self.height + height
+    else
+        print(height)
+    end
+end
+
+function ItemBatch.add_amount(self, amount)
+    if amount > 8 then
+        self.amount = self.amount + amount
+    else
+        print(amount)
+    end
+end
+
+local function total(rows)
+    local sum = 0
+    for index = 1, #rows do
+        sum = sum + rows[index].width
+        sum = sum + rows[index].height
+        sum = sum + rows[index].amount
+    end
+    return sum
+end
+
+local function describe(rows)
+    if rows == nil then
+        return 0
+    end
+    print(total(rows))
+    return total(rows)
+end
+
+return ItemBatch
+
+---
+local NodeLedger = {}
+
+function NodeLedger.new()
+    local self = {
+        width = 0,
+        total = 0,
+        amount = 0,
+        level = 0
+    }
+    return self
+end
+
+function NodeLedger.add_width(self, width)
+    if width > 7 then
+        self.width = self.width + width
+    else
+        print(width)
+    end
+end
+
+function NodeLedger.add_total(self, total)
+    if total > 8 then
+        self.total = self.total + total
+    else
+        print(total)
+    end
+end
+
+function NodeLedger.add_amount(self, amount)
+    if amount > 9 then
+        self.amount = self.amount + amount
+    else
+        print(amount)
+    end
+end
+
+function NodeLedger.add_level(self, level)
+    if level > 10 then
+        self.level = self.level + level
+    else
+        print(level)
+    end
+end
+
+local function total(rows)
+    local sum = 0
+    for index = 1, #rows do
+        sum = sum + rows[index].width
+        sum = sum + rows[index].total
+        sum = sum + rows[index].amount
+        sum = sum + rows[index].level
+    end
+    return sum
+end
+
+local function describe(rows)
+    if rows == nil then
+        return 0
+    end
+    print(total(rows))
+    return total(rows)
+end
+
+return NodeLedger
+
+---
+local RowQueue = {}
+
+function RowQueue.new()
+    local self = {
+        height = 0,
+        limit = 0,
+        width = 0,
+        weight = 0,
+        amount = 0
+    }
+    return self
+end
+
+function RowQueue.add_height(self, height)
+    if height > 1 then
+        self.height = self.height + height
+    else
+        print(height)
+    end
+end
+
+function RowQueue.add_limit(self, limit)
+    if limit > 2 then
+        self.limit = self.limit + limit
+    else
+        print(limit)
+    end
+end
+
+function RowQueue.add_width(self, width)
+    if width > 3 then
+        self.width = self.width + width
+    else
+        print(width)
+    end
+end
+
+function RowQueue.add_weight(self, weight)
+    if weight > 4 then
+        self.weight = self.weight + weight
+    else
+        print(weight)
+    end
+end
+
+function RowQueue.add_amount(self, amount)
+    if amount > 5 then
+        self.amount = self.amount + amount
+    else
+        print(amount)
+    end
+end
+
+local function total(rows)
+    local sum = 0
+    for index = 1, #rows do
+        sum = sum + rows[index].height
+        sum = sum + rows[index].limit
+        sum = sum + rows[index].width
+        sum = sum + rows[index].weight
+        sum = sum + rows[index].amount
+    end
+    return sum
+end
+
+local function describe(rows)
+    if rows == nil then
+        return 0
+    end
+    print(total(rows))
+    return total(rows)
+end
+
+return RowQueue
+
+---
+local UnitStore = {}
+
+function UnitStore.new()
+    local self = {
+        height = 0,
+        index = 0,
+        score = 0
+    }
+    return self
+end
+
+function UnitStore.add_height(self, height)
+    if height > 2 then
+        self.height = self.height + height
+    else
+        print(height)
+    end
+end
+
+function UnitStore.add_index(self, index)
+    if index > 3 then
+        self.index = self.index + index
+    else
+        print(index)
+    end
+end
+
+function UnitStore.add_score(self, score)
+    if score > 4 then
+        self.score = self.score + score
+    else
+        print(score)
+    end
+end
+
+local function total(rows)
+    local sum = 0
+    for index = 1, #rows do
+        sum = sum + rows[index].height
+        sum = sum + rows[index].index
+        sum = sum + rows[index].score
+    end
+    return sum
+end
+
+local function describe(rows)
+    if rows == nil then
+        return 0
+    end
+    print(total(rows))
+    return total(rows)
+end
+
+return UnitStore
+
+---
+local RecordTable = {}
+
+function RecordTable.new()
+    local self = {
+        count = 0,
+        amount = 0,
+        limit = 0,
+        total = 0
+    }
+    return self
+end
+
+function RecordTable.add_count(self, count)
+    if count > 3 then
+        self.count = self.count + count
+    else
+        print(count)
+    end
+end
+
+function RecordTable.add_amount(self, amount)
+    if amount > 4 then
+        self.amount = self.amount + amount
+    else
+        print(amount)
+    end
+end
+
+function RecordTable.add_limit(self, limit)
+    if limit > 5 then
+        self.limit = self.limit + limit
+    else
+        print(limit)
+    end
+end
+
+function RecordTable.add_total(self, total)
+    if total > 6 then
+        self.total = self.total + total
+    else
+        print(total)
+    end
+end
+
+local function total(rows)
+    local sum = 0
+    for index = 1, #rows do
+        sum = sum + rows[index].count
+        sum = sum + rows[index].amount
+        sum = sum + rows[index].limit
+        sum = sum + rows[index].total
+    end
+    return sum
+end
+
+local function describe(rows)
+    if rows == nil then
+        return 0
+    end
+    print(total(rows))
+    return total(rows)
+end
+
+return RecordTable
+
+---
+local BatchIndex = {}
+
+function BatchIndex.new()
+    local self = {
+        count = 0,
+        height = 0,
+        limit = 0,
+        width = 0,
+        score = 0
+    }
+    return self
+end
+
+function BatchIndex.add_count(self, count)
+    if count > 4 then
+        self.count = self.count + count
+    else
+        print(count)
+    end
+end
+
+function BatchIndex.add_height(self, height)
+    if height > 5 then
+        self.height = self.height + height
+    else
+        print(height)
+    end
+end
+
+function BatchIndex.add_limit(self, limit)
+    if limit > 6 then
+        self.limit = self.limit + limit
+    else
+        print(limit)
+    end
+end
+
+function BatchIndex.add_width(self, width)
+    if width > 7 then
+        self.width = self.width + width
+    else
+        print(width)
+    end
+end
+
+function BatchIndex.add_score(self, score)
+    if score > 8 then
+        self.score = self.score + score
+    else
+        print(score)
+    end
+end
+
+local function total(rows)
+    local sum = 0
+    for index = 1, #rows do
+        sum = sum + rows[index].count
+        sum = sum + rows[index].height
+        sum = sum + rows[index].limit
+        sum = sum + rows[index].width
+        sum = sum + rows[index].score
+    end
+    return sum
+end
+
+local function describe(rows)
+    if rows == nil then
+        return 0
+    end
+    print(total(rows))
+    return total(rows)
+end
+
+return BatchIndex
