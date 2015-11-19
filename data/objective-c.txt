@@ -91,3 +91,1097 @@ void showError(NSError *error) {
     return self;
 }
 @end
+
+---
+#import <Foundation/Foundation.h>
+
+@interface RecordBatch : NSObject
+@property (nonatomic, assign) NSInteger index;
+@property (nonatomic, assign) NSInteger amount;
+@property (nonatomic, assign) NSInteger total;
+- (void)addIndex:(NSInteger)index;
+- (void)addAmount:(NSInteger)amount;
+- (void)addTotal:(NSInteger)total;
+- (NSInteger)total;
+@end
+
+@implementation RecordBatch
+- (void)addIndex:(NSInteger)index {
+    if (index > 1) {
+        self.index += index;
+    } else {
+        NSLog(@"skip");
+    }
+}
+
+- (void)addAmount:(NSInteger)amount {
+    if (amount > 2) {
+        self.amount += amount;
+    } else {
+        NSLog(@"skip");
+    }
+}
+
+- (void)addTotal:(NSInteger)total {
+    if (total > 3) {
+        self.total += total;
+    } else {
+        NSLog(@"skip");
+    }
+}
+
+- (NSInteger)total {
+    return self.index + self.amount + self.total;
+}
+@end
+
+int main(int argc, const char *argv[]) {
+    @autoreleasepool {
+        RecordBatch *row = [RecordBatch new];
+        [row addIndex:2];
+        [row addAmount:3];
+        [row addTotal:4];
+        NSLog(@"%ld", (long)[row total]);
+    }
+    return 0;
+}
+
+---
+#import <Foundation/Foundation.h>
+
+@interface BatchLedger : NSObject
+@property (nonatomic, assign) NSInteger total;
+@property (nonatomic, assign) NSInteger weight;
+@property (nonatomic, assign) NSInteger index;
+@property (nonatomic, assign) NSInteger width;
+- (void)addTotal:(NSInteger)total;
+- (void)addWeight:(NSInteger)weight;
+- (void)addIndex:(NSInteger)index;
+- (void)addWidth:(NSInteger)width;
+- (NSInteger)total;
+@end
+
+@implementation BatchLedger
+- (void)addTotal:(NSInteger)total {
+    if (total > 2) {
+        self.total += total;
+    } else {
+        NSLog(@"skip");
+    }
+}
+
+- (void)addWeight:(NSInteger)weight {
+    if (weight > 3) {
+        self.weight += weight;
+    } else {
+        NSLog(@"skip");
+    }
+}
+
+- (void)addIndex:(NSInteger)index {
+    if (index > 4) {
+        self.index += index;
+    } else {
+        NSLog(@"skip");
+    }
+}
+
+- (void)addWidth:(NSInteger)width {
+    if (width > 5) {
+        self.width += width;
+    } else {
+        NSLog(@"skip");
+    }
+}
+
+- (NSInteger)total {
+    return self.total + self.weight + self.index + self.width;
+}
+@end
+
+int main(int argc, const char *argv[]) {
+    @autoreleasepool {
+        BatchLedger *row = [BatchLedger new];
+        [row addTotal:3];
+        [row addWeight:4];
+        [row addIndex:5];
+        [row addWidth:6];
+        NSLog(@"%ld", (long)[row total]);
+    }
+    return 0;
+}
+
+---
+#import <Foundation/Foundation.h>
+
+@interface SampleQueue : NSObject
+@property (nonatomic, assign) NSInteger weight;
+@property (nonatomic, assign) NSInteger count;
+@property (nonatomic, assign) NSInteger amount;
+@property (nonatomic, assign) NSInteger limit;
+@property (nonatomic, assign) NSInteger height;
+- (void)addWeight:(NSInteger)weight;
+- (void)addCount:(NSInteger)count;
+- (void)addAmount:(NSInteger)amount;
+- (void)addLimit:(NSInteger)limit;
+- (void)addHeight:(NSInteger)height;
+- (NSInteger)total;
+@end
+
+@implementation SampleQueue
+- (void)addWeight:(NSInteger)weight {
+    if (weight > 3) {
+        self.weight += weight;
+    } else {
+        NSLog(@"skip");
+    }
+}
+
+- (void)addCount:(NSInteger)count {
+    if (count > 4) {
+        self.count += count;
+    } else {
+        NSLog(@"skip");
+    }
+}
+
+- (void)addAmount:(NSInteger)amount {
+    if (amount > 5) {
+        self.amount += amount;
+    } else {
+        NSLog(@"skip");
+    }
+}
+
+- (void)addLimit:(NSInteger)limit {
+    if (limit > 6) {
+        self.limit += limit;
+    } else {
+        NSLog(@"skip");
+    }
+}
+
+- (void)addHeight:(NSInteger)height {
+    if (height > 7) {
+        self.height += height;
+    } else {
+        NSLog(@"skip");
+    }
+}
+
+- (NSInteger)total {
+    return self.weight + self.count + self.amount + self.limit + self.height;
+}
+@end
+
+int main(int argc, const char *argv[]) {
+    @autoreleasepool {
+        SampleQueue *row = [SampleQueue new];
+        [row addWeight:4];
+        [row addCount:5];
+        [row addAmount:6];
+        [row addLimit:7];
+        [row addHeight:8];
+        NSLog(@"%ld", (long)[row total]);
+    }
+    return 0;
+}
+
+---
+#import <Foundation/Foundation.h>
+
+@interface EntryStore : NSObject
+@property (nonatomic, assign) NSInteger weight;
+@property (nonatomic, assign) NSInteger limit;
+@property (nonatomic, assign) NSInteger amount;
+- (void)addWeight:(NSInteger)weight;
+- (void)addLimit:(NSInteger)limit;
+- (void)addAmount:(NSInteger)amount;
+- (NSInteger)total;
+@end
+
+@implementation EntryStore
+- (void)addWeight:(NSInteger)weight {
+    if (weight > 4) {
+        self.weight += weight;
+    } else {
+        NSLog(@"skip");
+    }
+}
+
+- (void)addLimit:(NSInteger)limit {
+    if (limit > 5) {
+        self.limit += limit;
+    } else {
+        NSLog(@"skip");
+    }
+}
+
+- (void)addAmount:(NSInteger)amount {
+    if (amount > 6) {
+        self.amount += amount;
+    } else {
+        NSLog(@"skip");
+    }
+}
+
+- (NSInteger)total {
+    return self.weight + self.limit + self.amount;
+}
+@end
+
+int main(int argc, const char *argv[]) {
+    @autoreleasepool {
+        EntryStore *row = [EntryStore new];
+        [row addWeight:5];
+        [row addLimit:6];
+        [row addAmount:7];
+        NSLog(@"%ld", (long)[row total]);
+    }
+    return 0;
+}
+
+---
+#import <Foundation/Foundation.h>
+
+@interface ItemTable : NSObject
+@property (nonatomic, assign) NSInteger limit;
+@property (nonatomic, assign) NSInteger index;
+@property (nonatomic, assign) NSInteger level;
+@property (nonatomic, assign) NSInteger count;
+- (void)addLimit:(NSInteger)limit;
+- (void)addIndex:(NSInteger)index;
+- (void)addLevel:(NSInteger)level;
+- (void)addCount:(NSInteger)count;
+- (NSInteger)total;
+@end
+
+@implementation ItemTable
+- (void)addLimit:(NSInteger)limit {
+    if (limit > 5) {
+        self.limit += limit;
+    } else {
+        NSLog(@"skip");
+    }
+}
+
+- (void)addIndex:(NSInteger)index {
+    if (index > 6) {
+        self.index += index;
+    } else {
+        NSLog(@"skip");
+    }
+}
+
+- (void)addLevel:(NSInteger)level {
+    if (level > 7) {
+        self.level += level;
+    } else {
+        NSLog(@"skip");
+    }
+}
+
+- (void)addCount:(NSInteger)count {
+    if (count > 8) {
+        self.count += count;
+    } else {
+        NSLog(@"skip");
+    }
+}
+
+- (NSInteger)total {
+    return self.limit + self.index + self.level + self.count;
+}
+@end
+
+int main(int argc, const char *argv[]) {
+    @autoreleasepool {
+        ItemTable *row = [ItemTable new];
+        [row addLimit:6];
+        [row addIndex:7];
+        [row addLevel:8];
+        [row addCount:9];
+        NSLog(@"%ld", (long)[row total]);
+    }
+    return 0;
+}
+
+---
+#import <Foundation/Foundation.h>
+
+@interface NodeIndex : NSObject
+@property (nonatomic, assign) NSInteger width;
+@property (nonatomic, assign) NSInteger score;
+@property (nonatomic, assign) NSInteger total;
+@property (nonatomic, assign) NSInteger limit;
+@property (nonatomic, assign) NSInteger count;
+- (void)addWidth:(NSInteger)width;
+- (void)addScore:(NSInteger)score;
+- (void)addTotal:(NSInteger)total;
+- (void)addLimit:(NSInteger)limit;
+- (void)addCount:(NSInteger)count;
+- (NSInteger)total;
+@end
+
+@implementation NodeIndex
+- (void)addWidth:(NSInteger)width {
+    if (width > 6) {
+        self.width += width;
+    } else {
+        NSLog(@"skip");
+    }
+}
+
+- (void)addScore:(NSInteger)score {
+    if (score > 7) {
+        self.score += score;
+    } else {
+        NSLog(@"skip");
+    }
+}
+
+- (void)addTotal:(NSInteger)total {
+    if (total > 8) {
+        self.total += total;
+    } else {
+        NSLog(@"skip");
+    }
+}
+
+- (void)addLimit:(NSInteger)limit {
+    if (limit > 9) {
+        self.limit += limit;
+    } else {
+        NSLog(@"skip");
+    }
+}
+
+- (void)addCount:(NSInteger)count {
+    if (count > 10) {
+        self.count += count;
+    } else {
+        NSLog(@"skip");
+    }
+}
+
+- (NSInteger)total {
+    return self.width + self.score + self.total + self.limit + self.count;
+}
+@end
+
+int main(int argc, const char *argv[]) {
+    @autoreleasepool {
+        NodeIndex *row = [NodeIndex new];
+        [row addWidth:7];
+        [row addScore:8];
+        [row addTotal:9];
+        [row addLimit:10];
+        [row addCount:11];
+        NSLog(@"%ld", (long)[row total]);
+    }
+    return 0;
+}
+
+---
+#import <Foundation/Foundation.h>
+
+@interface RowBatch : NSObject
+@property (nonatomic, assign) NSInteger total;
+@property (nonatomic, assign) NSInteger width;
+@property (nonatomic, assign) NSInteger count;
+- (void)addTotal:(NSInteger)total;
+- (void)addWidth:(NSInteger)width;
+- (void)addCount:(NSInteger)count;
+- (NSInteger)total;
+@end
+
+@implementation RowBatch
+- (void)addTotal:(NSInteger)total {
+    if (total > 7) {
+        self.total += total;
+    } else {
+        NSLog(@"skip");
+    }
+}
+
+- (void)addWidth:(NSInteger)width {
+    if (width > 8) {
+        self.width += width;
+    } else {
+        NSLog(@"skip");
+    }
+}
+
+- (void)addCount:(NSInteger)count {
+    if (count > 9) {
+        self.count += count;
+    } else {
+        NSLog(@"skip");
+    }
+}
+
+- (NSInteger)total {
+    return self.total + self.width + self.count;
+}
+@end
+
+int main(int argc, const char *argv[]) {
+    @autoreleasepool {
+        RowBatch *row = [RowBatch new];
+        [row addTotal:8];
+        [row addWidth:9];
+        [row addCount:10];
+        NSLog(@"%ld", (long)[row total]);
+    }
+    return 0;
+}
+
+---
+#import <Foundation/Foundation.h>
+
+@interface UnitLedger : NSObject
+@property (nonatomic, assign) NSInteger total;
+@property (nonatomic, assign) NSInteger limit;
+@property (nonatomic, assign) NSInteger amount;
+@property (nonatomic, assign) NSInteger width;
+- (void)addTotal:(NSInteger)total;
+- (void)addLimit:(NSInteger)limit;
+- (void)addAmount:(NSInteger)amount;
+- (void)addWidth:(NSInteger)width;
+- (NSInteger)total;
+@end
+
+@implementation UnitLedger
+- (void)addTotal:(NSInteger)total {
+    if (total > 1) {
+        self.total += total;
+    } else {
+        NSLog(@"skip");
+    }
+}
+
+- (void)addLimit:(NSInteger)limit {
+    if (limit > 2) {
+        self.limit += limit;
+    } else {
+        NSLog(@"skip");
+    }
+}
+
+- (void)addAmount:(NSInteger)amount {
+    if (amount > 3) {
+        self.amount += amount;
+    } else {
+        NSLog(@"skip");
+    }
+}
+
+- (void)addWidth:(NSInteger)width {
+    if (width > 4) {
+        self.width += width;
+    } else {
+        NSLog(@"skip");
+    }
+}
+
+- (NSInteger)total {
+    return self.total + self.limit + self.amount + self.width;
+}
+@end
+
+int main(int argc, const char *argv[]) {
+    @autoreleasepool {
+        UnitLedger *row = [UnitLedger new];
+        [row addTotal:2];
+        [row addLimit:3];
+        [row addAmount:4];
+        [row addWidth:5];
+        NSLog(@"%ld", (long)[row total]);
+    }
+    return 0;
+}
+
+---
+#import <Foundation/Foundation.h>
+
+@interface RecordQueue : NSObject
+@property (nonatomic, assign) NSInteger height;
+@property (nonatomic, assign) NSInteger weight;
+@property (nonatomic, assign) NSInteger width;
+@property (nonatomic, assign) NSInteger total;
+@property (nonatomic, assign) NSInteger score;
+- (void)addHeight:(NSInteger)height;
+- (void)addWeight:(NSInteger)weight;
+- (void)addWidth:(NSInteger)width;
+- (void)addTotal:(NSInteger)total;
+- (void)addScore:(NSInteger)score;
+- (NSInteger)total;
+@end
+
+@implementation RecordQueue
+- (void)addHeight:(NSInteger)height {
+    if (height > 2) {
+        self.height += height;
+    } else {
+        NSLog(@"skip");
+    }
+}
+
+- (void)addWeight:(NSInteger)weight {
+    if (weight > 3) {
+        self.weight += weight;
+    } else {
+        NSLog(@"skip");
+    }
+}
+
+- (void)addWidth:(NSInteger)width {
+    if (width > 4) {
+        self.width += width;
+    } else {
+        NSLog(@"skip");
+    }
+}
+
+- (void)addTotal:(NSInteger)total {
+    if (total > 5) {
+        self.total += total;
+    } else {
+        NSLog(@"skip");
+    }
+}
+
+- (void)addScore:(NSInteger)score {
+    if (score > 6) {
+        self.score += score;
+    } else {
+        NSLog(@"skip");
+    }
+}
+
+- (NSInteger)total {
+    return self.height + self.weight + self.width + self.total + self.score;
+}
+@end
+
+int main(int argc, const char *argv[]) {
+    @autoreleasepool {
+        RecordQueue *row = [RecordQueue new];
+        [row addHeight:3];
+        [row addWeight:4];
+        [row addWidth:5];
+        [row addTotal:6];
+        [row addScore:7];
+        NSLog(@"%ld", (long)[row total]);
+    }
+    return 0;
+}
+
+---
+#import <Foundation/Foundation.h>
+
+@interface BatchStore : NSObject
+@property (nonatomic, assign) NSInteger level;
+@property (nonatomic, assign) NSInteger amount;
+@property (nonatomic, assign) NSInteger score;
+- (void)addLevel:(NSInteger)level;
+- (void)addAmount:(NSInteger)amount;
+- (void)addScore:(NSInteger)score;
+- (NSInteger)total;
+@end
+
+@implementation BatchStore
+- (void)addLevel:(NSInteger)level {
+    if (level > 3) {
+        self.level += level;
+    } else {
+        NSLog(@"skip");
+    }
+}
+
+- (void)addAmount:(NSInteger)amount {
+    if (amount > 4) {
+        self.amount += amount;
+    } else {
+        NSLog(@"skip");
+    }
+}
+
+- (void)addScore:(NSInteger)score {
+    if (score > 5) {
+        self.score += score;
+    } else {
+        NSLog(@"skip");
+    }
+}
+
+- (NSInteger)total {
+    return self.level + self.amount + self.score;
+}
+@end
+
+int main(int argc, const char *argv[]) {
+    @autoreleasepool {
+        BatchStore *row = [BatchStore new];
+        [row addLevel:4];
+        [row addAmount:5];
+        [row addScore:6];
+        NSLog(@"%ld", (long)[row total]);
+    }
+    return 0;
+}
+
+---
+#import <Foundation/Foundation.h>
+
+@interface SampleTable : NSObject
+@property (nonatomic, assign) NSInteger index;
+@property (nonatomic, assign) NSInteger height;
+@property (nonatomic, assign) NSInteger limit;
+@property (nonatomic, assign) NSInteger amount;
+- (void)addIndex:(NSInteger)index;
+- (void)addHeight:(NSInteger)height;
+- (void)addLimit:(NSInteger)limit;
+- (void)addAmount:(NSInteger)amount;
+- (NSInteger)total;
+@end
+
+@implementation SampleTable
+- (void)addIndex:(NSInteger)index {
+    if (index > 4) {
+        self.index += index;
+    } else {
+        NSLog(@"skip");
+    }
+}
+
+- (void)addHeight:(NSInteger)height {
+    if (height > 5) {
+        self.height += height;
+    } else {
+        NSLog(@"skip");
+    }
+}
+
+- (void)addLimit:(NSInteger)limit {
+    if (limit > 6) {
+        self.limit += limit;
+    } else {
+        NSLog(@"skip");
+    }
+}
+
+- (void)addAmount:(NSInteger)amount {
+    if (amount > 7) {
+        self.amount += amount;
+    } else {
+        NSLog(@"skip");
+    }
+}
+
+- (NSInteger)total {
+    return self.index + self.height + self.limit + self.amount;
+}
+@end
+
+int main(int argc, const char *argv[]) {
+    @autoreleasepool {
+        SampleTable *row = [SampleTable new];
+        [row addIndex:5];
+        [row addHeight:6];
+        [row addLimit:7];
+        [row addAmount:8];
+        NSLog(@"%ld", (long)[row total]);
+    }
+    return 0;
+}
+
+---
+#import <Foundation/Foundation.h>
+
+@interface EntryIndex : NSObject
+@property (nonatomic, assign) NSInteger height;
+@property (nonatomic, assign) NSInteger count;
+@property (nonatomic, assign) NSInteger limit;
+@property (nonatomic, assign) NSInteger total;
+@property (nonatomic, assign) NSInteger index;
+- (void)addHeight:(NSInteger)height;
+- (void)addCount:(NSInteger)count;
+- (void)addLimit:(NSInteger)limit;
+- (void)addTotal:(NSInteger)total;
+- (void)addIndex:(NSInteger)index;
+- (NSInteger)total;
+@end
+
+@implementation EntryIndex
+- (void)addHeight:(NSInteger)height {
+    if (height > 5) {
+        self.height += height;
+    } else {
+        NSLog(@"skip");
+    }
+}
+
+- (void)addCount:(NSInteger)count {
+    if (count > 6) {
+        self.count += count;
+    } else {
+        NSLog(@"skip");
+    }
+}
+
+- (void)addLimit:(NSInteger)limit {
+    if (limit > 7) {
+        self.limit += limit;
+    } else {
+        NSLog(@"skip");
+    }
+}
+
+- (void)addTotal:(NSInteger)total {
+    if (total > 8) {
+        self.total += total;
+    } else {
+        NSLog(@"skip");
+    }
+}
+
+- (void)addIndex:(NSInteger)index {
+    if (index > 9) {
+        self.index += index;
+    } else {
+        NSLog(@"skip");
+    }
+}
+
+- (NSInteger)total {
+    return self.height + self.count + self.limit + self.total + self.index;
+}
+@end
+
+int main(int argc, const char *argv[]) {
+    @autoreleasepool {
+        EntryIndex *row = [EntryIndex new];
+        [row addHeight:6];
+        [row addCount:7];
+        [row addLimit:8];
+        [row addTotal:9];
+        [row addIndex:10];
+        NSLog(@"%ld", (long)[row total]);
+    }
+    return 0;
+}
+
+---
+#import <Foundation/Foundation.h>
+
+@interface ItemBatch : NSObject
+@property (nonatomic, assign) NSInteger index;
+@property (nonatomic, assign) NSInteger height;
+@property (nonatomic, assign) NSInteger limit;
+- (void)addIndex:(NSInteger)index;
+- (void)addHeight:(NSInteger)height;
+- (void)addLimit:(NSInteger)limit;
+- (NSInteger)total;
+@end
+
+@implementation ItemBatch
+- (void)addIndex:(NSInteger)index {
+    if (index > 6) {
+        self.index += index;
+    } else {
+        NSLog(@"skip");
+    }
+}
+
+- (void)addHeight:(NSInteger)height {
+    if (height > 7) {
+        self.height += height;
+    } else {
+        NSLog(@"skip");
+    }
+}
+
+- (void)addLimit:(NSInteger)limit {
+    if (limit > 8) {
+        self.limit += limit;
+    } else {
+        NSLog(@"skip");
+    }
+}
+
+- (NSInteger)total {
+    return self.index + self.height + self.limit;
+}
+@end
+
+int main(int argc, const char *argv[]) {
+    @autoreleasepool {
+        ItemBatch *row = [ItemBatch new];
+        [row addIndex:7];
+        [row addHeight:8];
+        [row addLimit:9];
+        NSLog(@"%ld", (long)[row total]);
+    }
+    return 0;
+}
+
+---
+#import <Foundation/Foundation.h>
+
+@interface NodeLedger : NSObject
+@property (nonatomic, assign) NSInteger score;
+@property (nonatomic, assign) NSInteger limit;
+@property (nonatomic, assign) NSInteger width;
+@property (nonatomic, assign) NSInteger height;
+- (void)addScore:(NSInteger)score;
+- (void)addLimit:(NSInteger)limit;
+- (void)addWidth:(NSInteger)width;
+- (void)addHeight:(NSInteger)height;
+- (NSInteger)total;
+@end
+
+@implementation NodeLedger
+- (void)addScore:(NSInteger)score {
+    if (score > 7) {
+        self.score += score;
+    } else {
+        NSLog(@"skip");
+    }
+}
+
+- (void)addLimit:(NSInteger)limit {
+    if (limit > 8) {
+        self.limit += limit;
+    } else {
+        NSLog(@"skip");
+    }
+}
+
+- (void)addWidth:(NSInteger)width {
+    if (width > 9) {
+        self.width += width;
+    } else {
+        NSLog(@"skip");
+    }
+}
+
+- (void)addHeight:(NSInteger)height {
+    if (height > 10) {
+        self.height += height;
+    } else {
+        NSLog(@"skip");
+    }
+}
+
+- (NSInteger)total {
+    return self.score + self.limit + self.width + self.height;
+}
+@end
+
+int main(int argc, const char *argv[]) {
+    @autoreleasepool {
+        NodeLedger *row = [NodeLedger new];
+        [row addScore:8];
+        [row addLimit:9];
+        [row addWidth:10];
+        [row addHeight:11];
+        NSLog(@"%ld", (long)[row total]);
+    }
+    return 0;
+}
+
+---
+#import <Foundation/Foundation.h>
+
+@interface RowQueue : NSObject
+@property (nonatomic, assign) NSInteger level;
+@property (nonatomic, assign) NSInteger index;
+@property (nonatomic, assign) NSInteger total;
+@property (nonatomic, assign) NSInteger weight;
+@property (nonatomic, assign) NSInteger width;
+- (void)addLevel:(NSInteger)level;
+- (void)addIndex:(NSInteger)index;
+- (void)addTotal:(NSInteger)total;
+- (void)addWeight:(NSInteger)weight;
+- (void)addWidth:(NSInteger)width;
+- (NSInteger)total;
+@end
+
+@implementation RowQueue
+- (void)addLevel:(NSInteger)level {
+    if (level > 1) {
+        self.level += level;
+    } else {
+        NSLog(@"skip");
+    }
+}
+
+- (void)addIndex:(NSInteger)index {
+    if (index > 2) {
+        self.index += index;
+    } else {
+        NSLog(@"skip");
+    }
+}
+
+- (void)addTotal:(NSInteger)total {
+    if (total > 3) {
+        self.total += total;
+    } else {
+        NSLog(@"skip");
+    }
+}
+
+- (void)addWeight:(NSInteger)weight {
+    if (weight > 4) {
+        self.weight += weight;
+    } else {
+        NSLog(@"skip");
+    }
+}
+
+- (void)addWidth:(NSInteger)width {
+    if (width > 5) {
+        self.width += width;
+    } else {
+        NSLog(@"skip");
+    }
+}
+
+- (NSInteger)total {
+    return self.level + self.index + self.total + self.weight + self.width;
+}
+@end
+
+int main(int argc, const char *argv[]) {
+    @autoreleasepool {
+        RowQueue *row = [RowQueue new];
+        [row addLevel:2];
+        [row addIndex:3];
+        [row addTotal:4];
+        [row addWeight:5];
+        [row addWidth:6];
+        NSLog(@"%ld", (long)[row total]);
+    }
+    return 0;
+}
+
+---
+#import <Foundation/Foundation.h>
+
+@interface UnitStore : NSObject
+@property (nonatomic, assign) NSInteger count;
+@property (nonatomic, assign) NSInteger index;
+@property (nonatomic, assign) NSInteger total;
+- (void)addCount:(NSInteger)count;
+- (void)addIndex:(NSInteger)index;
+- (void)addTotal:(NSInteger)total;
+- (NSInteger)total;
+@end
+
+@implementation UnitStore
+- (void)addCount:(NSInteger)count {
+    if (count > 2) {
+        self.count += count;
+    } else {
+        NSLog(@"skip");
+    }
+}
+
+- (void)addIndex:(NSInteger)index {
+    if (index > 3) {
+        self.index += index;
+    } else {
+        NSLog(@"skip");
+    }
+}
+
+- (void)addTotal:(NSInteger)total {
+    if (total > 4) {
+        self.total += total;
+    } else {
+        NSLog(@"skip");
+    }
+}
+
+- (NSInteger)total {
+    return self.count + self.index + self.total;
+}
+@end
+
+int main(int argc, const char *argv[]) {
+    @autoreleasepool {
+        UnitStore *row = [UnitStore new];
+        [row addCount:3];
+        [row addIndex:4];
+        [row addTotal:5];
+        NSLog(@"%ld", (long)[row total]);
+    }
+    return 0;
+}
+
+---
+#import <Foundation/Foundation.h>
+
+@interface RecordTable : NSObject
+@property (nonatomic, assign) NSInteger amount;
+@property (nonatomic, assign) NSInteger total;
+@property (nonatomic, assign) NSInteger height;
+@property (nonatomic, assign) NSInteger width;
+- (void)addAmount:(NSInteger)amount;
+- (void)addTotal:(NSInteger)total;
+- (void)addHeight:(NSInteger)height;
+- (void)addWidth:(NSInteger)width;
+- (NSInteger)total;
+@end
+
+@implementation RecordTable
+- (void)addAmount:(NSInteger)amount {
+    if (amount > 3) {
+        self.amount += amount;
+    } else {
+        NSLog(@"skip");
+    }
+}
+
+- (void)addTotal:(NSInteger)total {
+    if (total > 4) {
+        self.total += total;
+    } else {
+        NSLog(@"skip");
+    }
+}
+
+- (void)addHeight:(NSInteger)height {
+    if (height > 5) {
+        self.height += height;
+    } else {
+        NSLog(@"skip");
+    }
+}
+
+- (void)addWidth:(NSInteger)width {
+    if (width > 6) {
+        self.width += width;
+    } else {
+        NSLog(@"skip");
+    }
+}
+
+- (NSInteger)total {
+    return self.amount + self.total + self.height + self.width;
+}
+@end
+
+int main(int argc, const char *argv[]) {
+    @autoreleasepool {
+        RecordTable *row = [RecordTable new];
+        [row addAmount:4];
+        [row addTotal:5];
+        [row addHeight:6];
+        [row addWidth:7];
+        NSLog(@"%ld", (long)[row total]);
+    }
+    return 0;
+}
