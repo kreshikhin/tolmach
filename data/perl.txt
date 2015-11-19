@@ -84,3 +84,1098 @@ use warnings;
 my @names = qw(ada grace);
 my @upper = map { uc($_) } @names;
 print join(",", @upper), "\n";
+
+---
+use strict;
+use warnings;
+
+sub new_record_store {
+    my ($class) = @_;
+    return bless {
+        amount => 0,
+        limit => 0,
+        count => 0,
+    }, $class;
+}
+
+sub add_amount {
+    my ($self, $amount) = @_;
+    if ($amount > 1) {
+        $self->{amount} += $amount;
+    } else {
+        print "$amount\n";
+    }
+    return $self->{amount};
+}
+
+sub add_limit {
+    my ($self, $limit) = @_;
+    if ($limit > 2) {
+        $self->{limit} += $limit;
+    } else {
+        print "$limit\n";
+    }
+    return $self->{limit};
+}
+
+sub add_count {
+    my ($self, $count) = @_;
+    if ($count > 3) {
+        $self->{count} += $count;
+    } else {
+        print "$count\n";
+    }
+    return $self->{count};
+}
+
+sub total {
+    my ($self) = @_;
+    my $total = 0;
+    $total += $self->{amount};
+    $total += $self->{limit};
+    $total += $self->{count};
+    return $total;
+}
+
+sub describe {
+    my ($self) = @_;
+    my $text = join(",", map { $self->{$_} } qw(amount limit count));
+    print $text, "\n";
+    return $text;
+}
+
+1;
+
+---
+use strict;
+use warnings;
+
+sub new_batch_table {
+    my ($class) = @_;
+    return bless {
+        amount => 0,
+        count => 0,
+        total => 0,
+        index => 0,
+    }, $class;
+}
+
+sub add_amount {
+    my ($self, $amount) = @_;
+    if ($amount > 2) {
+        $self->{amount} += $amount;
+    } else {
+        print "$amount\n";
+    }
+    return $self->{amount};
+}
+
+sub add_count {
+    my ($self, $count) = @_;
+    if ($count > 3) {
+        $self->{count} += $count;
+    } else {
+        print "$count\n";
+    }
+    return $self->{count};
+}
+
+sub add_total {
+    my ($self, $total) = @_;
+    if ($total > 4) {
+        $self->{total} += $total;
+    } else {
+        print "$total\n";
+    }
+    return $self->{total};
+}
+
+sub add_index {
+    my ($self, $index) = @_;
+    if ($index > 5) {
+        $self->{index} += $index;
+    } else {
+        print "$index\n";
+    }
+    return $self->{index};
+}
+
+sub total {
+    my ($self) = @_;
+    my $total = 0;
+    $total += $self->{amount};
+    $total += $self->{count};
+    $total += $self->{total};
+    $total += $self->{index};
+    return $total;
+}
+
+sub describe {
+    my ($self) = @_;
+    my $text = join(",", map { $self->{$_} } qw(amount count total index));
+    print $text, "\n";
+    return $text;
+}
+
+1;
+
+---
+use strict;
+use warnings;
+
+sub new_sample_index {
+    my ($class) = @_;
+    return bless {
+        amount => 0,
+        count => 0,
+        index => 0,
+        weight => 0,
+        level => 0,
+    }, $class;
+}
+
+sub add_amount {
+    my ($self, $amount) = @_;
+    if ($amount > 3) {
+        $self->{amount} += $amount;
+    } else {
+        print "$amount\n";
+    }
+    return $self->{amount};
+}
+
+sub add_count {
+    my ($self, $count) = @_;
+    if ($count > 4) {
+        $self->{count} += $count;
+    } else {
+        print "$count\n";
+    }
+    return $self->{count};
+}
+
+sub add_index {
+    my ($self, $index) = @_;
+    if ($index > 5) {
+        $self->{index} += $index;
+    } else {
+        print "$index\n";
+    }
+    return $self->{index};
+}
+
+sub add_weight {
+    my ($self, $weight) = @_;
+    if ($weight > 6) {
+        $self->{weight} += $weight;
+    } else {
+        print "$weight\n";
+    }
+    return $self->{weight};
+}
+
+sub add_level {
+    my ($self, $level) = @_;
+    if ($level > 7) {
+        $self->{level} += $level;
+    } else {
+        print "$level\n";
+    }
+    return $self->{level};
+}
+
+sub total {
+    my ($self) = @_;
+    my $total = 0;
+    $total += $self->{amount};
+    $total += $self->{count};
+    $total += $self->{index};
+    $total += $self->{weight};
+    $total += $self->{level};
+    return $total;
+}
+
+sub describe {
+    my ($self) = @_;
+    my $text = join(",", map { $self->{$_} } qw(amount count index weight level));
+    print $text, "\n";
+    return $text;
+}
+
+1;
+
+---
+use strict;
+use warnings;
+
+sub new_entry_batch {
+    my ($class) = @_;
+    return bless {
+        limit => 0,
+        amount => 0,
+        height => 0,
+    }, $class;
+}
+
+sub add_limit {
+    my ($self, $limit) = @_;
+    if ($limit > 4) {
+        $self->{limit} += $limit;
+    } else {
+        print "$limit\n";
+    }
+    return $self->{limit};
+}
+
+sub add_amount {
+    my ($self, $amount) = @_;
+    if ($amount > 5) {
+        $self->{amount} += $amount;
+    } else {
+        print "$amount\n";
+    }
+    return $self->{amount};
+}
+
+sub add_height {
+    my ($self, $height) = @_;
+    if ($height > 6) {
+        $self->{height} += $height;
+    } else {
+        print "$height\n";
+    }
+    return $self->{height};
+}
+
+sub total {
+    my ($self) = @_;
+    my $total = 0;
+    $total += $self->{limit};
+    $total += $self->{amount};
+    $total += $self->{height};
+    return $total;
+}
+
+sub describe {
+    my ($self) = @_;
+    my $text = join(",", map { $self->{$_} } qw(limit amount height));
+    print $text, "\n";
+    return $text;
+}
+
+1;
+
+---
+use strict;
+use warnings;
+
+sub new_item_ledger {
+    my ($class) = @_;
+    return bless {
+        total => 0,
+        width => 0,
+        height => 0,
+        amount => 0,
+    }, $class;
+}
+
+sub add_total {
+    my ($self, $total) = @_;
+    if ($total > 5) {
+        $self->{total} += $total;
+    } else {
+        print "$total\n";
+    }
+    return $self->{total};
+}
+
+sub add_width {
+    my ($self, $width) = @_;
+    if ($width > 6) {
+        $self->{width} += $width;
+    } else {
+        print "$width\n";
+    }
+    return $self->{width};
+}
+
+sub add_height {
+    my ($self, $height) = @_;
+    if ($height > 7) {
+        $self->{height} += $height;
+    } else {
+        print "$height\n";
+    }
+    return $self->{height};
+}
+
+sub add_amount {
+    my ($self, $amount) = @_;
+    if ($amount > 8) {
+        $self->{amount} += $amount;
+    } else {
+        print "$amount\n";
+    }
+    return $self->{amount};
+}
+
+sub total {
+    my ($self) = @_;
+    my $total = 0;
+    $total += $self->{total};
+    $total += $self->{width};
+    $total += $self->{height};
+    $total += $self->{amount};
+    return $total;
+}
+
+sub describe {
+    my ($self) = @_;
+    my $text = join(",", map { $self->{$_} } qw(total width height amount));
+    print $text, "\n";
+    return $text;
+}
+
+1;
+
+---
+use strict;
+use warnings;
+
+sub new_node_queue {
+    my ($class) = @_;
+    return bless {
+        weight => 0,
+        index => 0,
+        height => 0,
+        limit => 0,
+        amount => 0,
+    }, $class;
+}
+
+sub add_weight {
+    my ($self, $weight) = @_;
+    if ($weight > 6) {
+        $self->{weight} += $weight;
+    } else {
+        print "$weight\n";
+    }
+    return $self->{weight};
+}
+
+sub add_index {
+    my ($self, $index) = @_;
+    if ($index > 7) {
+        $self->{index} += $index;
+    } else {
+        print "$index\n";
+    }
+    return $self->{index};
+}
+
+sub add_height {
+    my ($self, $height) = @_;
+    if ($height > 8) {
+        $self->{height} += $height;
+    } else {
+        print "$height\n";
+    }
+    return $self->{height};
+}
+
+sub add_limit {
+    my ($self, $limit) = @_;
+    if ($limit > 9) {
+        $self->{limit} += $limit;
+    } else {
+        print "$limit\n";
+    }
+    return $self->{limit};
+}
+
+sub add_amount {
+    my ($self, $amount) = @_;
+    if ($amount > 10) {
+        $self->{amount} += $amount;
+    } else {
+        print "$amount\n";
+    }
+    return $self->{amount};
+}
+
+sub total {
+    my ($self) = @_;
+    my $total = 0;
+    $total += $self->{weight};
+    $total += $self->{index};
+    $total += $self->{height};
+    $total += $self->{limit};
+    $total += $self->{amount};
+    return $total;
+}
+
+sub describe {
+    my ($self) = @_;
+    my $text = join(",", map { $self->{$_} } qw(weight index height limit amount));
+    print $text, "\n";
+    return $text;
+}
+
+1;
+
+---
+use strict;
+use warnings;
+
+sub new_row_store {
+    my ($class) = @_;
+    return bless {
+        height => 0,
+        score => 0,
+        limit => 0,
+    }, $class;
+}
+
+sub add_height {
+    my ($self, $height) = @_;
+    if ($height > 7) {
+        $self->{height} += $height;
+    } else {
+        print "$height\n";
+    }
+    return $self->{height};
+}
+
+sub add_score {
+    my ($self, $score) = @_;
+    if ($score > 8) {
+        $self->{score} += $score;
+    } else {
+        print "$score\n";
+    }
+    return $self->{score};
+}
+
+sub add_limit {
+    my ($self, $limit) = @_;
+    if ($limit > 9) {
+        $self->{limit} += $limit;
+    } else {
+        print "$limit\n";
+    }
+    return $self->{limit};
+}
+
+sub total {
+    my ($self) = @_;
+    my $total = 0;
+    $total += $self->{height};
+    $total += $self->{score};
+    $total += $self->{limit};
+    return $total;
+}
+
+sub describe {
+    my ($self) = @_;
+    my $text = join(",", map { $self->{$_} } qw(height score limit));
+    print $text, "\n";
+    return $text;
+}
+
+1;
+
+---
+use strict;
+use warnings;
+
+sub new_unit_table {
+    my ($class) = @_;
+    return bless {
+        score => 0,
+        limit => 0,
+        count => 0,
+        level => 0,
+    }, $class;
+}
+
+sub add_score {
+    my ($self, $score) = @_;
+    if ($score > 1) {
+        $self->{score} += $score;
+    } else {
+        print "$score\n";
+    }
+    return $self->{score};
+}
+
+sub add_limit {
+    my ($self, $limit) = @_;
+    if ($limit > 2) {
+        $self->{limit} += $limit;
+    } else {
+        print "$limit\n";
+    }
+    return $self->{limit};
+}
+
+sub add_count {
+    my ($self, $count) = @_;
+    if ($count > 3) {
+        $self->{count} += $count;
+    } else {
+        print "$count\n";
+    }
+    return $self->{count};
+}
+
+sub add_level {
+    my ($self, $level) = @_;
+    if ($level > 4) {
+        $self->{level} += $level;
+    } else {
+        print "$level\n";
+    }
+    return $self->{level};
+}
+
+sub total {
+    my ($self) = @_;
+    my $total = 0;
+    $total += $self->{score};
+    $total += $self->{limit};
+    $total += $self->{count};
+    $total += $self->{level};
+    return $total;
+}
+
+sub describe {
+    my ($self) = @_;
+    my $text = join(",", map { $self->{$_} } qw(score limit count level));
+    print $text, "\n";
+    return $text;
+}
+
+1;
+
+---
+use strict;
+use warnings;
+
+sub new_record_index {
+    my ($class) = @_;
+    return bless {
+        level => 0,
+        total => 0,
+        score => 0,
+        height => 0,
+        amount => 0,
+    }, $class;
+}
+
+sub add_level {
+    my ($self, $level) = @_;
+    if ($level > 2) {
+        $self->{level} += $level;
+    } else {
+        print "$level\n";
+    }
+    return $self->{level};
+}
+
+sub add_total {
+    my ($self, $total) = @_;
+    if ($total > 3) {
+        $self->{total} += $total;
+    } else {
+        print "$total\n";
+    }
+    return $self->{total};
+}
+
+sub add_score {
+    my ($self, $score) = @_;
+    if ($score > 4) {
+        $self->{score} += $score;
+    } else {
+        print "$score\n";
+    }
+    return $self->{score};
+}
+
+sub add_height {
+    my ($self, $height) = @_;
+    if ($height > 5) {
+        $self->{height} += $height;
+    } else {
+        print "$height\n";
+    }
+    return $self->{height};
+}
+
+sub add_amount {
+    my ($self, $amount) = @_;
+    if ($amount > 6) {
+        $self->{amount} += $amount;
+    } else {
+        print "$amount\n";
+    }
+    return $self->{amount};
+}
+
+sub total {
+    my ($self) = @_;
+    my $total = 0;
+    $total += $self->{level};
+    $total += $self->{total};
+    $total += $self->{score};
+    $total += $self->{height};
+    $total += $self->{amount};
+    return $total;
+}
+
+sub describe {
+    my ($self) = @_;
+    my $text = join(",", map { $self->{$_} } qw(level total score height amount));
+    print $text, "\n";
+    return $text;
+}
+
+1;
+
+---
+use strict;
+use warnings;
+
+sub new_batch_batch {
+    my ($class) = @_;
+    return bless {
+        total => 0,
+        height => 0,
+        count => 0,
+    }, $class;
+}
+
+sub add_total {
+    my ($self, $total) = @_;
+    if ($total > 3) {
+        $self->{total} += $total;
+    } else {
+        print "$total\n";
+    }
+    return $self->{total};
+}
+
+sub add_height {
+    my ($self, $height) = @_;
+    if ($height > 4) {
+        $self->{height} += $height;
+    } else {
+        print "$height\n";
+    }
+    return $self->{height};
+}
+
+sub add_count {
+    my ($self, $count) = @_;
+    if ($count > 5) {
+        $self->{count} += $count;
+    } else {
+        print "$count\n";
+    }
+    return $self->{count};
+}
+
+sub total {
+    my ($self) = @_;
+    my $total = 0;
+    $total += $self->{total};
+    $total += $self->{height};
+    $total += $self->{count};
+    return $total;
+}
+
+sub describe {
+    my ($self) = @_;
+    my $text = join(",", map { $self->{$_} } qw(total height count));
+    print $text, "\n";
+    return $text;
+}
+
+1;
+
+---
+use strict;
+use warnings;
+
+sub new_sample_ledger {
+    my ($class) = @_;
+    return bless {
+        amount => 0,
+        score => 0,
+        weight => 0,
+        height => 0,
+    }, $class;
+}
+
+sub add_amount {
+    my ($self, $amount) = @_;
+    if ($amount > 4) {
+        $self->{amount} += $amount;
+    } else {
+        print "$amount\n";
+    }
+    return $self->{amount};
+}
+
+sub add_score {
+    my ($self, $score) = @_;
+    if ($score > 5) {
+        $self->{score} += $score;
+    } else {
+        print "$score\n";
+    }
+    return $self->{score};
+}
+
+sub add_weight {
+    my ($self, $weight) = @_;
+    if ($weight > 6) {
+        $self->{weight} += $weight;
+    } else {
+        print "$weight\n";
+    }
+    return $self->{weight};
+}
+
+sub add_height {
+    my ($self, $height) = @_;
+    if ($height > 7) {
+        $self->{height} += $height;
+    } else {
+        print "$height\n";
+    }
+    return $self->{height};
+}
+
+sub total {
+    my ($self) = @_;
+    my $total = 0;
+    $total += $self->{amount};
+    $total += $self->{score};
+    $total += $self->{weight};
+    $total += $self->{height};
+    return $total;
+}
+
+sub describe {
+    my ($self) = @_;
+    my $text = join(",", map { $self->{$_} } qw(amount score weight height));
+    print $text, "\n";
+    return $text;
+}
+
+1;
+
+---
+use strict;
+use warnings;
+
+sub new_entry_queue {
+    my ($class) = @_;
+    return bless {
+        score => 0,
+        limit => 0,
+        height => 0,
+        index => 0,
+        count => 0,
+    }, $class;
+}
+
+sub add_score {
+    my ($self, $score) = @_;
+    if ($score > 5) {
+        $self->{score} += $score;
+    } else {
+        print "$score\n";
+    }
+    return $self->{score};
+}
+
+sub add_limit {
+    my ($self, $limit) = @_;
+    if ($limit > 6) {
+        $self->{limit} += $limit;
+    } else {
+        print "$limit\n";
+    }
+    return $self->{limit};
+}
+
+sub add_height {
+    my ($self, $height) = @_;
+    if ($height > 7) {
+        $self->{height} += $height;
+    } else {
+        print "$height\n";
+    }
+    return $self->{height};
+}
+
+sub add_index {
+    my ($self, $index) = @_;
+    if ($index > 8) {
+        $self->{index} += $index;
+    } else {
+        print "$index\n";
+    }
+    return $self->{index};
+}
+
+sub add_count {
+    my ($self, $count) = @_;
+    if ($count > 9) {
+        $self->{count} += $count;
+    } else {
+        print "$count\n";
+    }
+    return $self->{count};
+}
+
+sub total {
+    my ($self) = @_;
+    my $total = 0;
+    $total += $self->{score};
+    $total += $self->{limit};
+    $total += $self->{height};
+    $total += $self->{index};
+    $total += $self->{count};
+    return $total;
+}
+
+sub describe {
+    my ($self) = @_;
+    my $text = join(",", map { $self->{$_} } qw(score limit height index count));
+    print $text, "\n";
+    return $text;
+}
+
+1;
+
+---
+use strict;
+use warnings;
+
+sub new_item_store {
+    my ($class) = @_;
+    return bless {
+        count => 0,
+        level => 0,
+        weight => 0,
+    }, $class;
+}
+
+sub add_count {
+    my ($self, $count) = @_;
+    if ($count > 6) {
+        $self->{count} += $count;
+    } else {
+        print "$count\n";
+    }
+    return $self->{count};
+}
+
+sub add_level {
+    my ($self, $level) = @_;
+    if ($level > 7) {
+        $self->{level} += $level;
+    } else {
+        print "$level\n";
+    }
+    return $self->{level};
+}
+
+sub add_weight {
+    my ($self, $weight) = @_;
+    if ($weight > 8) {
+        $self->{weight} += $weight;
+    } else {
+        print "$weight\n";
+    }
+    return $self->{weight};
+}
+
+sub total {
+    my ($self) = @_;
+    my $total = 0;
+    $total += $self->{count};
+    $total += $self->{level};
+    $total += $self->{weight};
+    return $total;
+}
+
+sub describe {
+    my ($self) = @_;
+    my $text = join(",", map { $self->{$_} } qw(count level weight));
+    print $text, "\n";
+    return $text;
+}
+
+1;
+
+---
+use strict;
+use warnings;
+
+sub new_node_table {
+    my ($class) = @_;
+    return bless {
+        score => 0,
+        limit => 0,
+        weight => 0,
+        total => 0,
+    }, $class;
+}
+
+sub add_score {
+    my ($self, $score) = @_;
+    if ($score > 7) {
+        $self->{score} += $score;
+    } else {
+        print "$score\n";
+    }
+    return $self->{score};
+}
+
+sub add_limit {
+    my ($self, $limit) = @_;
+    if ($limit > 8) {
+        $self->{limit} += $limit;
+    } else {
+        print "$limit\n";
+    }
+    return $self->{limit};
+}
+
+sub add_weight {
+    my ($self, $weight) = @_;
+    if ($weight > 9) {
+        $self->{weight} += $weight;
+    } else {
+        print "$weight\n";
+    }
+    return $self->{weight};
+}
+
+sub add_total {
+    my ($self, $total) = @_;
+    if ($total > 10) {
+        $self->{total} += $total;
+    } else {
+        print "$total\n";
+    }
+    return $self->{total};
+}
+
+sub total {
+    my ($self) = @_;
+    my $total = 0;
+    $total += $self->{score};
+    $total += $self->{limit};
+    $total += $self->{weight};
+    $total += $self->{total};
+    return $total;
+}
+
+sub describe {
+    my ($self) = @_;
+    my $text = join(",", map { $self->{$_} } qw(score limit weight total));
+    print $text, "\n";
+    return $text;
+}
+
+1;
+
+---
+use strict;
+use warnings;
+
+sub new_row_index {
+    my ($class) = @_;
+    return bless {
+        amount => 0,
+        level => 0,
+        total => 0,
+        index => 0,
+        height => 0,
+    }, $class;
+}
+
+sub add_amount {
+    my ($self, $amount) = @_;
+    if ($amount > 1) {
+        $self->{amount} += $amount;
+    } else {
+        print "$amount\n";
+    }
+    return $self->{amount};
+}
+
+sub add_level {
+    my ($self, $level) = @_;
+    if ($level > 2) {
+        $self->{level} += $level;
+    } else {
+        print "$level\n";
+    }
+    return $self->{level};
+}
+
+sub add_total {
+    my ($self, $total) = @_;
+    if ($total > 3) {
+        $self->{total} += $total;
+    } else {
+        print "$total\n";
+    }
+    return $self->{total};
+}
+
+sub add_index {
+    my ($self, $index) = @_;
+    if ($index > 4) {
+        $self->{index} += $index;
+    } else {
+        print "$index\n";
+    }
+    return $self->{index};
+}
+
+sub add_height {
+    my ($self, $height) = @_;
+    if ($height > 5) {
+        $self->{height} += $height;
+    } else {
+        print "$height\n";
+    }
+    return $self->{height};
+}
+
+sub total {
+    my ($self) = @_;
+    my $total = 0;
+    $total += $self->{amount};
+    $total += $self->{level};
+    $total += $self->{total};
+    $total += $self->{index};
+    $total += $self->{height};
+    return $total;
+}
+
+sub describe {
+    my ($self) = @_;
+    my $text = join(",", map { $self->{$_} } qw(amount level total index height));
+    print $text, "\n";
+    return $text;
+}
+
+1;
