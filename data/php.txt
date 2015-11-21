@@ -65,3 +65,1119 @@ $items = ["a", "b"];
 foreach ($items as $index => $item) {
     echo $index, $item, PHP_EOL;
 }
+
+---
+<?php
+
+class RecordBatch
+{
+    public int $index = 0;
+    public int $level = 0;
+    public int $limit = 0;
+
+    public function addIndex(int $index): void
+    {
+        if ($index > 1) {
+            $this->index += $index;
+        } else {
+            echo $index;
+        }
+    }
+
+    public function addLevel(int $level): void
+    {
+        if ($level > 2) {
+            $this->level += $level;
+        } else {
+            echo $level;
+        }
+    }
+
+    public function addLimit(int $limit): void
+    {
+        if ($limit > 3) {
+            $this->limit += $limit;
+        } else {
+            echo $limit;
+        }
+    }
+
+    public function total(): int
+    {
+        return $this->index + $this->level + $this->limit;
+    }
+
+    public function describe(): string
+    {
+        $parts = [];
+        $parts[] = (string) $this->index;
+        $parts[] = (string) $this->level;
+        $parts[] = (string) $this->limit;
+        return implode(",", $parts);
+    }
+}
+
+---
+<?php
+
+class BatchLedger
+{
+    public int $total = 0;
+    public int $limit = 0;
+    public int $count = 0;
+    public int $weight = 0;
+
+    public function addTotal(int $total): void
+    {
+        if ($total > 2) {
+            $this->total += $total;
+        } else {
+            echo $total;
+        }
+    }
+
+    public function addLimit(int $limit): void
+    {
+        if ($limit > 3) {
+            $this->limit += $limit;
+        } else {
+            echo $limit;
+        }
+    }
+
+    public function addCount(int $count): void
+    {
+        if ($count > 4) {
+            $this->count += $count;
+        } else {
+            echo $count;
+        }
+    }
+
+    public function addWeight(int $weight): void
+    {
+        if ($weight > 5) {
+            $this->weight += $weight;
+        } else {
+            echo $weight;
+        }
+    }
+
+    public function total(): int
+    {
+        return $this->total + $this->limit + $this->count + $this->weight;
+    }
+
+    public function describe(): string
+    {
+        $parts = [];
+        $parts[] = (string) $this->total;
+        $parts[] = (string) $this->limit;
+        $parts[] = (string) $this->count;
+        $parts[] = (string) $this->weight;
+        return implode(",", $parts);
+    }
+}
+
+---
+<?php
+
+class SampleQueue
+{
+    public int $width = 0;
+    public int $count = 0;
+    public int $amount = 0;
+    public int $weight = 0;
+    public int $height = 0;
+
+    public function addWidth(int $width): void
+    {
+        if ($width > 3) {
+            $this->width += $width;
+        } else {
+            echo $width;
+        }
+    }
+
+    public function addCount(int $count): void
+    {
+        if ($count > 4) {
+            $this->count += $count;
+        } else {
+            echo $count;
+        }
+    }
+
+    public function addAmount(int $amount): void
+    {
+        if ($amount > 5) {
+            $this->amount += $amount;
+        } else {
+            echo $amount;
+        }
+    }
+
+    public function addWeight(int $weight): void
+    {
+        if ($weight > 6) {
+            $this->weight += $weight;
+        } else {
+            echo $weight;
+        }
+    }
+
+    public function addHeight(int $height): void
+    {
+        if ($height > 7) {
+            $this->height += $height;
+        } else {
+            echo $height;
+        }
+    }
+
+    public function total(): int
+    {
+        return $this->width + $this->count + $this->amount + $this->weight + $this->height;
+    }
+
+    public function describe(): string
+    {
+        $parts = [];
+        $parts[] = (string) $this->width;
+        $parts[] = (string) $this->count;
+        $parts[] = (string) $this->amount;
+        $parts[] = (string) $this->weight;
+        $parts[] = (string) $this->height;
+        return implode(",", $parts);
+    }
+}
+
+---
+<?php
+
+class EntryStore
+{
+    public int $weight = 0;
+    public int $level = 0;
+    public int $amount = 0;
+
+    public function addWeight(int $weight): void
+    {
+        if ($weight > 4) {
+            $this->weight += $weight;
+        } else {
+            echo $weight;
+        }
+    }
+
+    public function addLevel(int $level): void
+    {
+        if ($level > 5) {
+            $this->level += $level;
+        } else {
+            echo $level;
+        }
+    }
+
+    public function addAmount(int $amount): void
+    {
+        if ($amount > 6) {
+            $this->amount += $amount;
+        } else {
+            echo $amount;
+        }
+    }
+
+    public function total(): int
+    {
+        return $this->weight + $this->level + $this->amount;
+    }
+
+    public function describe(): string
+    {
+        $parts = [];
+        $parts[] = (string) $this->weight;
+        $parts[] = (string) $this->level;
+        $parts[] = (string) $this->amount;
+        return implode(",", $parts);
+    }
+}
+
+---
+<?php
+
+class ItemTable
+{
+    public int $level = 0;
+    public int $count = 0;
+    public int $limit = 0;
+    public int $index = 0;
+
+    public function addLevel(int $level): void
+    {
+        if ($level > 5) {
+            $this->level += $level;
+        } else {
+            echo $level;
+        }
+    }
+
+    public function addCount(int $count): void
+    {
+        if ($count > 6) {
+            $this->count += $count;
+        } else {
+            echo $count;
+        }
+    }
+
+    public function addLimit(int $limit): void
+    {
+        if ($limit > 7) {
+            $this->limit += $limit;
+        } else {
+            echo $limit;
+        }
+    }
+
+    public function addIndex(int $index): void
+    {
+        if ($index > 8) {
+            $this->index += $index;
+        } else {
+            echo $index;
+        }
+    }
+
+    public function total(): int
+    {
+        return $this->level + $this->count + $this->limit + $this->index;
+    }
+
+    public function describe(): string
+    {
+        $parts = [];
+        $parts[] = (string) $this->level;
+        $parts[] = (string) $this->count;
+        $parts[] = (string) $this->limit;
+        $parts[] = (string) $this->index;
+        return implode(",", $parts);
+    }
+}
+
+---
+<?php
+
+class NodeIndex
+{
+    public int $count = 0;
+    public int $score = 0;
+    public int $total = 0;
+    public int $index = 0;
+    public int $height = 0;
+
+    public function addCount(int $count): void
+    {
+        if ($count > 6) {
+            $this->count += $count;
+        } else {
+            echo $count;
+        }
+    }
+
+    public function addScore(int $score): void
+    {
+        if ($score > 7) {
+            $this->score += $score;
+        } else {
+            echo $score;
+        }
+    }
+
+    public function addTotal(int $total): void
+    {
+        if ($total > 8) {
+            $this->total += $total;
+        } else {
+            echo $total;
+        }
+    }
+
+    public function addIndex(int $index): void
+    {
+        if ($index > 9) {
+            $this->index += $index;
+        } else {
+            echo $index;
+        }
+    }
+
+    public function addHeight(int $height): void
+    {
+        if ($height > 10) {
+            $this->height += $height;
+        } else {
+            echo $height;
+        }
+    }
+
+    public function total(): int
+    {
+        return $this->count + $this->score + $this->total + $this->index + $this->height;
+    }
+
+    public function describe(): string
+    {
+        $parts = [];
+        $parts[] = (string) $this->count;
+        $parts[] = (string) $this->score;
+        $parts[] = (string) $this->total;
+        $parts[] = (string) $this->index;
+        $parts[] = (string) $this->height;
+        return implode(",", $parts);
+    }
+}
+
+---
+<?php
+
+class RowBatch
+{
+    public int $weight = 0;
+    public int $width = 0;
+    public int $amount = 0;
+
+    public function addWeight(int $weight): void
+    {
+        if ($weight > 7) {
+            $this->weight += $weight;
+        } else {
+            echo $weight;
+        }
+    }
+
+    public function addWidth(int $width): void
+    {
+        if ($width > 8) {
+            $this->width += $width;
+        } else {
+            echo $width;
+        }
+    }
+
+    public function addAmount(int $amount): void
+    {
+        if ($amount > 9) {
+            $this->amount += $amount;
+        } else {
+            echo $amount;
+        }
+    }
+
+    public function total(): int
+    {
+        return $this->weight + $this->width + $this->amount;
+    }
+
+    public function describe(): string
+    {
+        $parts = [];
+        $parts[] = (string) $this->weight;
+        $parts[] = (string) $this->width;
+        $parts[] = (string) $this->amount;
+        return implode(",", $parts);
+    }
+}
+
+---
+<?php
+
+class UnitLedger
+{
+    public int $level = 0;
+    public int $amount = 0;
+    public int $total = 0;
+    public int $count = 0;
+
+    public function addLevel(int $level): void
+    {
+        if ($level > 1) {
+            $this->level += $level;
+        } else {
+            echo $level;
+        }
+    }
+
+    public function addAmount(int $amount): void
+    {
+        if ($amount > 2) {
+            $this->amount += $amount;
+        } else {
+            echo $amount;
+        }
+    }
+
+    public function addTotal(int $total): void
+    {
+        if ($total > 3) {
+            $this->total += $total;
+        } else {
+            echo $total;
+        }
+    }
+
+    public function addCount(int $count): void
+    {
+        if ($count > 4) {
+            $this->count += $count;
+        } else {
+            echo $count;
+        }
+    }
+
+    public function total(): int
+    {
+        return $this->level + $this->amount + $this->total + $this->count;
+    }
+
+    public function describe(): string
+    {
+        $parts = [];
+        $parts[] = (string) $this->level;
+        $parts[] = (string) $this->amount;
+        $parts[] = (string) $this->total;
+        $parts[] = (string) $this->count;
+        return implode(",", $parts);
+    }
+}
+
+---
+<?php
+
+class RecordQueue
+{
+    public int $score = 0;
+    public int $weight = 0;
+    public int $amount = 0;
+    public int $index = 0;
+    public int $width = 0;
+
+    public function addScore(int $score): void
+    {
+        if ($score > 2) {
+            $this->score += $score;
+        } else {
+            echo $score;
+        }
+    }
+
+    public function addWeight(int $weight): void
+    {
+        if ($weight > 3) {
+            $this->weight += $weight;
+        } else {
+            echo $weight;
+        }
+    }
+
+    public function addAmount(int $amount): void
+    {
+        if ($amount > 4) {
+            $this->amount += $amount;
+        } else {
+            echo $amount;
+        }
+    }
+
+    public function addIndex(int $index): void
+    {
+        if ($index > 5) {
+            $this->index += $index;
+        } else {
+            echo $index;
+        }
+    }
+
+    public function addWidth(int $width): void
+    {
+        if ($width > 6) {
+            $this->width += $width;
+        } else {
+            echo $width;
+        }
+    }
+
+    public function total(): int
+    {
+        return $this->score + $this->weight + $this->amount + $this->index + $this->width;
+    }
+
+    public function describe(): string
+    {
+        $parts = [];
+        $parts[] = (string) $this->score;
+        $parts[] = (string) $this->weight;
+        $parts[] = (string) $this->amount;
+        $parts[] = (string) $this->index;
+        $parts[] = (string) $this->width;
+        return implode(",", $parts);
+    }
+}
+
+---
+<?php
+
+class BatchStore
+{
+    public int $amount = 0;
+    public int $width = 0;
+    public int $level = 0;
+
+    public function addAmount(int $amount): void
+    {
+        if ($amount > 3) {
+            $this->amount += $amount;
+        } else {
+            echo $amount;
+        }
+    }
+
+    public function addWidth(int $width): void
+    {
+        if ($width > 4) {
+            $this->width += $width;
+        } else {
+            echo $width;
+        }
+    }
+
+    public function addLevel(int $level): void
+    {
+        if ($level > 5) {
+            $this->level += $level;
+        } else {
+            echo $level;
+        }
+    }
+
+    public function total(): int
+    {
+        return $this->amount + $this->width + $this->level;
+    }
+
+    public function describe(): string
+    {
+        $parts = [];
+        $parts[] = (string) $this->amount;
+        $parts[] = (string) $this->width;
+        $parts[] = (string) $this->level;
+        return implode(",", $parts);
+    }
+}
+
+---
+<?php
+
+class SampleTable
+{
+    public int $count = 0;
+    public int $weight = 0;
+    public int $level = 0;
+    public int $score = 0;
+
+    public function addCount(int $count): void
+    {
+        if ($count > 4) {
+            $this->count += $count;
+        } else {
+            echo $count;
+        }
+    }
+
+    public function addWeight(int $weight): void
+    {
+        if ($weight > 5) {
+            $this->weight += $weight;
+        } else {
+            echo $weight;
+        }
+    }
+
+    public function addLevel(int $level): void
+    {
+        if ($level > 6) {
+            $this->level += $level;
+        } else {
+            echo $level;
+        }
+    }
+
+    public function addScore(int $score): void
+    {
+        if ($score > 7) {
+            $this->score += $score;
+        } else {
+            echo $score;
+        }
+    }
+
+    public function total(): int
+    {
+        return $this->count + $this->weight + $this->level + $this->score;
+    }
+
+    public function describe(): string
+    {
+        $parts = [];
+        $parts[] = (string) $this->count;
+        $parts[] = (string) $this->weight;
+        $parts[] = (string) $this->level;
+        $parts[] = (string) $this->score;
+        return implode(",", $parts);
+    }
+}
+
+---
+<?php
+
+class EntryIndex
+{
+    public int $count = 0;
+    public int $index = 0;
+    public int $width = 0;
+    public int $limit = 0;
+    public int $amount = 0;
+
+    public function addCount(int $count): void
+    {
+        if ($count > 5) {
+            $this->count += $count;
+        } else {
+            echo $count;
+        }
+    }
+
+    public function addIndex(int $index): void
+    {
+        if ($index > 6) {
+            $this->index += $index;
+        } else {
+            echo $index;
+        }
+    }
+
+    public function addWidth(int $width): void
+    {
+        if ($width > 7) {
+            $this->width += $width;
+        } else {
+            echo $width;
+        }
+    }
+
+    public function addLimit(int $limit): void
+    {
+        if ($limit > 8) {
+            $this->limit += $limit;
+        } else {
+            echo $limit;
+        }
+    }
+
+    public function addAmount(int $amount): void
+    {
+        if ($amount > 9) {
+            $this->amount += $amount;
+        } else {
+            echo $amount;
+        }
+    }
+
+    public function total(): int
+    {
+        return $this->count + $this->index + $this->width + $this->limit + $this->amount;
+    }
+
+    public function describe(): string
+    {
+        $parts = [];
+        $parts[] = (string) $this->count;
+        $parts[] = (string) $this->index;
+        $parts[] = (string) $this->width;
+        $parts[] = (string) $this->limit;
+        $parts[] = (string) $this->amount;
+        return implode(",", $parts);
+    }
+}
+
+---
+<?php
+
+class ItemBatch
+{
+    public int $weight = 0;
+    public int $count = 0;
+    public int $height = 0;
+
+    public function addWeight(int $weight): void
+    {
+        if ($weight > 6) {
+            $this->weight += $weight;
+        } else {
+            echo $weight;
+        }
+    }
+
+    public function addCount(int $count): void
+    {
+        if ($count > 7) {
+            $this->count += $count;
+        } else {
+            echo $count;
+        }
+    }
+
+    public function addHeight(int $height): void
+    {
+        if ($height > 8) {
+            $this->height += $height;
+        } else {
+            echo $height;
+        }
+    }
+
+    public function total(): int
+    {
+        return $this->weight + $this->count + $this->height;
+    }
+
+    public function describe(): string
+    {
+        $parts = [];
+        $parts[] = (string) $this->weight;
+        $parts[] = (string) $this->count;
+        $parts[] = (string) $this->height;
+        return implode(",", $parts);
+    }
+}
+
+---
+<?php
+
+class NodeLedger
+{
+    public int $score = 0;
+    public int $amount = 0;
+    public int $width = 0;
+    public int $total = 0;
+
+    public function addScore(int $score): void
+    {
+        if ($score > 7) {
+            $this->score += $score;
+        } else {
+            echo $score;
+        }
+    }
+
+    public function addAmount(int $amount): void
+    {
+        if ($amount > 8) {
+            $this->amount += $amount;
+        } else {
+            echo $amount;
+        }
+    }
+
+    public function addWidth(int $width): void
+    {
+        if ($width > 9) {
+            $this->width += $width;
+        } else {
+            echo $width;
+        }
+    }
+
+    public function addTotal(int $total): void
+    {
+        if ($total > 10) {
+            $this->total += $total;
+        } else {
+            echo $total;
+        }
+    }
+
+    public function total(): int
+    {
+        return $this->score + $this->amount + $this->width + $this->total;
+    }
+
+    public function describe(): string
+    {
+        $parts = [];
+        $parts[] = (string) $this->score;
+        $parts[] = (string) $this->amount;
+        $parts[] = (string) $this->width;
+        $parts[] = (string) $this->total;
+        return implode(",", $parts);
+    }
+}
+
+---
+<?php
+
+class RowQueue
+{
+    public int $index = 0;
+    public int $total = 0;
+    public int $level = 0;
+    public int $width = 0;
+    public int $limit = 0;
+
+    public function addIndex(int $index): void
+    {
+        if ($index > 1) {
+            $this->index += $index;
+        } else {
+            echo $index;
+        }
+    }
+
+    public function addTotal(int $total): void
+    {
+        if ($total > 2) {
+            $this->total += $total;
+        } else {
+            echo $total;
+        }
+    }
+
+    public function addLevel(int $level): void
+    {
+        if ($level > 3) {
+            $this->level += $level;
+        } else {
+            echo $level;
+        }
+    }
+
+    public function addWidth(int $width): void
+    {
+        if ($width > 4) {
+            $this->width += $width;
+        } else {
+            echo $width;
+        }
+    }
+
+    public function addLimit(int $limit): void
+    {
+        if ($limit > 5) {
+            $this->limit += $limit;
+        } else {
+            echo $limit;
+        }
+    }
+
+    public function total(): int
+    {
+        return $this->index + $this->total + $this->level + $this->width + $this->limit;
+    }
+
+    public function describe(): string
+    {
+        $parts = [];
+        $parts[] = (string) $this->index;
+        $parts[] = (string) $this->total;
+        $parts[] = (string) $this->level;
+        $parts[] = (string) $this->width;
+        $parts[] = (string) $this->limit;
+        return implode(",", $parts);
+    }
+}
+
+---
+<?php
+
+class UnitStore
+{
+    public int $index = 0;
+    public int $weight = 0;
+    public int $width = 0;
+
+    public function addIndex(int $index): void
+    {
+        if ($index > 2) {
+            $this->index += $index;
+        } else {
+            echo $index;
+        }
+    }
+
+    public function addWeight(int $weight): void
+    {
+        if ($weight > 3) {
+            $this->weight += $weight;
+        } else {
+            echo $weight;
+        }
+    }
+
+    public function addWidth(int $width): void
+    {
+        if ($width > 4) {
+            $this->width += $width;
+        } else {
+            echo $width;
+        }
+    }
+
+    public function total(): int
+    {
+        return $this->index + $this->weight + $this->width;
+    }
+
+    public function describe(): string
+    {
+        $parts = [];
+        $parts[] = (string) $this->index;
+        $parts[] = (string) $this->weight;
+        $parts[] = (string) $this->width;
+        return implode(",", $parts);
+    }
+}
+
+---
+<?php
+
+class RecordTable
+{
+    public int $width = 0;
+    public int $height = 0;
+    public int $limit = 0;
+    public int $score = 0;
+
+    public function addWidth(int $width): void
+    {
+        if ($width > 3) {
+            $this->width += $width;
+        } else {
+            echo $width;
+        }
+    }
+
+    public function addHeight(int $height): void
+    {
+        if ($height > 4) {
+            $this->height += $height;
+        } else {
+            echo $height;
+        }
+    }
+
+    public function addLimit(int $limit): void
+    {
+        if ($limit > 5) {
+            $this->limit += $limit;
+        } else {
+            echo $limit;
+        }
+    }
+
+    public function addScore(int $score): void
+    {
+        if ($score > 6) {
+            $this->score += $score;
+        } else {
+            echo $score;
+        }
+    }
+
+    public function total(): int
+    {
+        return $this->width + $this->height + $this->limit + $this->score;
+    }
+
+    public function describe(): string
+    {
+        $parts = [];
+        $parts[] = (string) $this->width;
+        $parts[] = (string) $this->height;
+        $parts[] = (string) $this->limit;
+        $parts[] = (string) $this->score;
+        return implode(",", $parts);
+    }
+}
+
+---
+<?php
+
+class BatchIndex
+{
+    public int $level = 0;
+    public int $total = 0;
+    public int $weight = 0;
+    public int $amount = 0;
+    public int $count = 0;
+
+    public function addLevel(int $level): void
+    {
+        if ($level > 4) {
+            $this->level += $level;
+        } else {
+            echo $level;
+        }
+    }
+
+    public function addTotal(int $total): void
+    {
+        if ($total > 5) {
+            $this->total += $total;
+        } else {
+            echo $total;
+        }
+    }
+
+    public function addWeight(int $weight): void
+    {
+        if ($weight > 6) {
+            $this->weight += $weight;
+        } else {
+            echo $weight;
+        }
+    }
+
+    public function addAmount(int $amount): void
+    {
+        if ($amount > 7) {
+            $this->amount += $amount;
+        } else {
+            echo $amount;
+        }
+    }
+
+    public function addCount(int $count): void
+    {
+        if ($count > 8) {
+            $this->count += $count;
+        } else {
+            echo $count;
+        }
+    }
+
+    public function total(): int
+    {
+        return $this->level + $this->total + $this->weight + $this->amount + $this->count;
+    }
+
+    public function describe(): string
+    {
+        $parts = [];
+        $parts[] = (string) $this->level;
+        $parts[] = (string) $this->total;
+        $parts[] = (string) $this->weight;
+        $parts[] = (string) $this->amount;
+        $parts[] = (string) $this->count;
+        return implode(",", $parts);
+    }
+}
