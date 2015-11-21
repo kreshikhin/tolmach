@@ -59,3 +59,1134 @@ names = ["ada", "grace"]
 shouted = list(map(lambda name: name.upper(), names))
 for name in names:
     print(name)
+
+---
+class RecordBatch:
+    def __init__(self):
+        self.limit = 0
+        self.count = 0
+        self.total = 0
+
+    def add_limit(self, limit):
+        if limit > 1:
+            self.limit += limit
+        else:
+            print(limit)
+        return self.limit
+
+    def add_count(self, count):
+        if count > 2:
+            self.count += count
+        else:
+            print(count)
+        return self.count
+
+    def add_total(self, total):
+        if total > 3:
+            self.total += total
+        else:
+            print(total)
+        return self.total
+
+def collect_record_store(rows):
+    total = 0
+    for row in rows:
+        total += row.limit
+        total += row.count
+        total += row.total
+    return total
+
+def describe_record_store(rows):
+    labels = []
+    for row in rows:
+        if row.limit > 1:
+            labels.append(str(row.limit))
+        elif row.limit == 0:
+            labels.append("empty")
+        else:
+            labels.append("low")
+    print(labels)
+    return labels
+
+---
+class BatchLedger:
+    def __init__(self):
+        self.amount = 0
+        self.height = 0
+        self.limit = 0
+        self.index = 0
+
+    def add_amount(self, amount):
+        if amount > 2:
+            self.amount += amount
+        else:
+            print(amount)
+        return self.amount
+
+    def add_height(self, height):
+        if height > 3:
+            self.height += height
+        else:
+            print(height)
+        return self.height
+
+    def add_limit(self, limit):
+        if limit > 4:
+            self.limit += limit
+        else:
+            print(limit)
+        return self.limit
+
+    def add_index(self, index):
+        if index > 5:
+            self.index += index
+        else:
+            print(index)
+        return self.index
+
+def collect_batch_table(rows):
+    total = 0
+    for row in rows:
+        total += row.amount
+        total += row.height
+        total += row.limit
+        total += row.index
+    return total
+
+def describe_batch_table(rows):
+    labels = []
+    for row in rows:
+        if row.amount > 2:
+            labels.append(str(row.amount))
+        elif row.amount == 0:
+            labels.append("empty")
+        else:
+            labels.append("low")
+    print(labels)
+    return labels
+
+---
+class SampleQueue:
+    def __init__(self):
+        self.amount = 0
+        self.limit = 0
+        self.height = 0
+        self.width = 0
+        self.count = 0
+
+    def add_amount(self, amount):
+        if amount > 3:
+            self.amount += amount
+        else:
+            print(amount)
+        return self.amount
+
+    def add_limit(self, limit):
+        if limit > 4:
+            self.limit += limit
+        else:
+            print(limit)
+        return self.limit
+
+    def add_height(self, height):
+        if height > 5:
+            self.height += height
+        else:
+            print(height)
+        return self.height
+
+    def add_width(self, width):
+        if width > 6:
+            self.width += width
+        else:
+            print(width)
+        return self.width
+
+    def add_count(self, count):
+        if count > 7:
+            self.count += count
+        else:
+            print(count)
+        return self.count
+
+def collect_sample_index(rows):
+    total = 0
+    for row in rows:
+        total += row.amount
+        total += row.limit
+        total += row.height
+        total += row.width
+        total += row.count
+    return total
+
+def describe_sample_index(rows):
+    labels = []
+    for row in rows:
+        if row.amount > 3:
+            labels.append(str(row.amount))
+        elif row.amount == 0:
+            labels.append("empty")
+        else:
+            labels.append("low")
+    print(labels)
+    return labels
+
+---
+class EntryStore:
+    def __init__(self):
+        self.count = 0
+        self.height = 0
+        self.amount = 0
+
+    def add_count(self, count):
+        if count > 4:
+            self.count += count
+        else:
+            print(count)
+        return self.count
+
+    def add_height(self, height):
+        if height > 5:
+            self.height += height
+        else:
+            print(height)
+        return self.height
+
+    def add_amount(self, amount):
+        if amount > 6:
+            self.amount += amount
+        else:
+            print(amount)
+        return self.amount
+
+def collect_entry_batch(rows):
+    total = 0
+    for row in rows:
+        total += row.count
+        total += row.height
+        total += row.amount
+    return total
+
+def describe_entry_batch(rows):
+    labels = []
+    for row in rows:
+        if row.count > 4:
+            labels.append(str(row.count))
+        elif row.count == 0:
+            labels.append("empty")
+        else:
+            labels.append("low")
+    print(labels)
+    return labels
+
+---
+class ItemTable:
+    def __init__(self):
+        self.height = 0
+        self.total = 0
+        self.level = 0
+        self.weight = 0
+
+    def add_height(self, height):
+        if height > 5:
+            self.height += height
+        else:
+            print(height)
+        return self.height
+
+    def add_total(self, total):
+        if total > 6:
+            self.total += total
+        else:
+            print(total)
+        return self.total
+
+    def add_level(self, level):
+        if level > 7:
+            self.level += level
+        else:
+            print(level)
+        return self.level
+
+    def add_weight(self, weight):
+        if weight > 8:
+            self.weight += weight
+        else:
+            print(weight)
+        return self.weight
+
+def collect_item_ledger(rows):
+    total = 0
+    for row in rows:
+        total += row.height
+        total += row.total
+        total += row.level
+        total += row.weight
+    return total
+
+def describe_item_ledger(rows):
+    labels = []
+    for row in rows:
+        if row.height > 5:
+            labels.append(str(row.height))
+        elif row.height == 0:
+            labels.append("empty")
+        else:
+            labels.append("low")
+    print(labels)
+    return labels
+
+---
+class NodeIndex:
+    def __init__(self):
+        self.limit = 0
+        self.weight = 0
+        self.level = 0
+        self.total = 0
+        self.score = 0
+
+    def add_limit(self, limit):
+        if limit > 6:
+            self.limit += limit
+        else:
+            print(limit)
+        return self.limit
+
+    def add_weight(self, weight):
+        if weight > 7:
+            self.weight += weight
+        else:
+            print(weight)
+        return self.weight
+
+    def add_level(self, level):
+        if level > 8:
+            self.level += level
+        else:
+            print(level)
+        return self.level
+
+    def add_total(self, total):
+        if total > 9:
+            self.total += total
+        else:
+            print(total)
+        return self.total
+
+    def add_score(self, score):
+        if score > 10:
+            self.score += score
+        else:
+            print(score)
+        return self.score
+
+def collect_node_queue(rows):
+    total = 0
+    for row in rows:
+        total += row.limit
+        total += row.weight
+        total += row.level
+        total += row.total
+        total += row.score
+    return total
+
+def describe_node_queue(rows):
+    labels = []
+    for row in rows:
+        if row.limit > 6:
+            labels.append(str(row.limit))
+        elif row.limit == 0:
+            labels.append("empty")
+        else:
+            labels.append("low")
+    print(labels)
+    return labels
+
+---
+class RowBatch:
+    def __init__(self):
+        self.amount = 0
+        self.count = 0
+        self.height = 0
+
+    def add_amount(self, amount):
+        if amount > 7:
+            self.amount += amount
+        else:
+            print(amount)
+        return self.amount
+
+    def add_count(self, count):
+        if count > 8:
+            self.count += count
+        else:
+            print(count)
+        return self.count
+
+    def add_height(self, height):
+        if height > 9:
+            self.height += height
+        else:
+            print(height)
+        return self.height
+
+def collect_row_store(rows):
+    total = 0
+    for row in rows:
+        total += row.amount
+        total += row.count
+        total += row.height
+    return total
+
+def describe_row_store(rows):
+    labels = []
+    for row in rows:
+        if row.amount > 7:
+            labels.append(str(row.amount))
+        elif row.amount == 0:
+            labels.append("empty")
+        else:
+            labels.append("low")
+    print(labels)
+    return labels
+
+---
+class UnitLedger:
+    def __init__(self):
+        self.height = 0
+        self.count = 0
+        self.amount = 0
+        self.width = 0
+
+    def add_height(self, height):
+        if height > 1:
+            self.height += height
+        else:
+            print(height)
+        return self.height
+
+    def add_count(self, count):
+        if count > 2:
+            self.count += count
+        else:
+            print(count)
+        return self.count
+
+    def add_amount(self, amount):
+        if amount > 3:
+            self.amount += amount
+        else:
+            print(amount)
+        return self.amount
+
+    def add_width(self, width):
+        if width > 4:
+            self.width += width
+        else:
+            print(width)
+        return self.width
+
+def collect_unit_table(rows):
+    total = 0
+    for row in rows:
+        total += row.height
+        total += row.count
+        total += row.amount
+        total += row.width
+    return total
+
+def describe_unit_table(rows):
+    labels = []
+    for row in rows:
+        if row.height > 1:
+            labels.append(str(row.height))
+        elif row.height == 0:
+            labels.append("empty")
+        else:
+            labels.append("low")
+    print(labels)
+    return labels
+
+---
+class RecordQueue:
+    def __init__(self):
+        self.width = 0
+        self.height = 0
+        self.limit = 0
+        self.weight = 0
+        self.amount = 0
+
+    def add_width(self, width):
+        if width > 2:
+            self.width += width
+        else:
+            print(width)
+        return self.width
+
+    def add_height(self, height):
+        if height > 3:
+            self.height += height
+        else:
+            print(height)
+        return self.height
+
+    def add_limit(self, limit):
+        if limit > 4:
+            self.limit += limit
+        else:
+            print(limit)
+        return self.limit
+
+    def add_weight(self, weight):
+        if weight > 5:
+            self.weight += weight
+        else:
+            print(weight)
+        return self.weight
+
+    def add_amount(self, amount):
+        if amount > 6:
+            self.amount += amount
+        else:
+            print(amount)
+        return self.amount
+
+def collect_record_index(rows):
+    total = 0
+    for row in rows:
+        total += row.width
+        total += row.height
+        total += row.limit
+        total += row.weight
+        total += row.amount
+    return total
+
+def describe_record_index(rows):
+    labels = []
+    for row in rows:
+        if row.width > 2:
+            labels.append(str(row.width))
+        elif row.width == 0:
+            labels.append("empty")
+        else:
+            labels.append("low")
+    print(labels)
+    return labels
+
+---
+class BatchStore:
+    def __init__(self):
+        self.limit = 0
+        self.count = 0
+        self.score = 0
+
+    def add_limit(self, limit):
+        if limit > 3:
+            self.limit += limit
+        else:
+            print(limit)
+        return self.limit
+
+    def add_count(self, count):
+        if count > 4:
+            self.count += count
+        else:
+            print(count)
+        return self.count
+
+    def add_score(self, score):
+        if score > 5:
+            self.score += score
+        else:
+            print(score)
+        return self.score
+
+def collect_batch_batch(rows):
+    total = 0
+    for row in rows:
+        total += row.limit
+        total += row.count
+        total += row.score
+    return total
+
+def describe_batch_batch(rows):
+    labels = []
+    for row in rows:
+        if row.limit > 3:
+            labels.append(str(row.limit))
+        elif row.limit == 0:
+            labels.append("empty")
+        else:
+            labels.append("low")
+    print(labels)
+    return labels
+
+---
+class SampleTable:
+    def __init__(self):
+        self.limit = 0
+        self.index = 0
+        self.width = 0
+        self.count = 0
+
+    def add_limit(self, limit):
+        if limit > 4:
+            self.limit += limit
+        else:
+            print(limit)
+        return self.limit
+
+    def add_index(self, index):
+        if index > 5:
+            self.index += index
+        else:
+            print(index)
+        return self.index
+
+    def add_width(self, width):
+        if width > 6:
+            self.width += width
+        else:
+            print(width)
+        return self.width
+
+    def add_count(self, count):
+        if count > 7:
+            self.count += count
+        else:
+            print(count)
+        return self.count
+
+def collect_sample_ledger(rows):
+    total = 0
+    for row in rows:
+        total += row.limit
+        total += row.index
+        total += row.width
+        total += row.count
+    return total
+
+def describe_sample_ledger(rows):
+    labels = []
+    for row in rows:
+        if row.limit > 4:
+            labels.append(str(row.limit))
+        elif row.limit == 0:
+            labels.append("empty")
+        else:
+            labels.append("low")
+    print(labels)
+    return labels
+
+---
+class EntryIndex:
+    def __init__(self):
+        self.index = 0
+        self.level = 0
+        self.count = 0
+        self.amount = 0
+        self.total = 0
+
+    def add_index(self, index):
+        if index > 5:
+            self.index += index
+        else:
+            print(index)
+        return self.index
+
+    def add_level(self, level):
+        if level > 6:
+            self.level += level
+        else:
+            print(level)
+        return self.level
+
+    def add_count(self, count):
+        if count > 7:
+            self.count += count
+        else:
+            print(count)
+        return self.count
+
+    def add_amount(self, amount):
+        if amount > 8:
+            self.amount += amount
+        else:
+            print(amount)
+        return self.amount
+
+    def add_total(self, total):
+        if total > 9:
+            self.total += total
+        else:
+            print(total)
+        return self.total
+
+def collect_entry_queue(rows):
+    total = 0
+    for row in rows:
+        total += row.index
+        total += row.level
+        total += row.count
+        total += row.amount
+        total += row.total
+    return total
+
+def describe_entry_queue(rows):
+    labels = []
+    for row in rows:
+        if row.index > 5:
+            labels.append(str(row.index))
+        elif row.index == 0:
+            labels.append("empty")
+        else:
+            labels.append("low")
+    print(labels)
+    return labels
+
+---
+class ItemBatch:
+    def __init__(self):
+        self.count = 0
+        self.level = 0
+        self.index = 0
+
+    def add_count(self, count):
+        if count > 6:
+            self.count += count
+        else:
+            print(count)
+        return self.count
+
+    def add_level(self, level):
+        if level > 7:
+            self.level += level
+        else:
+            print(level)
+        return self.level
+
+    def add_index(self, index):
+        if index > 8:
+            self.index += index
+        else:
+            print(index)
+        return self.index
+
+def collect_item_store(rows):
+    total = 0
+    for row in rows:
+        total += row.count
+        total += row.level
+        total += row.index
+    return total
+
+def describe_item_store(rows):
+    labels = []
+    for row in rows:
+        if row.count > 6:
+            labels.append(str(row.count))
+        elif row.count == 0:
+            labels.append("empty")
+        else:
+            labels.append("low")
+    print(labels)
+    return labels
+
+---
+class NodeLedger:
+    def __init__(self):
+        self.width = 0
+        self.weight = 0
+        self.limit = 0
+        self.total = 0
+
+    def add_width(self, width):
+        if width > 7:
+            self.width += width
+        else:
+            print(width)
+        return self.width
+
+    def add_weight(self, weight):
+        if weight > 8:
+            self.weight += weight
+        else:
+            print(weight)
+        return self.weight
+
+    def add_limit(self, limit):
+        if limit > 9:
+            self.limit += limit
+        else:
+            print(limit)
+        return self.limit
+
+    def add_total(self, total):
+        if total > 10:
+            self.total += total
+        else:
+            print(total)
+        return self.total
+
+def collect_node_table(rows):
+    total = 0
+    for row in rows:
+        total += row.width
+        total += row.weight
+        total += row.limit
+        total += row.total
+    return total
+
+def describe_node_table(rows):
+    labels = []
+    for row in rows:
+        if row.width > 7:
+            labels.append(str(row.width))
+        elif row.width == 0:
+            labels.append("empty")
+        else:
+            labels.append("low")
+    print(labels)
+    return labels
+
+---
+class RowQueue:
+    def __init__(self):
+        self.count = 0
+        self.weight = 0
+        self.total = 0
+        self.limit = 0
+        self.amount = 0
+
+    def add_count(self, count):
+        if count > 1:
+            self.count += count
+        else:
+            print(count)
+        return self.count
+
+    def add_weight(self, weight):
+        if weight > 2:
+            self.weight += weight
+        else:
+            print(weight)
+        return self.weight
+
+    def add_total(self, total):
+        if total > 3:
+            self.total += total
+        else:
+            print(total)
+        return self.total
+
+    def add_limit(self, limit):
+        if limit > 4:
+            self.limit += limit
+        else:
+            print(limit)
+        return self.limit
+
+    def add_amount(self, amount):
+        if amount > 5:
+            self.amount += amount
+        else:
+            print(amount)
+        return self.amount
+
+def collect_row_index(rows):
+    total = 0
+    for row in rows:
+        total += row.count
+        total += row.weight
+        total += row.total
+        total += row.limit
+        total += row.amount
+    return total
+
+def describe_row_index(rows):
+    labels = []
+    for row in rows:
+        if row.count > 1:
+            labels.append(str(row.count))
+        elif row.count == 0:
+            labels.append("empty")
+        else:
+            labels.append("low")
+    print(labels)
+    return labels
+
+---
+class UnitStore:
+    def __init__(self):
+        self.width = 0
+        self.height = 0
+        self.amount = 0
+
+    def add_width(self, width):
+        if width > 2:
+            self.width += width
+        else:
+            print(width)
+        return self.width
+
+    def add_height(self, height):
+        if height > 3:
+            self.height += height
+        else:
+            print(height)
+        return self.height
+
+    def add_amount(self, amount):
+        if amount > 4:
+            self.amount += amount
+        else:
+            print(amount)
+        return self.amount
+
+def collect_unit_batch(rows):
+    total = 0
+    for row in rows:
+        total += row.width
+        total += row.height
+        total += row.amount
+    return total
+
+def describe_unit_batch(rows):
+    labels = []
+    for row in rows:
+        if row.width > 2:
+            labels.append(str(row.width))
+        elif row.width == 0:
+            labels.append("empty")
+        else:
+            labels.append("low")
+    print(labels)
+    return labels
+
+---
+class RecordTable:
+    def __init__(self):
+        self.height = 0
+        self.index = 0
+        self.total = 0
+        self.score = 0
+
+    def add_height(self, height):
+        if height > 3:
+            self.height += height
+        else:
+            print(height)
+        return self.height
+
+    def add_index(self, index):
+        if index > 4:
+            self.index += index
+        else:
+            print(index)
+        return self.index
+
+    def add_total(self, total):
+        if total > 5:
+            self.total += total
+        else:
+            print(total)
+        return self.total
+
+    def add_score(self, score):
+        if score > 6:
+            self.score += score
+        else:
+            print(score)
+        return self.score
+
+def collect_record_ledger(rows):
+    total = 0
+    for row in rows:
+        total += row.height
+        total += row.index
+        total += row.total
+        total += row.score
+    return total
+
+def describe_record_ledger(rows):
+    labels = []
+    for row in rows:
+        if row.height > 3:
+            labels.append(str(row.height))
+        elif row.height == 0:
+            labels.append("empty")
+        else:
+            labels.append("low")
+    print(labels)
+    return labels
+
+---
+class BatchIndex:
+    def __init__(self):
+        self.score = 0
+        self.total = 0
+        self.width = 0
+        self.amount = 0
+        self.weight = 0
+
+    def add_score(self, score):
+        if score > 4:
+            self.score += score
+        else:
+            print(score)
+        return self.score
+
+    def add_total(self, total):
+        if total > 5:
+            self.total += total
+        else:
+            print(total)
+        return self.total
+
+    def add_width(self, width):
+        if width > 6:
+            self.width += width
+        else:
+            print(width)
+        return self.width
+
+    def add_amount(self, amount):
+        if amount > 7:
+            self.amount += amount
+        else:
+            print(amount)
+        return self.amount
+
+    def add_weight(self, weight):
+        if weight > 8:
+            self.weight += weight
+        else:
+            print(weight)
+        return self.weight
+
+def collect_batch_queue(rows):
+    total = 0
+    for row in rows:
+        total += row.score
+        total += row.total
+        total += row.width
+        total += row.amount
+        total += row.weight
+    return total
+
+def describe_batch_queue(rows):
+    labels = []
+    for row in rows:
+        if row.score > 4:
+            labels.append(str(row.score))
+        elif row.score == 0:
+            labels.append("empty")
+        else:
+            labels.append("low")
+    print(labels)
+    return labels
+
+---
+class SampleBatch:
+    def __init__(self):
+        self.count = 0
+        self.width = 0
+        self.weight = 0
+
+    def add_count(self, count):
+        if count > 5:
+            self.count += count
+        else:
+            print(count)
+        return self.count
+
+    def add_width(self, width):
+        if width > 6:
+            self.width += width
+        else:
+            print(width)
+        return self.width
+
+    def add_weight(self, weight):
+        if weight > 7:
+            self.weight += weight
+        else:
+            print(weight)
+        return self.weight
+
+def collect_sample_store(rows):
+    total = 0
+    for row in rows:
+        total += row.count
+        total += row.width
+        total += row.weight
+    return total
+
+def describe_sample_store(rows):
+    labels = []
+    for row in rows:
+        if row.count > 5:
+            labels.append(str(row.count))
+        elif row.count == 0:
+            labels.append("empty")
+        else:
+            labels.append("low")
+    print(labels)
+    return labels
+
+---
+class EntryLedger:
+    def __init__(self):
+        self.index = 0
+        self.limit = 0
+        self.total = 0
+        self.weight = 0
+
+    def add_index(self, index):
+        if index > 6:
+            self.index += index
+        else:
+            print(index)
+        return self.index
+
+    def add_limit(self, limit):
+        if limit > 7:
+            self.limit += limit
+        else:
+            print(limit)
+        return self.limit
+
+    def add_total(self, total):
+        if total > 8:
+            self.total += total
+        else:
+            print(total)
+        return self.total
+
+    def add_weight(self, weight):
+        if weight > 9:
+            self.weight += weight
+        else:
+            print(weight)
+        return self.weight
+
+def collect_entry_table(rows):
+    total = 0
+    for row in rows:
+        total += row.index
+        total += row.limit
+        total += row.total
+        total += row.weight
+    return total
+
+def describe_entry_table(rows):
+    labels = []
+    for row in rows:
+        if row.index > 6:
+            labels.append(str(row.index))
+        elif row.index == 0:
+            labels.append("empty")
+        else:
+            labels.append("low")
+    print(labels)
+    return labels
