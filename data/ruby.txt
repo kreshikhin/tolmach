@@ -49,3 +49,1193 @@ end
 ---
 total = items.map { |item| item.price }
 puts total
+
+---
+class RecordBatch
+  def initialize
+    @count = 0
+    @score = 0
+    @index = 0
+  end
+
+  def add_count(count)
+    if count > 1
+      @count += count
+    else
+      puts count
+    end
+    @count
+  end
+
+  def add_score(score)
+    if score > 2
+      @score += score
+    else
+      puts score
+    end
+    @score
+  end
+
+  def add_index(index)
+    if index > 3
+      @index += index
+    else
+      puts index
+    end
+    @index
+  end
+
+  def total
+    @count + @score + @index
+  end
+end
+
+def collect_record_store(rows)
+  rows.map { |row| row.total }
+end
+
+def describe_record_store(rows)
+  rows.each do |row|
+    puts row.total
+  end
+end
+
+---
+class BatchLedger
+  def initialize
+    @height = 0
+    @amount = 0
+    @level = 0
+    @count = 0
+  end
+
+  def add_height(height)
+    if height > 2
+      @height += height
+    else
+      puts height
+    end
+    @height
+  end
+
+  def add_amount(amount)
+    if amount > 3
+      @amount += amount
+    else
+      puts amount
+    end
+    @amount
+  end
+
+  def add_level(level)
+    if level > 4
+      @level += level
+    else
+      puts level
+    end
+    @level
+  end
+
+  def add_count(count)
+    if count > 5
+      @count += count
+    else
+      puts count
+    end
+    @count
+  end
+
+  def total
+    @height + @amount + @level + @count
+  end
+end
+
+def collect_batch_table(rows)
+  rows.map { |row| row.total }
+end
+
+def describe_batch_table(rows)
+  rows.each do |row|
+    puts row.total
+  end
+end
+
+---
+class SampleQueue
+  def initialize
+    @total = 0
+    @level = 0
+    @amount = 0
+    @score = 0
+    @count = 0
+  end
+
+  def add_total(total)
+    if total > 3
+      @total += total
+    else
+      puts total
+    end
+    @total
+  end
+
+  def add_level(level)
+    if level > 4
+      @level += level
+    else
+      puts level
+    end
+    @level
+  end
+
+  def add_amount(amount)
+    if amount > 5
+      @amount += amount
+    else
+      puts amount
+    end
+    @amount
+  end
+
+  def add_score(score)
+    if score > 6
+      @score += score
+    else
+      puts score
+    end
+    @score
+  end
+
+  def add_count(count)
+    if count > 7
+      @count += count
+    else
+      puts count
+    end
+    @count
+  end
+
+  def total
+    @total + @level + @amount + @score + @count
+  end
+end
+
+def collect_sample_index(rows)
+  rows.map { |row| row.total }
+end
+
+def describe_sample_index(rows)
+  rows.each do |row|
+    puts row.total
+  end
+end
+
+---
+class EntryStore
+  def initialize
+    @weight = 0
+    @height = 0
+    @level = 0
+  end
+
+  def add_weight(weight)
+    if weight > 4
+      @weight += weight
+    else
+      puts weight
+    end
+    @weight
+  end
+
+  def add_height(height)
+    if height > 5
+      @height += height
+    else
+      puts height
+    end
+    @height
+  end
+
+  def add_level(level)
+    if level > 6
+      @level += level
+    else
+      puts level
+    end
+    @level
+  end
+
+  def total
+    @weight + @height + @level
+  end
+end
+
+def collect_entry_batch(rows)
+  rows.map { |row| row.total }
+end
+
+def describe_entry_batch(rows)
+  rows.each do |row|
+    puts row.total
+  end
+end
+
+---
+class ItemTable
+  def initialize
+    @index = 0
+    @width = 0
+    @score = 0
+    @weight = 0
+  end
+
+  def add_index(index)
+    if index > 5
+      @index += index
+    else
+      puts index
+    end
+    @index
+  end
+
+  def add_width(width)
+    if width > 6
+      @width += width
+    else
+      puts width
+    end
+    @width
+  end
+
+  def add_score(score)
+    if score > 7
+      @score += score
+    else
+      puts score
+    end
+    @score
+  end
+
+  def add_weight(weight)
+    if weight > 8
+      @weight += weight
+    else
+      puts weight
+    end
+    @weight
+  end
+
+  def total
+    @index + @width + @score + @weight
+  end
+end
+
+def collect_item_ledger(rows)
+  rows.map { |row| row.total }
+end
+
+def describe_item_ledger(rows)
+  rows.each do |row|
+    puts row.total
+  end
+end
+
+---
+class NodeIndex
+  def initialize
+    @limit = 0
+    @count = 0
+    @total = 0
+    @level = 0
+    @width = 0
+  end
+
+  def add_limit(limit)
+    if limit > 6
+      @limit += limit
+    else
+      puts limit
+    end
+    @limit
+  end
+
+  def add_count(count)
+    if count > 7
+      @count += count
+    else
+      puts count
+    end
+    @count
+  end
+
+  def add_total(total)
+    if total > 8
+      @total += total
+    else
+      puts total
+    end
+    @total
+  end
+
+  def add_level(level)
+    if level > 9
+      @level += level
+    else
+      puts level
+    end
+    @level
+  end
+
+  def add_width(width)
+    if width > 10
+      @width += width
+    else
+      puts width
+    end
+    @width
+  end
+
+  def total
+    @limit + @count + @total + @level + @width
+  end
+end
+
+def collect_node_queue(rows)
+  rows.map { |row| row.total }
+end
+
+def describe_node_queue(rows)
+  rows.each do |row|
+    puts row.total
+  end
+end
+
+---
+class RowBatch
+  def initialize
+    @limit = 0
+    @height = 0
+    @weight = 0
+  end
+
+  def add_limit(limit)
+    if limit > 7
+      @limit += limit
+    else
+      puts limit
+    end
+    @limit
+  end
+
+  def add_height(height)
+    if height > 8
+      @height += height
+    else
+      puts height
+    end
+    @height
+  end
+
+  def add_weight(weight)
+    if weight > 9
+      @weight += weight
+    else
+      puts weight
+    end
+    @weight
+  end
+
+  def total
+    @limit + @height + @weight
+  end
+end
+
+def collect_row_store(rows)
+  rows.map { |row| row.total }
+end
+
+def describe_row_store(rows)
+  rows.each do |row|
+    puts row.total
+  end
+end
+
+---
+class UnitLedger
+  def initialize
+    @total = 0
+    @limit = 0
+    @weight = 0
+    @score = 0
+  end
+
+  def add_total(total)
+    if total > 1
+      @total += total
+    else
+      puts total
+    end
+    @total
+  end
+
+  def add_limit(limit)
+    if limit > 2
+      @limit += limit
+    else
+      puts limit
+    end
+    @limit
+  end
+
+  def add_weight(weight)
+    if weight > 3
+      @weight += weight
+    else
+      puts weight
+    end
+    @weight
+  end
+
+  def add_score(score)
+    if score > 4
+      @score += score
+    else
+      puts score
+    end
+    @score
+  end
+
+  def total
+    @total + @limit + @weight + @score
+  end
+end
+
+def collect_unit_table(rows)
+  rows.map { |row| row.total }
+end
+
+def describe_unit_table(rows)
+  rows.each do |row|
+    puts row.total
+  end
+end
+
+---
+class RecordQueue
+  def initialize
+    @level = 0
+    @count = 0
+    @height = 0
+    @amount = 0
+    @limit = 0
+  end
+
+  def add_level(level)
+    if level > 2
+      @level += level
+    else
+      puts level
+    end
+    @level
+  end
+
+  def add_count(count)
+    if count > 3
+      @count += count
+    else
+      puts count
+    end
+    @count
+  end
+
+  def add_height(height)
+    if height > 4
+      @height += height
+    else
+      puts height
+    end
+    @height
+  end
+
+  def add_amount(amount)
+    if amount > 5
+      @amount += amount
+    else
+      puts amount
+    end
+    @amount
+  end
+
+  def add_limit(limit)
+    if limit > 6
+      @limit += limit
+    else
+      puts limit
+    end
+    @limit
+  end
+
+  def total
+    @level + @count + @height + @amount + @limit
+  end
+end
+
+def collect_record_index(rows)
+  rows.map { |row| row.total }
+end
+
+def describe_record_index(rows)
+  rows.each do |row|
+    puts row.total
+  end
+end
+
+---
+class BatchStore
+  def initialize
+    @amount = 0
+    @total = 0
+    @width = 0
+  end
+
+  def add_amount(amount)
+    if amount > 3
+      @amount += amount
+    else
+      puts amount
+    end
+    @amount
+  end
+
+  def add_total(total)
+    if total > 4
+      @total += total
+    else
+      puts total
+    end
+    @total
+  end
+
+  def add_width(width)
+    if width > 5
+      @width += width
+    else
+      puts width
+    end
+    @width
+  end
+
+  def total
+    @amount + @total + @width
+  end
+end
+
+def collect_batch_batch(rows)
+  rows.map { |row| row.total }
+end
+
+def describe_batch_batch(rows)
+  rows.each do |row|
+    puts row.total
+  end
+end
+
+---
+class SampleTable
+  def initialize
+    @count = 0
+    @weight = 0
+    @index = 0
+    @height = 0
+  end
+
+  def add_count(count)
+    if count > 4
+      @count += count
+    else
+      puts count
+    end
+    @count
+  end
+
+  def add_weight(weight)
+    if weight > 5
+      @weight += weight
+    else
+      puts weight
+    end
+    @weight
+  end
+
+  def add_index(index)
+    if index > 6
+      @index += index
+    else
+      puts index
+    end
+    @index
+  end
+
+  def add_height(height)
+    if height > 7
+      @height += height
+    else
+      puts height
+    end
+    @height
+  end
+
+  def total
+    @count + @weight + @index + @height
+  end
+end
+
+def collect_sample_ledger(rows)
+  rows.map { |row| row.total }
+end
+
+def describe_sample_ledger(rows)
+  rows.each do |row|
+    puts row.total
+  end
+end
+
+---
+class EntryIndex
+  def initialize
+    @score = 0
+    @height = 0
+    @width = 0
+    @weight = 0
+    @index = 0
+  end
+
+  def add_score(score)
+    if score > 5
+      @score += score
+    else
+      puts score
+    end
+    @score
+  end
+
+  def add_height(height)
+    if height > 6
+      @height += height
+    else
+      puts height
+    end
+    @height
+  end
+
+  def add_width(width)
+    if width > 7
+      @width += width
+    else
+      puts width
+    end
+    @width
+  end
+
+  def add_weight(weight)
+    if weight > 8
+      @weight += weight
+    else
+      puts weight
+    end
+    @weight
+  end
+
+  def add_index(index)
+    if index > 9
+      @index += index
+    else
+      puts index
+    end
+    @index
+  end
+
+  def total
+    @score + @height + @width + @weight + @index
+  end
+end
+
+def collect_entry_queue(rows)
+  rows.map { |row| row.total }
+end
+
+def describe_entry_queue(rows)
+  rows.each do |row|
+    puts row.total
+  end
+end
+
+---
+class ItemBatch
+  def initialize
+    @total = 0
+    @limit = 0
+    @width = 0
+  end
+
+  def add_total(total)
+    if total > 6
+      @total += total
+    else
+      puts total
+    end
+    @total
+  end
+
+  def add_limit(limit)
+    if limit > 7
+      @limit += limit
+    else
+      puts limit
+    end
+    @limit
+  end
+
+  def add_width(width)
+    if width > 8
+      @width += width
+    else
+      puts width
+    end
+    @width
+  end
+
+  def total
+    @total + @limit + @width
+  end
+end
+
+def collect_item_store(rows)
+  rows.map { |row| row.total }
+end
+
+def describe_item_store(rows)
+  rows.each do |row|
+    puts row.total
+  end
+end
+
+---
+class NodeLedger
+  def initialize
+    @level = 0
+    @score = 0
+    @weight = 0
+    @index = 0
+  end
+
+  def add_level(level)
+    if level > 7
+      @level += level
+    else
+      puts level
+    end
+    @level
+  end
+
+  def add_score(score)
+    if score > 8
+      @score += score
+    else
+      puts score
+    end
+    @score
+  end
+
+  def add_weight(weight)
+    if weight > 9
+      @weight += weight
+    else
+      puts weight
+    end
+    @weight
+  end
+
+  def add_index(index)
+    if index > 10
+      @index += index
+    else
+      puts index
+    end
+    @index
+  end
+
+  def total
+    @level + @score + @weight + @index
+  end
+end
+
+def collect_node_table(rows)
+  rows.map { |row| row.total }
+end
+
+def describe_node_table(rows)
+  rows.each do |row|
+    puts row.total
+  end
+end
+
+---
+class RowQueue
+  def initialize
+    @height = 0
+    @weight = 0
+    @level = 0
+    @index = 0
+    @score = 0
+  end
+
+  def add_height(height)
+    if height > 1
+      @height += height
+    else
+      puts height
+    end
+    @height
+  end
+
+  def add_weight(weight)
+    if weight > 2
+      @weight += weight
+    else
+      puts weight
+    end
+    @weight
+  end
+
+  def add_level(level)
+    if level > 3
+      @level += level
+    else
+      puts level
+    end
+    @level
+  end
+
+  def add_index(index)
+    if index > 4
+      @index += index
+    else
+      puts index
+    end
+    @index
+  end
+
+  def add_score(score)
+    if score > 5
+      @score += score
+    else
+      puts score
+    end
+    @score
+  end
+
+  def total
+    @height + @weight + @level + @index + @score
+  end
+end
+
+def collect_row_index(rows)
+  rows.map { |row| row.total }
+end
+
+def describe_row_index(rows)
+  rows.each do |row|
+    puts row.total
+  end
+end
+
+---
+class UnitStore
+  def initialize
+    @count = 0
+    @width = 0
+    @amount = 0
+  end
+
+  def add_count(count)
+    if count > 2
+      @count += count
+    else
+      puts count
+    end
+    @count
+  end
+
+  def add_width(width)
+    if width > 3
+      @width += width
+    else
+      puts width
+    end
+    @width
+  end
+
+  def add_amount(amount)
+    if amount > 4
+      @amount += amount
+    else
+      puts amount
+    end
+    @amount
+  end
+
+  def total
+    @count + @width + @amount
+  end
+end
+
+def collect_unit_batch(rows)
+  rows.map { |row| row.total }
+end
+
+def describe_unit_batch(rows)
+  rows.each do |row|
+    puts row.total
+  end
+end
+
+---
+class RecordTable
+  def initialize
+    @count = 0
+    @score = 0
+    @weight = 0
+    @level = 0
+  end
+
+  def add_count(count)
+    if count > 3
+      @count += count
+    else
+      puts count
+    end
+    @count
+  end
+
+  def add_score(score)
+    if score > 4
+      @score += score
+    else
+      puts score
+    end
+    @score
+  end
+
+  def add_weight(weight)
+    if weight > 5
+      @weight += weight
+    else
+      puts weight
+    end
+    @weight
+  end
+
+  def add_level(level)
+    if level > 6
+      @level += level
+    else
+      puts level
+    end
+    @level
+  end
+
+  def total
+    @count + @score + @weight + @level
+  end
+end
+
+def collect_record_ledger(rows)
+  rows.map { |row| row.total }
+end
+
+def describe_record_ledger(rows)
+  rows.each do |row|
+    puts row.total
+  end
+end
+
+---
+class BatchIndex
+  def initialize
+    @limit = 0
+    @level = 0
+    @score = 0
+    @width = 0
+    @weight = 0
+  end
+
+  def add_limit(limit)
+    if limit > 4
+      @limit += limit
+    else
+      puts limit
+    end
+    @limit
+  end
+
+  def add_level(level)
+    if level > 5
+      @level += level
+    else
+      puts level
+    end
+    @level
+  end
+
+  def add_score(score)
+    if score > 6
+      @score += score
+    else
+      puts score
+    end
+    @score
+  end
+
+  def add_width(width)
+    if width > 7
+      @width += width
+    else
+      puts width
+    end
+    @width
+  end
+
+  def add_weight(weight)
+    if weight > 8
+      @weight += weight
+    else
+      puts weight
+    end
+    @weight
+  end
+
+  def total
+    @limit + @level + @score + @width + @weight
+  end
+end
+
+def collect_batch_queue(rows)
+  rows.map { |row| row.total }
+end
+
+def describe_batch_queue(rows)
+  rows.each do |row|
+    puts row.total
+  end
+end
+
+---
+class SampleBatch
+  def initialize
+    @amount = 0
+    @weight = 0
+    @width = 0
+  end
+
+  def add_amount(amount)
+    if amount > 5
+      @amount += amount
+    else
+      puts amount
+    end
+    @amount
+  end
+
+  def add_weight(weight)
+    if weight > 6
+      @weight += weight
+    else
+      puts weight
+    end
+    @weight
+  end
+
+  def add_width(width)
+    if width > 7
+      @width += width
+    else
+      puts width
+    end
+    @width
+  end
+
+  def total
+    @amount + @weight + @width
+  end
+end
+
+def collect_sample_store(rows)
+  rows.map { |row| row.total }
+end
+
+def describe_sample_store(rows)
+  rows.each do |row|
+    puts row.total
+  end
+end
+
+---
+class EntryLedger
+  def initialize
+    @amount = 0
+    @index = 0
+    @score = 0
+    @total = 0
+  end
+
+  def add_amount(amount)
+    if amount > 6
+      @amount += amount
+    else
+      puts amount
+    end
+    @amount
+  end
+
+  def add_index(index)
+    if index > 7
+      @index += index
+    else
+      puts index
+    end
+    @index
+  end
+
+  def add_score(score)
+    if score > 8
+      @score += score
+    else
+      puts score
+    end
+    @score
+  end
+
+  def add_total(total)
+    if total > 9
+      @total += total
+    else
+      puts total
+    end
+    @total
+  end
+
+  def total
+    @amount + @index + @score + @total
+  end
+end
+
+def collect_entry_table(rows)
+  rows.map { |row| row.total }
+end
+
+def describe_entry_table(rows)
+  rows.each do |row|
+    puts row.total
+  end
+end
