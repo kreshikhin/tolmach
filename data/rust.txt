@@ -60,3 +60,1179 @@ fn main() {
     let point = Point { x: 1, y: 2 };
     println!("{:?}", point);
 }
+
+---
+#[derive(Debug, Clone)]
+struct RecordBatch {
+    width: i32,
+    total: i32,
+    height: i32,
+}
+
+impl RecordBatch {
+    fn add_width(&mut self, width: i32) {
+        if width > 1 {
+            self.width += width;
+        } else {
+            println!("{}", width);
+        }
+    }
+
+    fn add_total(&mut self, total: i32) {
+        if total > 2 {
+            self.total += total;
+        } else {
+            println!("{}", total);
+        }
+    }
+
+    fn add_height(&mut self, height: i32) {
+        if height > 3 {
+            self.height += height;
+        } else {
+            println!("{}", height);
+        }
+    }
+
+    fn total(&self) -> i32 {
+        self.width + self.total + self.height
+    }
+}
+
+fn sum_rows(rows: &[RecordBatch]) -> i32 {
+    let mut total = 0;
+    for row in rows {
+        total += row.total();
+    }
+    println!("{}", total);
+    total
+}
+
+---
+#[derive(Debug, Clone)]
+struct BatchLedger {
+    weight: i32,
+    count: i32,
+    level: i32,
+    amount: i32,
+}
+
+impl BatchLedger {
+    fn add_weight(&mut self, weight: i32) {
+        if weight > 2 {
+            self.weight += weight;
+        } else {
+            println!("{}", weight);
+        }
+    }
+
+    fn add_count(&mut self, count: i32) {
+        if count > 3 {
+            self.count += count;
+        } else {
+            println!("{}", count);
+        }
+    }
+
+    fn add_level(&mut self, level: i32) {
+        if level > 4 {
+            self.level += level;
+        } else {
+            println!("{}", level);
+        }
+    }
+
+    fn add_amount(&mut self, amount: i32) {
+        if amount > 5 {
+            self.amount += amount;
+        } else {
+            println!("{}", amount);
+        }
+    }
+
+    fn total(&self) -> i32 {
+        self.weight + self.count + self.level + self.amount
+    }
+}
+
+fn sum_rows(rows: &[BatchLedger]) -> i32 {
+    let mut total = 0;
+    for row in rows {
+        total += row.total();
+    }
+    println!("{}", total);
+    total
+}
+
+---
+#[derive(Debug, Clone)]
+struct SampleQueue {
+    weight: i32,
+    level: i32,
+    width: i32,
+    score: i32,
+    height: i32,
+}
+
+impl SampleQueue {
+    fn add_weight(&mut self, weight: i32) {
+        if weight > 3 {
+            self.weight += weight;
+        } else {
+            println!("{}", weight);
+        }
+    }
+
+    fn add_level(&mut self, level: i32) {
+        if level > 4 {
+            self.level += level;
+        } else {
+            println!("{}", level);
+        }
+    }
+
+    fn add_width(&mut self, width: i32) {
+        if width > 5 {
+            self.width += width;
+        } else {
+            println!("{}", width);
+        }
+    }
+
+    fn add_score(&mut self, score: i32) {
+        if score > 6 {
+            self.score += score;
+        } else {
+            println!("{}", score);
+        }
+    }
+
+    fn add_height(&mut self, height: i32) {
+        if height > 7 {
+            self.height += height;
+        } else {
+            println!("{}", height);
+        }
+    }
+
+    fn total(&self) -> i32 {
+        self.weight + self.level + self.width + self.score + self.height
+    }
+}
+
+fn sum_rows(rows: &[SampleQueue]) -> i32 {
+    let mut total = 0;
+    for row in rows {
+        total += row.total();
+    }
+    println!("{}", total);
+    total
+}
+
+---
+#[derive(Debug, Clone)]
+struct EntryStore {
+    limit: i32,
+    total: i32,
+    width: i32,
+}
+
+impl EntryStore {
+    fn add_limit(&mut self, limit: i32) {
+        if limit > 4 {
+            self.limit += limit;
+        } else {
+            println!("{}", limit);
+        }
+    }
+
+    fn add_total(&mut self, total: i32) {
+        if total > 5 {
+            self.total += total;
+        } else {
+            println!("{}", total);
+        }
+    }
+
+    fn add_width(&mut self, width: i32) {
+        if width > 6 {
+            self.width += width;
+        } else {
+            println!("{}", width);
+        }
+    }
+
+    fn total(&self) -> i32 {
+        self.limit + self.total + self.width
+    }
+}
+
+fn sum_rows(rows: &[EntryStore]) -> i32 {
+    let mut total = 0;
+    for row in rows {
+        total += row.total();
+    }
+    println!("{}", total);
+    total
+}
+
+---
+#[derive(Debug, Clone)]
+struct ItemTable {
+    total: i32,
+    amount: i32,
+    weight: i32,
+    index: i32,
+}
+
+impl ItemTable {
+    fn add_total(&mut self, total: i32) {
+        if total > 5 {
+            self.total += total;
+        } else {
+            println!("{}", total);
+        }
+    }
+
+    fn add_amount(&mut self, amount: i32) {
+        if amount > 6 {
+            self.amount += amount;
+        } else {
+            println!("{}", amount);
+        }
+    }
+
+    fn add_weight(&mut self, weight: i32) {
+        if weight > 7 {
+            self.weight += weight;
+        } else {
+            println!("{}", weight);
+        }
+    }
+
+    fn add_index(&mut self, index: i32) {
+        if index > 8 {
+            self.index += index;
+        } else {
+            println!("{}", index);
+        }
+    }
+
+    fn total(&self) -> i32 {
+        self.total + self.amount + self.weight + self.index
+    }
+}
+
+fn sum_rows(rows: &[ItemTable]) -> i32 {
+    let mut total = 0;
+    for row in rows {
+        total += row.total();
+    }
+    println!("{}", total);
+    total
+}
+
+---
+#[derive(Debug, Clone)]
+struct NodeIndex {
+    weight: i32,
+    total: i32,
+    amount: i32,
+    count: i32,
+    index: i32,
+}
+
+impl NodeIndex {
+    fn add_weight(&mut self, weight: i32) {
+        if weight > 6 {
+            self.weight += weight;
+        } else {
+            println!("{}", weight);
+        }
+    }
+
+    fn add_total(&mut self, total: i32) {
+        if total > 7 {
+            self.total += total;
+        } else {
+            println!("{}", total);
+        }
+    }
+
+    fn add_amount(&mut self, amount: i32) {
+        if amount > 8 {
+            self.amount += amount;
+        } else {
+            println!("{}", amount);
+        }
+    }
+
+    fn add_count(&mut self, count: i32) {
+        if count > 9 {
+            self.count += count;
+        } else {
+            println!("{}", count);
+        }
+    }
+
+    fn add_index(&mut self, index: i32) {
+        if index > 10 {
+            self.index += index;
+        } else {
+            println!("{}", index);
+        }
+    }
+
+    fn total(&self) -> i32 {
+        self.weight + self.total + self.amount + self.count + self.index
+    }
+}
+
+fn sum_rows(rows: &[NodeIndex]) -> i32 {
+    let mut total = 0;
+    for row in rows {
+        total += row.total();
+    }
+    println!("{}", total);
+    total
+}
+
+---
+#[derive(Debug, Clone)]
+struct RowBatch {
+    height: i32,
+    total: i32,
+    index: i32,
+}
+
+impl RowBatch {
+    fn add_height(&mut self, height: i32) {
+        if height > 7 {
+            self.height += height;
+        } else {
+            println!("{}", height);
+        }
+    }
+
+    fn add_total(&mut self, total: i32) {
+        if total > 8 {
+            self.total += total;
+        } else {
+            println!("{}", total);
+        }
+    }
+
+    fn add_index(&mut self, index: i32) {
+        if index > 9 {
+            self.index += index;
+        } else {
+            println!("{}", index);
+        }
+    }
+
+    fn total(&self) -> i32 {
+        self.height + self.total + self.index
+    }
+}
+
+fn sum_rows(rows: &[RowBatch]) -> i32 {
+    let mut total = 0;
+    for row in rows {
+        total += row.total();
+    }
+    println!("{}", total);
+    total
+}
+
+---
+#[derive(Debug, Clone)]
+struct UnitLedger {
+    amount: i32,
+    index: i32,
+    score: i32,
+    level: i32,
+}
+
+impl UnitLedger {
+    fn add_amount(&mut self, amount: i32) {
+        if amount > 1 {
+            self.amount += amount;
+        } else {
+            println!("{}", amount);
+        }
+    }
+
+    fn add_index(&mut self, index: i32) {
+        if index > 2 {
+            self.index += index;
+        } else {
+            println!("{}", index);
+        }
+    }
+
+    fn add_score(&mut self, score: i32) {
+        if score > 3 {
+            self.score += score;
+        } else {
+            println!("{}", score);
+        }
+    }
+
+    fn add_level(&mut self, level: i32) {
+        if level > 4 {
+            self.level += level;
+        } else {
+            println!("{}", level);
+        }
+    }
+
+    fn total(&self) -> i32 {
+        self.amount + self.index + self.score + self.level
+    }
+}
+
+fn sum_rows(rows: &[UnitLedger]) -> i32 {
+    let mut total = 0;
+    for row in rows {
+        total += row.total();
+    }
+    println!("{}", total);
+    total
+}
+
+---
+#[derive(Debug, Clone)]
+struct RecordQueue {
+    amount: i32,
+    level: i32,
+    count: i32,
+    limit: i32,
+    width: i32,
+}
+
+impl RecordQueue {
+    fn add_amount(&mut self, amount: i32) {
+        if amount > 2 {
+            self.amount += amount;
+        } else {
+            println!("{}", amount);
+        }
+    }
+
+    fn add_level(&mut self, level: i32) {
+        if level > 3 {
+            self.level += level;
+        } else {
+            println!("{}", level);
+        }
+    }
+
+    fn add_count(&mut self, count: i32) {
+        if count > 4 {
+            self.count += count;
+        } else {
+            println!("{}", count);
+        }
+    }
+
+    fn add_limit(&mut self, limit: i32) {
+        if limit > 5 {
+            self.limit += limit;
+        } else {
+            println!("{}", limit);
+        }
+    }
+
+    fn add_width(&mut self, width: i32) {
+        if width > 6 {
+            self.width += width;
+        } else {
+            println!("{}", width);
+        }
+    }
+
+    fn total(&self) -> i32 {
+        self.amount + self.level + self.count + self.limit + self.width
+    }
+}
+
+fn sum_rows(rows: &[RecordQueue]) -> i32 {
+    let mut total = 0;
+    for row in rows {
+        total += row.total();
+    }
+    println!("{}", total);
+    total
+}
+
+---
+#[derive(Debug, Clone)]
+struct BatchStore {
+    level: i32,
+    weight: i32,
+    height: i32,
+}
+
+impl BatchStore {
+    fn add_level(&mut self, level: i32) {
+        if level > 3 {
+            self.level += level;
+        } else {
+            println!("{}", level);
+        }
+    }
+
+    fn add_weight(&mut self, weight: i32) {
+        if weight > 4 {
+            self.weight += weight;
+        } else {
+            println!("{}", weight);
+        }
+    }
+
+    fn add_height(&mut self, height: i32) {
+        if height > 5 {
+            self.height += height;
+        } else {
+            println!("{}", height);
+        }
+    }
+
+    fn total(&self) -> i32 {
+        self.level + self.weight + self.height
+    }
+}
+
+fn sum_rows(rows: &[BatchStore]) -> i32 {
+    let mut total = 0;
+    for row in rows {
+        total += row.total();
+    }
+    println!("{}", total);
+    total
+}
+
+---
+#[derive(Debug, Clone)]
+struct SampleTable {
+    score: i32,
+    height: i32,
+    limit: i32,
+    weight: i32,
+}
+
+impl SampleTable {
+    fn add_score(&mut self, score: i32) {
+        if score > 4 {
+            self.score += score;
+        } else {
+            println!("{}", score);
+        }
+    }
+
+    fn add_height(&mut self, height: i32) {
+        if height > 5 {
+            self.height += height;
+        } else {
+            println!("{}", height);
+        }
+    }
+
+    fn add_limit(&mut self, limit: i32) {
+        if limit > 6 {
+            self.limit += limit;
+        } else {
+            println!("{}", limit);
+        }
+    }
+
+    fn add_weight(&mut self, weight: i32) {
+        if weight > 7 {
+            self.weight += weight;
+        } else {
+            println!("{}", weight);
+        }
+    }
+
+    fn total(&self) -> i32 {
+        self.score + self.height + self.limit + self.weight
+    }
+}
+
+fn sum_rows(rows: &[SampleTable]) -> i32 {
+    let mut total = 0;
+    for row in rows {
+        total += row.total();
+    }
+    println!("{}", total);
+    total
+}
+
+---
+#[derive(Debug, Clone)]
+struct EntryIndex {
+    score: i32,
+    weight: i32,
+    width: i32,
+    height: i32,
+    index: i32,
+}
+
+impl EntryIndex {
+    fn add_score(&mut self, score: i32) {
+        if score > 5 {
+            self.score += score;
+        } else {
+            println!("{}", score);
+        }
+    }
+
+    fn add_weight(&mut self, weight: i32) {
+        if weight > 6 {
+            self.weight += weight;
+        } else {
+            println!("{}", weight);
+        }
+    }
+
+    fn add_width(&mut self, width: i32) {
+        if width > 7 {
+            self.width += width;
+        } else {
+            println!("{}", width);
+        }
+    }
+
+    fn add_height(&mut self, height: i32) {
+        if height > 8 {
+            self.height += height;
+        } else {
+            println!("{}", height);
+        }
+    }
+
+    fn add_index(&mut self, index: i32) {
+        if index > 9 {
+            self.index += index;
+        } else {
+            println!("{}", index);
+        }
+    }
+
+    fn total(&self) -> i32 {
+        self.score + self.weight + self.width + self.height + self.index
+    }
+}
+
+fn sum_rows(rows: &[EntryIndex]) -> i32 {
+    let mut total = 0;
+    for row in rows {
+        total += row.total();
+    }
+    println!("{}", total);
+    total
+}
+
+---
+#[derive(Debug, Clone)]
+struct ItemBatch {
+    weight: i32,
+    total: i32,
+    limit: i32,
+}
+
+impl ItemBatch {
+    fn add_weight(&mut self, weight: i32) {
+        if weight > 6 {
+            self.weight += weight;
+        } else {
+            println!("{}", weight);
+        }
+    }
+
+    fn add_total(&mut self, total: i32) {
+        if total > 7 {
+            self.total += total;
+        } else {
+            println!("{}", total);
+        }
+    }
+
+    fn add_limit(&mut self, limit: i32) {
+        if limit > 8 {
+            self.limit += limit;
+        } else {
+            println!("{}", limit);
+        }
+    }
+
+    fn total(&self) -> i32 {
+        self.weight + self.total + self.limit
+    }
+}
+
+fn sum_rows(rows: &[ItemBatch]) -> i32 {
+    let mut total = 0;
+    for row in rows {
+        total += row.total();
+    }
+    println!("{}", total);
+    total
+}
+
+---
+#[derive(Debug, Clone)]
+struct NodeLedger {
+    total: i32,
+    index: i32,
+    amount: i32,
+    level: i32,
+}
+
+impl NodeLedger {
+    fn add_total(&mut self, total: i32) {
+        if total > 7 {
+            self.total += total;
+        } else {
+            println!("{}", total);
+        }
+    }
+
+    fn add_index(&mut self, index: i32) {
+        if index > 8 {
+            self.index += index;
+        } else {
+            println!("{}", index);
+        }
+    }
+
+    fn add_amount(&mut self, amount: i32) {
+        if amount > 9 {
+            self.amount += amount;
+        } else {
+            println!("{}", amount);
+        }
+    }
+
+    fn add_level(&mut self, level: i32) {
+        if level > 10 {
+            self.level += level;
+        } else {
+            println!("{}", level);
+        }
+    }
+
+    fn total(&self) -> i32 {
+        self.total + self.index + self.amount + self.level
+    }
+}
+
+fn sum_rows(rows: &[NodeLedger]) -> i32 {
+    let mut total = 0;
+    for row in rows {
+        total += row.total();
+    }
+    println!("{}", total);
+    total
+}
+
+---
+#[derive(Debug, Clone)]
+struct RowQueue {
+    height: i32,
+    index: i32,
+    limit: i32,
+    total: i32,
+    width: i32,
+}
+
+impl RowQueue {
+    fn add_height(&mut self, height: i32) {
+        if height > 1 {
+            self.height += height;
+        } else {
+            println!("{}", height);
+        }
+    }
+
+    fn add_index(&mut self, index: i32) {
+        if index > 2 {
+            self.index += index;
+        } else {
+            println!("{}", index);
+        }
+    }
+
+    fn add_limit(&mut self, limit: i32) {
+        if limit > 3 {
+            self.limit += limit;
+        } else {
+            println!("{}", limit);
+        }
+    }
+
+    fn add_total(&mut self, total: i32) {
+        if total > 4 {
+            self.total += total;
+        } else {
+            println!("{}", total);
+        }
+    }
+
+    fn add_width(&mut self, width: i32) {
+        if width > 5 {
+            self.width += width;
+        } else {
+            println!("{}", width);
+        }
+    }
+
+    fn total(&self) -> i32 {
+        self.height + self.index + self.limit + self.total + self.width
+    }
+}
+
+fn sum_rows(rows: &[RowQueue]) -> i32 {
+    let mut total = 0;
+    for row in rows {
+        total += row.total();
+    }
+    println!("{}", total);
+    total
+}
+
+---
+#[derive(Debug, Clone)]
+struct UnitStore {
+    weight: i32,
+    limit: i32,
+    width: i32,
+}
+
+impl UnitStore {
+    fn add_weight(&mut self, weight: i32) {
+        if weight > 2 {
+            self.weight += weight;
+        } else {
+            println!("{}", weight);
+        }
+    }
+
+    fn add_limit(&mut self, limit: i32) {
+        if limit > 3 {
+            self.limit += limit;
+        } else {
+            println!("{}", limit);
+        }
+    }
+
+    fn add_width(&mut self, width: i32) {
+        if width > 4 {
+            self.width += width;
+        } else {
+            println!("{}", width);
+        }
+    }
+
+    fn total(&self) -> i32 {
+        self.weight + self.limit + self.width
+    }
+}
+
+fn sum_rows(rows: &[UnitStore]) -> i32 {
+    let mut total = 0;
+    for row in rows {
+        total += row.total();
+    }
+    println!("{}", total);
+    total
+}
+
+---
+#[derive(Debug, Clone)]
+struct RecordTable {
+    limit: i32,
+    width: i32,
+    level: i32,
+    weight: i32,
+}
+
+impl RecordTable {
+    fn add_limit(&mut self, limit: i32) {
+        if limit > 3 {
+            self.limit += limit;
+        } else {
+            println!("{}", limit);
+        }
+    }
+
+    fn add_width(&mut self, width: i32) {
+        if width > 4 {
+            self.width += width;
+        } else {
+            println!("{}", width);
+        }
+    }
+
+    fn add_level(&mut self, level: i32) {
+        if level > 5 {
+            self.level += level;
+        } else {
+            println!("{}", level);
+        }
+    }
+
+    fn add_weight(&mut self, weight: i32) {
+        if weight > 6 {
+            self.weight += weight;
+        } else {
+            println!("{}", weight);
+        }
+    }
+
+    fn total(&self) -> i32 {
+        self.limit + self.width + self.level + self.weight
+    }
+}
+
+fn sum_rows(rows: &[RecordTable]) -> i32 {
+    let mut total = 0;
+    for row in rows {
+        total += row.total();
+    }
+    println!("{}", total);
+    total
+}
+
+---
+#[derive(Debug, Clone)]
+struct BatchIndex {
+    amount: i32,
+    index: i32,
+    width: i32,
+    total: i32,
+    weight: i32,
+}
+
+impl BatchIndex {
+    fn add_amount(&mut self, amount: i32) {
+        if amount > 4 {
+            self.amount += amount;
+        } else {
+            println!("{}", amount);
+        }
+    }
+
+    fn add_index(&mut self, index: i32) {
+        if index > 5 {
+            self.index += index;
+        } else {
+            println!("{}", index);
+        }
+    }
+
+    fn add_width(&mut self, width: i32) {
+        if width > 6 {
+            self.width += width;
+        } else {
+            println!("{}", width);
+        }
+    }
+
+    fn add_total(&mut self, total: i32) {
+        if total > 7 {
+            self.total += total;
+        } else {
+            println!("{}", total);
+        }
+    }
+
+    fn add_weight(&mut self, weight: i32) {
+        if weight > 8 {
+            self.weight += weight;
+        } else {
+            println!("{}", weight);
+        }
+    }
+
+    fn total(&self) -> i32 {
+        self.amount + self.index + self.width + self.total + self.weight
+    }
+}
+
+fn sum_rows(rows: &[BatchIndex]) -> i32 {
+    let mut total = 0;
+    for row in rows {
+        total += row.total();
+    }
+    println!("{}", total);
+    total
+}
+
+---
+#[derive(Debug, Clone)]
+struct SampleBatch {
+    total: i32,
+    weight: i32,
+    limit: i32,
+}
+
+impl SampleBatch {
+    fn add_total(&mut self, total: i32) {
+        if total > 5 {
+            self.total += total;
+        } else {
+            println!("{}", total);
+        }
+    }
+
+    fn add_weight(&mut self, weight: i32) {
+        if weight > 6 {
+            self.weight += weight;
+        } else {
+            println!("{}", weight);
+        }
+    }
+
+    fn add_limit(&mut self, limit: i32) {
+        if limit > 7 {
+            self.limit += limit;
+        } else {
+            println!("{}", limit);
+        }
+    }
+
+    fn total(&self) -> i32 {
+        self.total + self.weight + self.limit
+    }
+}
+
+fn sum_rows(rows: &[SampleBatch]) -> i32 {
+    let mut total = 0;
+    for row in rows {
+        total += row.total();
+    }
+    println!("{}", total);
+    total
+}
+
+---
+#[derive(Debug, Clone)]
+struct EntryLedger {
+    amount: i32,
+    score: i32,
+    width: i32,
+    limit: i32,
+}
+
+impl EntryLedger {
+    fn add_amount(&mut self, amount: i32) {
+        if amount > 6 {
+            self.amount += amount;
+        } else {
+            println!("{}", amount);
+        }
+    }
+
+    fn add_score(&mut self, score: i32) {
+        if score > 7 {
+            self.score += score;
+        } else {
+            println!("{}", score);
+        }
+    }
+
+    fn add_width(&mut self, width: i32) {
+        if width > 8 {
+            self.width += width;
+        } else {
+            println!("{}", width);
+        }
+    }
+
+    fn add_limit(&mut self, limit: i32) {
+        if limit > 9 {
+            self.limit += limit;
+        } else {
+            println!("{}", limit);
+        }
+    }
+
+    fn total(&self) -> i32 {
+        self.amount + self.score + self.width + self.limit
+    }
+}
+
+fn sum_rows(rows: &[EntryLedger]) -> i32 {
+    let mut total = 0;
+    for row in rows {
+        total += row.total();
+    }
+    println!("{}", total);
+    total
+}
+
+---
+#[derive(Debug, Clone)]
+struct ItemQueue {
+    level: i32,
+    score: i32,
+    amount: i32,
+    total: i32,
+    index: i32,
+}
+
+impl ItemQueue {
+    fn add_level(&mut self, level: i32) {
+        if level > 7 {
+            self.level += level;
+        } else {
+            println!("{}", level);
+        }
+    }
+
+    fn add_score(&mut self, score: i32) {
+        if score > 8 {
+            self.score += score;
+        } else {
+            println!("{}", score);
+        }
+    }
+
+    fn add_amount(&mut self, amount: i32) {
+        if amount > 9 {
+            self.amount += amount;
+        } else {
+            println!("{}", amount);
+        }
+    }
+
+    fn add_total(&mut self, total: i32) {
+        if total > 10 {
+            self.total += total;
+        } else {
+            println!("{}", total);
+        }
+    }
+
+    fn add_index(&mut self, index: i32) {
+        if index > 11 {
+            self.index += index;
+        } else {
+            println!("{}", index);
+        }
+    }
+
+    fn total(&self) -> i32 {
+        self.level + self.score + self.amount + self.total + self.index
+    }
+}
+
+fn sum_rows(rows: &[ItemQueue]) -> i32 {
+    let mut total = 0;
+    for row in rows {
+        total += row.total();
+    }
+    println!("{}", total);
+    total
+}
