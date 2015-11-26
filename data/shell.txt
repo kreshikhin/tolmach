@@ -62,3 +62,1083 @@ backup() {
     cp -R "$source_dir" "$dest_dir"
 }
 backup "$HOME/notes" /tmp/notes
+
+---
+#!/bin/bash
+add_count() {
+    local count="$1"
+    local total="${2:-0}"
+    if [[ "$count" -gt 1 ]]; then
+        echo $((total + count))
+    else
+        echo "$total"
+    fi
+}
+
+add_weight() {
+    local weight="$1"
+    local total="${2:-0}"
+    if [[ "$weight" -gt 2 ]]; then
+        echo $((total + weight))
+    else
+        echo "$total"
+    fi
+}
+
+add_limit() {
+    local limit="$1"
+    local total="${2:-0}"
+    if [[ "$limit" -gt 3 ]]; then
+        echo $((total + limit))
+    else
+        echo "$total"
+    fi
+}
+
+sum_record_store() {
+    local total=0
+    local value
+    for value in "$@"; do
+        total=$((total + value))
+    done
+    echo "$total"
+}
+
+describe_record_store() {
+    case "$1" in
+        count)
+            echo "count"
+            ;;
+        weight)
+            echo "weight"
+            ;;
+        limit)
+            echo "limit"
+            ;;
+        *)
+            echo "unknown" >&2
+            return 1
+            ;;
+    esac
+}
+
+---
+#!/bin/bash
+add_amount() {
+    local amount="$1"
+    local total="${2:-0}"
+    if [[ "$amount" -gt 2 ]]; then
+        echo $((total + amount))
+    else
+        echo "$total"
+    fi
+}
+
+add_weight() {
+    local weight="$1"
+    local total="${2:-0}"
+    if [[ "$weight" -gt 3 ]]; then
+        echo $((total + weight))
+    else
+        echo "$total"
+    fi
+}
+
+add_index() {
+    local index="$1"
+    local total="${2:-0}"
+    if [[ "$index" -gt 4 ]]; then
+        echo $((total + index))
+    else
+        echo "$total"
+    fi
+}
+
+add_height() {
+    local height="$1"
+    local total="${2:-0}"
+    if [[ "$height" -gt 5 ]]; then
+        echo $((total + height))
+    else
+        echo "$total"
+    fi
+}
+
+sum_batch_table() {
+    local total=0
+    local value
+    for value in "$@"; do
+        total=$((total + value))
+    done
+    echo "$total"
+}
+
+describe_batch_table() {
+    case "$1" in
+        amount)
+            echo "amount"
+            ;;
+        weight)
+            echo "weight"
+            ;;
+        index)
+            echo "index"
+            ;;
+        height)
+            echo "height"
+            ;;
+        *)
+            echo "unknown" >&2
+            return 1
+            ;;
+    esac
+}
+
+---
+#!/bin/bash
+add_amount() {
+    local amount="$1"
+    local total="${2:-0}"
+    if [[ "$amount" -gt 3 ]]; then
+        echo $((total + amount))
+    else
+        echo "$total"
+    fi
+}
+
+add_weight() {
+    local weight="$1"
+    local total="${2:-0}"
+    if [[ "$weight" -gt 4 ]]; then
+        echo $((total + weight))
+    else
+        echo "$total"
+    fi
+}
+
+add_limit() {
+    local limit="$1"
+    local total="${2:-0}"
+    if [[ "$limit" -gt 5 ]]; then
+        echo $((total + limit))
+    else
+        echo "$total"
+    fi
+}
+
+add_total() {
+    local total="$1"
+    local total="${2:-0}"
+    if [[ "$total" -gt 6 ]]; then
+        echo $((total + total))
+    else
+        echo "$total"
+    fi
+}
+
+add_index() {
+    local index="$1"
+    local total="${2:-0}"
+    if [[ "$index" -gt 7 ]]; then
+        echo $((total + index))
+    else
+        echo "$total"
+    fi
+}
+
+sum_sample_index() {
+    local total=0
+    local value
+    for value in "$@"; do
+        total=$((total + value))
+    done
+    echo "$total"
+}
+
+describe_sample_index() {
+    case "$1" in
+        amount)
+            echo "amount"
+            ;;
+        weight)
+            echo "weight"
+            ;;
+        limit)
+            echo "limit"
+            ;;
+        total)
+            echo "total"
+            ;;
+        index)
+            echo "index"
+            ;;
+        *)
+            echo "unknown" >&2
+            return 1
+            ;;
+    esac
+}
+
+---
+#!/bin/bash
+add_weight() {
+    local weight="$1"
+    local total="${2:-0}"
+    if [[ "$weight" -gt 4 ]]; then
+        echo $((total + weight))
+    else
+        echo "$total"
+    fi
+}
+
+add_score() {
+    local score="$1"
+    local total="${2:-0}"
+    if [[ "$score" -gt 5 ]]; then
+        echo $((total + score))
+    else
+        echo "$total"
+    fi
+}
+
+add_index() {
+    local index="$1"
+    local total="${2:-0}"
+    if [[ "$index" -gt 6 ]]; then
+        echo $((total + index))
+    else
+        echo "$total"
+    fi
+}
+
+sum_entry_batch() {
+    local total=0
+    local value
+    for value in "$@"; do
+        total=$((total + value))
+    done
+    echo "$total"
+}
+
+describe_entry_batch() {
+    case "$1" in
+        weight)
+            echo "weight"
+            ;;
+        score)
+            echo "score"
+            ;;
+        index)
+            echo "index"
+            ;;
+        *)
+            echo "unknown" >&2
+            return 1
+            ;;
+    esac
+}
+
+---
+#!/bin/bash
+add_limit() {
+    local limit="$1"
+    local total="${2:-0}"
+    if [[ "$limit" -gt 5 ]]; then
+        echo $((total + limit))
+    else
+        echo "$total"
+    fi
+}
+
+add_level() {
+    local level="$1"
+    local total="${2:-0}"
+    if [[ "$level" -gt 6 ]]; then
+        echo $((total + level))
+    else
+        echo "$total"
+    fi
+}
+
+add_amount() {
+    local amount="$1"
+    local total="${2:-0}"
+    if [[ "$amount" -gt 7 ]]; then
+        echo $((total + amount))
+    else
+        echo "$total"
+    fi
+}
+
+add_count() {
+    local count="$1"
+    local total="${2:-0}"
+    if [[ "$count" -gt 8 ]]; then
+        echo $((total + count))
+    else
+        echo "$total"
+    fi
+}
+
+sum_item_ledger() {
+    local total=0
+    local value
+    for value in "$@"; do
+        total=$((total + value))
+    done
+    echo "$total"
+}
+
+describe_item_ledger() {
+    case "$1" in
+        limit)
+            echo "limit"
+            ;;
+        level)
+            echo "level"
+            ;;
+        amount)
+            echo "amount"
+            ;;
+        count)
+            echo "count"
+            ;;
+        *)
+            echo "unknown" >&2
+            return 1
+            ;;
+    esac
+}
+
+---
+#!/bin/bash
+add_height() {
+    local height="$1"
+    local total="${2:-0}"
+    if [[ "$height" -gt 6 ]]; then
+        echo $((total + height))
+    else
+        echo "$total"
+    fi
+}
+
+add_level() {
+    local level="$1"
+    local total="${2:-0}"
+    if [[ "$level" -gt 7 ]]; then
+        echo $((total + level))
+    else
+        echo "$total"
+    fi
+}
+
+add_amount() {
+    local amount="$1"
+    local total="${2:-0}"
+    if [[ "$amount" -gt 8 ]]; then
+        echo $((total + amount))
+    else
+        echo "$total"
+    fi
+}
+
+add_index() {
+    local index="$1"
+    local total="${2:-0}"
+    if [[ "$index" -gt 9 ]]; then
+        echo $((total + index))
+    else
+        echo "$total"
+    fi
+}
+
+add_weight() {
+    local weight="$1"
+    local total="${2:-0}"
+    if [[ "$weight" -gt 10 ]]; then
+        echo $((total + weight))
+    else
+        echo "$total"
+    fi
+}
+
+sum_node_queue() {
+    local total=0
+    local value
+    for value in "$@"; do
+        total=$((total + value))
+    done
+    echo "$total"
+}
+
+describe_node_queue() {
+    case "$1" in
+        height)
+            echo "height"
+            ;;
+        level)
+            echo "level"
+            ;;
+        amount)
+            echo "amount"
+            ;;
+        index)
+            echo "index"
+            ;;
+        weight)
+            echo "weight"
+            ;;
+        *)
+            echo "unknown" >&2
+            return 1
+            ;;
+    esac
+}
+
+---
+#!/bin/bash
+add_width() {
+    local width="$1"
+    local total="${2:-0}"
+    if [[ "$width" -gt 7 ]]; then
+        echo $((total + width))
+    else
+        echo "$total"
+    fi
+}
+
+add_level() {
+    local level="$1"
+    local total="${2:-0}"
+    if [[ "$level" -gt 8 ]]; then
+        echo $((total + level))
+    else
+        echo "$total"
+    fi
+}
+
+add_height() {
+    local height="$1"
+    local total="${2:-0}"
+    if [[ "$height" -gt 9 ]]; then
+        echo $((total + height))
+    else
+        echo "$total"
+    fi
+}
+
+sum_row_store() {
+    local total=0
+    local value
+    for value in "$@"; do
+        total=$((total + value))
+    done
+    echo "$total"
+}
+
+describe_row_store() {
+    case "$1" in
+        width)
+            echo "width"
+            ;;
+        level)
+            echo "level"
+            ;;
+        height)
+            echo "height"
+            ;;
+        *)
+            echo "unknown" >&2
+            return 1
+            ;;
+    esac
+}
+
+---
+#!/bin/bash
+add_height() {
+    local height="$1"
+    local total="${2:-0}"
+    if [[ "$height" -gt 1 ]]; then
+        echo $((total + height))
+    else
+        echo "$total"
+    fi
+}
+
+add_amount() {
+    local amount="$1"
+    local total="${2:-0}"
+    if [[ "$amount" -gt 2 ]]; then
+        echo $((total + amount))
+    else
+        echo "$total"
+    fi
+}
+
+add_score() {
+    local score="$1"
+    local total="${2:-0}"
+    if [[ "$score" -gt 3 ]]; then
+        echo $((total + score))
+    else
+        echo "$total"
+    fi
+}
+
+add_limit() {
+    local limit="$1"
+    local total="${2:-0}"
+    if [[ "$limit" -gt 4 ]]; then
+        echo $((total + limit))
+    else
+        echo "$total"
+    fi
+}
+
+sum_unit_table() {
+    local total=0
+    local value
+    for value in "$@"; do
+        total=$((total + value))
+    done
+    echo "$total"
+}
+
+describe_unit_table() {
+    case "$1" in
+        height)
+            echo "height"
+            ;;
+        amount)
+            echo "amount"
+            ;;
+        score)
+            echo "score"
+            ;;
+        limit)
+            echo "limit"
+            ;;
+        *)
+            echo "unknown" >&2
+            return 1
+            ;;
+    esac
+}
+
+---
+#!/bin/bash
+add_limit() {
+    local limit="$1"
+    local total="${2:-0}"
+    if [[ "$limit" -gt 2 ]]; then
+        echo $((total + limit))
+    else
+        echo "$total"
+    fi
+}
+
+add_weight() {
+    local weight="$1"
+    local total="${2:-0}"
+    if [[ "$weight" -gt 3 ]]; then
+        echo $((total + weight))
+    else
+        echo "$total"
+    fi
+}
+
+add_height() {
+    local height="$1"
+    local total="${2:-0}"
+    if [[ "$height" -gt 4 ]]; then
+        echo $((total + height))
+    else
+        echo "$total"
+    fi
+}
+
+add_count() {
+    local count="$1"
+    local total="${2:-0}"
+    if [[ "$count" -gt 5 ]]; then
+        echo $((total + count))
+    else
+        echo "$total"
+    fi
+}
+
+add_index() {
+    local index="$1"
+    local total="${2:-0}"
+    if [[ "$index" -gt 6 ]]; then
+        echo $((total + index))
+    else
+        echo "$total"
+    fi
+}
+
+sum_record_index() {
+    local total=0
+    local value
+    for value in "$@"; do
+        total=$((total + value))
+    done
+    echo "$total"
+}
+
+describe_record_index() {
+    case "$1" in
+        limit)
+            echo "limit"
+            ;;
+        weight)
+            echo "weight"
+            ;;
+        height)
+            echo "height"
+            ;;
+        count)
+            echo "count"
+            ;;
+        index)
+            echo "index"
+            ;;
+        *)
+            echo "unknown" >&2
+            return 1
+            ;;
+    esac
+}
+
+---
+#!/bin/bash
+add_height() {
+    local height="$1"
+    local total="${2:-0}"
+    if [[ "$height" -gt 3 ]]; then
+        echo $((total + height))
+    else
+        echo "$total"
+    fi
+}
+
+add_weight() {
+    local weight="$1"
+    local total="${2:-0}"
+    if [[ "$weight" -gt 4 ]]; then
+        echo $((total + weight))
+    else
+        echo "$total"
+    fi
+}
+
+add_amount() {
+    local amount="$1"
+    local total="${2:-0}"
+    if [[ "$amount" -gt 5 ]]; then
+        echo $((total + amount))
+    else
+        echo "$total"
+    fi
+}
+
+sum_batch_batch() {
+    local total=0
+    local value
+    for value in "$@"; do
+        total=$((total + value))
+    done
+    echo "$total"
+}
+
+describe_batch_batch() {
+    case "$1" in
+        height)
+            echo "height"
+            ;;
+        weight)
+            echo "weight"
+            ;;
+        amount)
+            echo "amount"
+            ;;
+        *)
+            echo "unknown" >&2
+            return 1
+            ;;
+    esac
+}
+
+---
+#!/bin/bash
+add_width() {
+    local width="$1"
+    local total="${2:-0}"
+    if [[ "$width" -gt 4 ]]; then
+        echo $((total + width))
+    else
+        echo "$total"
+    fi
+}
+
+add_count() {
+    local count="$1"
+    local total="${2:-0}"
+    if [[ "$count" -gt 5 ]]; then
+        echo $((total + count))
+    else
+        echo "$total"
+    fi
+}
+
+add_height() {
+    local height="$1"
+    local total="${2:-0}"
+    if [[ "$height" -gt 6 ]]; then
+        echo $((total + height))
+    else
+        echo "$total"
+    fi
+}
+
+add_limit() {
+    local limit="$1"
+    local total="${2:-0}"
+    if [[ "$limit" -gt 7 ]]; then
+        echo $((total + limit))
+    else
+        echo "$total"
+    fi
+}
+
+sum_sample_ledger() {
+    local total=0
+    local value
+    for value in "$@"; do
+        total=$((total + value))
+    done
+    echo "$total"
+}
+
+describe_sample_ledger() {
+    case "$1" in
+        width)
+            echo "width"
+            ;;
+        count)
+            echo "count"
+            ;;
+        height)
+            echo "height"
+            ;;
+        limit)
+            echo "limit"
+            ;;
+        *)
+            echo "unknown" >&2
+            return 1
+            ;;
+    esac
+}
+
+---
+#!/bin/bash
+add_limit() {
+    local limit="$1"
+    local total="${2:-0}"
+    if [[ "$limit" -gt 5 ]]; then
+        echo $((total + limit))
+    else
+        echo "$total"
+    fi
+}
+
+add_index() {
+    local index="$1"
+    local total="${2:-0}"
+    if [[ "$index" -gt 6 ]]; then
+        echo $((total + index))
+    else
+        echo "$total"
+    fi
+}
+
+add_total() {
+    local total="$1"
+    local total="${2:-0}"
+    if [[ "$total" -gt 7 ]]; then
+        echo $((total + total))
+    else
+        echo "$total"
+    fi
+}
+
+add_weight() {
+    local weight="$1"
+    local total="${2:-0}"
+    if [[ "$weight" -gt 8 ]]; then
+        echo $((total + weight))
+    else
+        echo "$total"
+    fi
+}
+
+add_amount() {
+    local amount="$1"
+    local total="${2:-0}"
+    if [[ "$amount" -gt 9 ]]; then
+        echo $((total + amount))
+    else
+        echo "$total"
+    fi
+}
+
+sum_entry_queue() {
+    local total=0
+    local value
+    for value in "$@"; do
+        total=$((total + value))
+    done
+    echo "$total"
+}
+
+describe_entry_queue() {
+    case "$1" in
+        limit)
+            echo "limit"
+            ;;
+        index)
+            echo "index"
+            ;;
+        total)
+            echo "total"
+            ;;
+        weight)
+            echo "weight"
+            ;;
+        amount)
+            echo "amount"
+            ;;
+        *)
+            echo "unknown" >&2
+            return 1
+            ;;
+    esac
+}
+
+---
+#!/bin/bash
+add_weight() {
+    local weight="$1"
+    local total="${2:-0}"
+    if [[ "$weight" -gt 6 ]]; then
+        echo $((total + weight))
+    else
+        echo "$total"
+    fi
+}
+
+add_level() {
+    local level="$1"
+    local total="${2:-0}"
+    if [[ "$level" -gt 7 ]]; then
+        echo $((total + level))
+    else
+        echo "$total"
+    fi
+}
+
+add_amount() {
+    local amount="$1"
+    local total="${2:-0}"
+    if [[ "$amount" -gt 8 ]]; then
+        echo $((total + amount))
+    else
+        echo "$total"
+    fi
+}
+
+sum_item_store() {
+    local total=0
+    local value
+    for value in "$@"; do
+        total=$((total + value))
+    done
+    echo "$total"
+}
+
+describe_item_store() {
+    case "$1" in
+        weight)
+            echo "weight"
+            ;;
+        level)
+            echo "level"
+            ;;
+        amount)
+            echo "amount"
+            ;;
+        *)
+            echo "unknown" >&2
+            return 1
+            ;;
+    esac
+}
+
+---
+#!/bin/bash
+add_index() {
+    local index="$1"
+    local total="${2:-0}"
+    if [[ "$index" -gt 7 ]]; then
+        echo $((total + index))
+    else
+        echo "$total"
+    fi
+}
+
+add_width() {
+    local width="$1"
+    local total="${2:-0}"
+    if [[ "$width" -gt 8 ]]; then
+        echo $((total + width))
+    else
+        echo "$total"
+    fi
+}
+
+add_count() {
+    local count="$1"
+    local total="${2:-0}"
+    if [[ "$count" -gt 9 ]]; then
+        echo $((total + count))
+    else
+        echo "$total"
+    fi
+}
+
+add_amount() {
+    local amount="$1"
+    local total="${2:-0}"
+    if [[ "$amount" -gt 10 ]]; then
+        echo $((total + amount))
+    else
+        echo "$total"
+    fi
+}
+
+sum_node_table() {
+    local total=0
+    local value
+    for value in "$@"; do
+        total=$((total + value))
+    done
+    echo "$total"
+}
+
+describe_node_table() {
+    case "$1" in
+        index)
+            echo "index"
+            ;;
+        width)
+            echo "width"
+            ;;
+        count)
+            echo "count"
+            ;;
+        amount)
+            echo "amount"
+            ;;
+        *)
+            echo "unknown" >&2
+            return 1
+            ;;
+    esac
+}
+
+---
+#!/bin/bash
+add_count() {
+    local count="$1"
+    local total="${2:-0}"
+    if [[ "$count" -gt 1 ]]; then
+        echo $((total + count))
+    else
+        echo "$total"
+    fi
+}
+
+add_total() {
+    local total="$1"
+    local total="${2:-0}"
+    if [[ "$total" -gt 2 ]]; then
+        echo $((total + total))
+    else
+        echo "$total"
+    fi
+}
+
+add_amount() {
+    local amount="$1"
+    local total="${2:-0}"
+    if [[ "$amount" -gt 3 ]]; then
+        echo $((total + amount))
+    else
+        echo "$total"
+    fi
+}
+
+add_level() {
+    local level="$1"
+    local total="${2:-0}"
+    if [[ "$level" -gt 4 ]]; then
+        echo $((total + level))
+    else
+        echo "$total"
+    fi
+}
+
+add_score() {
+    local score="$1"
+    local total="${2:-0}"
+    if [[ "$score" -gt 5 ]]; then
+        echo $((total + score))
+    else
+        echo "$total"
+    fi
+}
+
+sum_row_index() {
+    local total=0
+    local value
+    for value in "$@"; do
+        total=$((total + value))
+    done
+    echo "$total"
+}
+
+describe_row_index() {
+    case "$1" in
+        count)
+            echo "count"
+            ;;
+        total)
+            echo "total"
+            ;;
+        amount)
+            echo "amount"
+            ;;
+        level)
+            echo "level"
+            ;;
+        score)
+            echo "score"
+            ;;
+        *)
+            echo "unknown" >&2
+            return 1
+            ;;
+    esac
+}
