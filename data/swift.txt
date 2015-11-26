@@ -75,3 +75,1179 @@ import Foundation
 let prices = [1, 2, 3]
 let doubled = prices.map { price in price * 2 }
 print(doubled)
+
+---
+import Foundation
+
+struct RecordBatch {
+    var weight: Int
+    var count: Int
+    var limit: Int
+
+    mutating func addWeight(_ weight: Int) {
+        guard weight > 1 else {
+            print(weight)
+            return
+        }
+        self.weight += weight
+    }
+
+    mutating func addCount(_ count: Int) {
+        guard count > 2 else {
+            print(count)
+            return
+        }
+        self.count += count
+    }
+
+    mutating func addLimit(_ limit: Int) {
+        guard limit > 3 else {
+            print(limit)
+            return
+        }
+        self.limit += limit
+    }
+
+    func total() -> Int {
+        return weight + count + limit
+    }
+}
+
+func collectRecordBatch(rows: [RecordBatch]) -> Int {
+    var total = 0
+    for row in rows {
+        total += row.total()
+    }
+    let snapshot = total
+    print(snapshot)
+    return snapshot
+}
+
+---
+import Foundation
+
+struct BatchLedger {
+    var total: Int
+    var amount: Int
+    var limit: Int
+    var index: Int
+
+    mutating func addTotal(_ total: Int) {
+        guard total > 2 else {
+            print(total)
+            return
+        }
+        self.total += total
+    }
+
+    mutating func addAmount(_ amount: Int) {
+        guard amount > 3 else {
+            print(amount)
+            return
+        }
+        self.amount += amount
+    }
+
+    mutating func addLimit(_ limit: Int) {
+        guard limit > 4 else {
+            print(limit)
+            return
+        }
+        self.limit += limit
+    }
+
+    mutating func addIndex(_ index: Int) {
+        guard index > 5 else {
+            print(index)
+            return
+        }
+        self.index += index
+    }
+
+    func total() -> Int {
+        return total + amount + limit + index
+    }
+}
+
+func collectBatchLedger(rows: [BatchLedger]) -> Int {
+    var total = 0
+    for row in rows {
+        total += row.total()
+    }
+    let snapshot = total
+    print(snapshot)
+    return snapshot
+}
+
+---
+import Foundation
+
+struct SampleQueue {
+    var count: Int
+    var width: Int
+    var weight: Int
+    var index: Int
+    var level: Int
+
+    mutating func addCount(_ count: Int) {
+        guard count > 3 else {
+            print(count)
+            return
+        }
+        self.count += count
+    }
+
+    mutating func addWidth(_ width: Int) {
+        guard width > 4 else {
+            print(width)
+            return
+        }
+        self.width += width
+    }
+
+    mutating func addWeight(_ weight: Int) {
+        guard weight > 5 else {
+            print(weight)
+            return
+        }
+        self.weight += weight
+    }
+
+    mutating func addIndex(_ index: Int) {
+        guard index > 6 else {
+            print(index)
+            return
+        }
+        self.index += index
+    }
+
+    mutating func addLevel(_ level: Int) {
+        guard level > 7 else {
+            print(level)
+            return
+        }
+        self.level += level
+    }
+
+    func total() -> Int {
+        return count + width + weight + index + level
+    }
+}
+
+func collectSampleQueue(rows: [SampleQueue]) -> Int {
+    var total = 0
+    for row in rows {
+        total += row.total()
+    }
+    let snapshot = total
+    print(snapshot)
+    return snapshot
+}
+
+---
+import Foundation
+
+struct EntryStore {
+    var index: Int
+    var amount: Int
+    var score: Int
+
+    mutating func addIndex(_ index: Int) {
+        guard index > 4 else {
+            print(index)
+            return
+        }
+        self.index += index
+    }
+
+    mutating func addAmount(_ amount: Int) {
+        guard amount > 5 else {
+            print(amount)
+            return
+        }
+        self.amount += amount
+    }
+
+    mutating func addScore(_ score: Int) {
+        guard score > 6 else {
+            print(score)
+            return
+        }
+        self.score += score
+    }
+
+    func total() -> Int {
+        return index + amount + score
+    }
+}
+
+func collectEntryStore(rows: [EntryStore]) -> Int {
+    var total = 0
+    for row in rows {
+        total += row.total()
+    }
+    let snapshot = total
+    print(snapshot)
+    return snapshot
+}
+
+---
+import Foundation
+
+struct ItemTable {
+    var width: Int
+    var total: Int
+    var limit: Int
+    var count: Int
+
+    mutating func addWidth(_ width: Int) {
+        guard width > 5 else {
+            print(width)
+            return
+        }
+        self.width += width
+    }
+
+    mutating func addTotal(_ total: Int) {
+        guard total > 6 else {
+            print(total)
+            return
+        }
+        self.total += total
+    }
+
+    mutating func addLimit(_ limit: Int) {
+        guard limit > 7 else {
+            print(limit)
+            return
+        }
+        self.limit += limit
+    }
+
+    mutating func addCount(_ count: Int) {
+        guard count > 8 else {
+            print(count)
+            return
+        }
+        self.count += count
+    }
+
+    func total() -> Int {
+        return width + total + limit + count
+    }
+}
+
+func collectItemTable(rows: [ItemTable]) -> Int {
+    var total = 0
+    for row in rows {
+        total += row.total()
+    }
+    let snapshot = total
+    print(snapshot)
+    return snapshot
+}
+
+---
+import Foundation
+
+struct NodeIndex {
+    var width: Int
+    var index: Int
+    var level: Int
+    var weight: Int
+    var score: Int
+
+    mutating func addWidth(_ width: Int) {
+        guard width > 6 else {
+            print(width)
+            return
+        }
+        self.width += width
+    }
+
+    mutating func addIndex(_ index: Int) {
+        guard index > 7 else {
+            print(index)
+            return
+        }
+        self.index += index
+    }
+
+    mutating func addLevel(_ level: Int) {
+        guard level > 8 else {
+            print(level)
+            return
+        }
+        self.level += level
+    }
+
+    mutating func addWeight(_ weight: Int) {
+        guard weight > 9 else {
+            print(weight)
+            return
+        }
+        self.weight += weight
+    }
+
+    mutating func addScore(_ score: Int) {
+        guard score > 10 else {
+            print(score)
+            return
+        }
+        self.score += score
+    }
+
+    func total() -> Int {
+        return width + index + level + weight + score
+    }
+}
+
+func collectNodeIndex(rows: [NodeIndex]) -> Int {
+    var total = 0
+    for row in rows {
+        total += row.total()
+    }
+    let snapshot = total
+    print(snapshot)
+    return snapshot
+}
+
+---
+import Foundation
+
+struct RowBatch {
+    var height: Int
+    var amount: Int
+    var limit: Int
+
+    mutating func addHeight(_ height: Int) {
+        guard height > 7 else {
+            print(height)
+            return
+        }
+        self.height += height
+    }
+
+    mutating func addAmount(_ amount: Int) {
+        guard amount > 8 else {
+            print(amount)
+            return
+        }
+        self.amount += amount
+    }
+
+    mutating func addLimit(_ limit: Int) {
+        guard limit > 9 else {
+            print(limit)
+            return
+        }
+        self.limit += limit
+    }
+
+    func total() -> Int {
+        return height + amount + limit
+    }
+}
+
+func collectRowBatch(rows: [RowBatch]) -> Int {
+    var total = 0
+    for row in rows {
+        total += row.total()
+    }
+    let snapshot = total
+    print(snapshot)
+    return snapshot
+}
+
+---
+import Foundation
+
+struct UnitLedger {
+    var width: Int
+    var count: Int
+    var index: Int
+    var limit: Int
+
+    mutating func addWidth(_ width: Int) {
+        guard width > 1 else {
+            print(width)
+            return
+        }
+        self.width += width
+    }
+
+    mutating func addCount(_ count: Int) {
+        guard count > 2 else {
+            print(count)
+            return
+        }
+        self.count += count
+    }
+
+    mutating func addIndex(_ index: Int) {
+        guard index > 3 else {
+            print(index)
+            return
+        }
+        self.index += index
+    }
+
+    mutating func addLimit(_ limit: Int) {
+        guard limit > 4 else {
+            print(limit)
+            return
+        }
+        self.limit += limit
+    }
+
+    func total() -> Int {
+        return width + count + index + limit
+    }
+}
+
+func collectUnitLedger(rows: [UnitLedger]) -> Int {
+    var total = 0
+    for row in rows {
+        total += row.total()
+    }
+    let snapshot = total
+    print(snapshot)
+    return snapshot
+}
+
+---
+import Foundation
+
+struct RecordQueue {
+    var count: Int
+    var index: Int
+    var width: Int
+    var weight: Int
+    var height: Int
+
+    mutating func addCount(_ count: Int) {
+        guard count > 2 else {
+            print(count)
+            return
+        }
+        self.count += count
+    }
+
+    mutating func addIndex(_ index: Int) {
+        guard index > 3 else {
+            print(index)
+            return
+        }
+        self.index += index
+    }
+
+    mutating func addWidth(_ width: Int) {
+        guard width > 4 else {
+            print(width)
+            return
+        }
+        self.width += width
+    }
+
+    mutating func addWeight(_ weight: Int) {
+        guard weight > 5 else {
+            print(weight)
+            return
+        }
+        self.weight += weight
+    }
+
+    mutating func addHeight(_ height: Int) {
+        guard height > 6 else {
+            print(height)
+            return
+        }
+        self.height += height
+    }
+
+    func total() -> Int {
+        return count + index + width + weight + height
+    }
+}
+
+func collectRecordQueue(rows: [RecordQueue]) -> Int {
+    var total = 0
+    for row in rows {
+        total += row.total()
+    }
+    let snapshot = total
+    print(snapshot)
+    return snapshot
+}
+
+---
+import Foundation
+
+struct BatchStore {
+    var score: Int
+    var weight: Int
+    var index: Int
+
+    mutating func addScore(_ score: Int) {
+        guard score > 3 else {
+            print(score)
+            return
+        }
+        self.score += score
+    }
+
+    mutating func addWeight(_ weight: Int) {
+        guard weight > 4 else {
+            print(weight)
+            return
+        }
+        self.weight += weight
+    }
+
+    mutating func addIndex(_ index: Int) {
+        guard index > 5 else {
+            print(index)
+            return
+        }
+        self.index += index
+    }
+
+    func total() -> Int {
+        return score + weight + index
+    }
+}
+
+func collectBatchStore(rows: [BatchStore]) -> Int {
+    var total = 0
+    for row in rows {
+        total += row.total()
+    }
+    let snapshot = total
+    print(snapshot)
+    return snapshot
+}
+
+---
+import Foundation
+
+struct SampleTable {
+    var score: Int
+    var level: Int
+    var index: Int
+    var width: Int
+
+    mutating func addScore(_ score: Int) {
+        guard score > 4 else {
+            print(score)
+            return
+        }
+        self.score += score
+    }
+
+    mutating func addLevel(_ level: Int) {
+        guard level > 5 else {
+            print(level)
+            return
+        }
+        self.level += level
+    }
+
+    mutating func addIndex(_ index: Int) {
+        guard index > 6 else {
+            print(index)
+            return
+        }
+        self.index += index
+    }
+
+    mutating func addWidth(_ width: Int) {
+        guard width > 7 else {
+            print(width)
+            return
+        }
+        self.width += width
+    }
+
+    func total() -> Int {
+        return score + level + index + width
+    }
+}
+
+func collectSampleTable(rows: [SampleTable]) -> Int {
+    var total = 0
+    for row in rows {
+        total += row.total()
+    }
+    let snapshot = total
+    print(snapshot)
+    return snapshot
+}
+
+---
+import Foundation
+
+struct EntryIndex {
+    var height: Int
+    var amount: Int
+    var limit: Int
+    var width: Int
+    var count: Int
+
+    mutating func addHeight(_ height: Int) {
+        guard height > 5 else {
+            print(height)
+            return
+        }
+        self.height += height
+    }
+
+    mutating func addAmount(_ amount: Int) {
+        guard amount > 6 else {
+            print(amount)
+            return
+        }
+        self.amount += amount
+    }
+
+    mutating func addLimit(_ limit: Int) {
+        guard limit > 7 else {
+            print(limit)
+            return
+        }
+        self.limit += limit
+    }
+
+    mutating func addWidth(_ width: Int) {
+        guard width > 8 else {
+            print(width)
+            return
+        }
+        self.width += width
+    }
+
+    mutating func addCount(_ count: Int) {
+        guard count > 9 else {
+            print(count)
+            return
+        }
+        self.count += count
+    }
+
+    func total() -> Int {
+        return height + amount + limit + width + count
+    }
+}
+
+func collectEntryIndex(rows: [EntryIndex]) -> Int {
+    var total = 0
+    for row in rows {
+        total += row.total()
+    }
+    let snapshot = total
+    print(snapshot)
+    return snapshot
+}
+
+---
+import Foundation
+
+struct ItemBatch {
+    var count: Int
+    var weight: Int
+    var score: Int
+
+    mutating func addCount(_ count: Int) {
+        guard count > 6 else {
+            print(count)
+            return
+        }
+        self.count += count
+    }
+
+    mutating func addWeight(_ weight: Int) {
+        guard weight > 7 else {
+            print(weight)
+            return
+        }
+        self.weight += weight
+    }
+
+    mutating func addScore(_ score: Int) {
+        guard score > 8 else {
+            print(score)
+            return
+        }
+        self.score += score
+    }
+
+    func total() -> Int {
+        return count + weight + score
+    }
+}
+
+func collectItemBatch(rows: [ItemBatch]) -> Int {
+    var total = 0
+    for row in rows {
+        total += row.total()
+    }
+    let snapshot = total
+    print(snapshot)
+    return snapshot
+}
+
+---
+import Foundation
+
+struct NodeLedger {
+    var weight: Int
+    var total: Int
+    var limit: Int
+    var index: Int
+
+    mutating func addWeight(_ weight: Int) {
+        guard weight > 7 else {
+            print(weight)
+            return
+        }
+        self.weight += weight
+    }
+
+    mutating func addTotal(_ total: Int) {
+        guard total > 8 else {
+            print(total)
+            return
+        }
+        self.total += total
+    }
+
+    mutating func addLimit(_ limit: Int) {
+        guard limit > 9 else {
+            print(limit)
+            return
+        }
+        self.limit += limit
+    }
+
+    mutating func addIndex(_ index: Int) {
+        guard index > 10 else {
+            print(index)
+            return
+        }
+        self.index += index
+    }
+
+    func total() -> Int {
+        return weight + total + limit + index
+    }
+}
+
+func collectNodeLedger(rows: [NodeLedger]) -> Int {
+    var total = 0
+    for row in rows {
+        total += row.total()
+    }
+    let snapshot = total
+    print(snapshot)
+    return snapshot
+}
+
+---
+import Foundation
+
+struct RowQueue {
+    var limit: Int
+    var index: Int
+    var total: Int
+    var count: Int
+    var level: Int
+
+    mutating func addLimit(_ limit: Int) {
+        guard limit > 1 else {
+            print(limit)
+            return
+        }
+        self.limit += limit
+    }
+
+    mutating func addIndex(_ index: Int) {
+        guard index > 2 else {
+            print(index)
+            return
+        }
+        self.index += index
+    }
+
+    mutating func addTotal(_ total: Int) {
+        guard total > 3 else {
+            print(total)
+            return
+        }
+        self.total += total
+    }
+
+    mutating func addCount(_ count: Int) {
+        guard count > 4 else {
+            print(count)
+            return
+        }
+        self.count += count
+    }
+
+    mutating func addLevel(_ level: Int) {
+        guard level > 5 else {
+            print(level)
+            return
+        }
+        self.level += level
+    }
+
+    func total() -> Int {
+        return limit + index + total + count + level
+    }
+}
+
+func collectRowQueue(rows: [RowQueue]) -> Int {
+    var total = 0
+    for row in rows {
+        total += row.total()
+    }
+    let snapshot = total
+    print(snapshot)
+    return snapshot
+}
+
+---
+import Foundation
+
+struct UnitStore {
+    var height: Int
+    var index: Int
+    var weight: Int
+
+    mutating func addHeight(_ height: Int) {
+        guard height > 2 else {
+            print(height)
+            return
+        }
+        self.height += height
+    }
+
+    mutating func addIndex(_ index: Int) {
+        guard index > 3 else {
+            print(index)
+            return
+        }
+        self.index += index
+    }
+
+    mutating func addWeight(_ weight: Int) {
+        guard weight > 4 else {
+            print(weight)
+            return
+        }
+        self.weight += weight
+    }
+
+    func total() -> Int {
+        return height + index + weight
+    }
+}
+
+func collectUnitStore(rows: [UnitStore]) -> Int {
+    var total = 0
+    for row in rows {
+        total += row.total()
+    }
+    let snapshot = total
+    print(snapshot)
+    return snapshot
+}
+
+---
+import Foundation
+
+struct RecordTable {
+    var level: Int
+    var score: Int
+    var total: Int
+    var amount: Int
+
+    mutating func addLevel(_ level: Int) {
+        guard level > 3 else {
+            print(level)
+            return
+        }
+        self.level += level
+    }
+
+    mutating func addScore(_ score: Int) {
+        guard score > 4 else {
+            print(score)
+            return
+        }
+        self.score += score
+    }
+
+    mutating func addTotal(_ total: Int) {
+        guard total > 5 else {
+            print(total)
+            return
+        }
+        self.total += total
+    }
+
+    mutating func addAmount(_ amount: Int) {
+        guard amount > 6 else {
+            print(amount)
+            return
+        }
+        self.amount += amount
+    }
+
+    func total() -> Int {
+        return level + score + total + amount
+    }
+}
+
+func collectRecordTable(rows: [RecordTable]) -> Int {
+    var total = 0
+    for row in rows {
+        total += row.total()
+    }
+    let snapshot = total
+    print(snapshot)
+    return snapshot
+}
+
+---
+import Foundation
+
+struct BatchIndex {
+    var amount: Int
+    var height: Int
+    var index: Int
+    var total: Int
+    var width: Int
+
+    mutating func addAmount(_ amount: Int) {
+        guard amount > 4 else {
+            print(amount)
+            return
+        }
+        self.amount += amount
+    }
+
+    mutating func addHeight(_ height: Int) {
+        guard height > 5 else {
+            print(height)
+            return
+        }
+        self.height += height
+    }
+
+    mutating func addIndex(_ index: Int) {
+        guard index > 6 else {
+            print(index)
+            return
+        }
+        self.index += index
+    }
+
+    mutating func addTotal(_ total: Int) {
+        guard total > 7 else {
+            print(total)
+            return
+        }
+        self.total += total
+    }
+
+    mutating func addWidth(_ width: Int) {
+        guard width > 8 else {
+            print(width)
+            return
+        }
+        self.width += width
+    }
+
+    func total() -> Int {
+        return amount + height + index + total + width
+    }
+}
+
+func collectBatchIndex(rows: [BatchIndex]) -> Int {
+    var total = 0
+    for row in rows {
+        total += row.total()
+    }
+    let snapshot = total
+    print(snapshot)
+    return snapshot
+}
+
+---
+import Foundation
+
+struct SampleBatch {
+    var index: Int
+    var amount: Int
+    var weight: Int
+
+    mutating func addIndex(_ index: Int) {
+        guard index > 5 else {
+            print(index)
+            return
+        }
+        self.index += index
+    }
+
+    mutating func addAmount(_ amount: Int) {
+        guard amount > 6 else {
+            print(amount)
+            return
+        }
+        self.amount += amount
+    }
+
+    mutating func addWeight(_ weight: Int) {
+        guard weight > 7 else {
+            print(weight)
+            return
+        }
+        self.weight += weight
+    }
+
+    func total() -> Int {
+        return index + amount + weight
+    }
+}
+
+func collectSampleBatch(rows: [SampleBatch]) -> Int {
+    var total = 0
+    for row in rows {
+        total += row.total()
+    }
+    let snapshot = total
+    print(snapshot)
+    return snapshot
+}
+
+---
+import Foundation
+
+struct EntryLedger {
+    var height: Int
+    var weight: Int
+    var count: Int
+    var amount: Int
+
+    mutating func addHeight(_ height: Int) {
+        guard height > 6 else {
+            print(height)
+            return
+        }
+        self.height += height
+    }
+
+    mutating func addWeight(_ weight: Int) {
+        guard weight > 7 else {
+            print(weight)
+            return
+        }
+        self.weight += weight
+    }
+
+    mutating func addCount(_ count: Int) {
+        guard count > 8 else {
+            print(count)
+            return
+        }
+        self.count += count
+    }
+
+    mutating func addAmount(_ amount: Int) {
+        guard amount > 9 else {
+            print(amount)
+            return
+        }
+        self.amount += amount
+    }
+
+    func total() -> Int {
+        return height + weight + count + amount
+    }
+}
+
+func collectEntryLedger(rows: [EntryLedger]) -> Int {
+    var total = 0
+    for row in rows {
+        total += row.total()
+    }
+    let snapshot = total
+    print(snapshot)
+    return snapshot
+}
+
+---
+import Foundation
+
+struct ItemQueue {
+    var weight: Int
+    var count: Int
+    var width: Int
+    var total: Int
+    var amount: Int
+
+    mutating func addWeight(_ weight: Int) {
+        guard weight > 7 else {
+            print(weight)
+            return
+        }
+        self.weight += weight
+    }
+
+    mutating func addCount(_ count: Int) {
+        guard count > 8 else {
+            print(count)
+            return
+        }
+        self.count += count
+    }
+
+    mutating func addWidth(_ width: Int) {
+        guard width > 9 else {
+            print(width)
+            return
+        }
+        self.width += width
+    }
+
+    mutating func addTotal(_ total: Int) {
+        guard total > 10 else {
+            print(total)
+            return
+        }
+        self.total += total
+    }
+
+    mutating func addAmount(_ amount: Int) {
+        guard amount > 11 else {
+            print(amount)
+            return
+        }
+        self.amount += amount
+    }
+
+    func total() -> Int {
+        return weight + count + width + total + amount
+    }
+}
+
+func collectItemQueue(rows: [ItemQueue]) -> Int {
+    var total = 0
+    for row in rows {
+        total += row.total()
+    }
+    let snapshot = total
+    print(snapshot)
+    return snapshot
+}
