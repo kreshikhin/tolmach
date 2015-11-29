@@ -25,6 +25,19 @@ test('detects held-out examples', () => {
     }
 });
 
+test('each language has at least 1000 lines of examples', () => {
+    const dataDir = path.join(root, 'data');
+    const files = fs.readdirSync(dataDir).filter((file) => file.endsWith('.txt')).sort();
+    assert.equal(files.length, tolmach.languages.length);
+    for (const file of files) {
+        const lines = fs.readFileSync(path.join(dataDir, file), 'utf8').split(/\n/).filter((line) => {
+            const trimmed = line.trim();
+            return trimmed.length > 0 && trimmed !== '---';
+        });
+        assert.ok(lines.length >= 1000, file + ' has ' + lines.length + ' lines');
+    }
+});
+
 test('classifies every training document as its own language', () => {
     const dataDir = path.join(root, 'data');
     const files = fs.readdirSync(dataDir).filter((file) => file.endsWith('.txt')).sort();
