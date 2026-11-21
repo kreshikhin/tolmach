@@ -1,7 +1,6 @@
 # Publishes to npm when a GitHub Release is published.
-# npmjs.com must list this workflow as a trusted publisher for tolmach.
-# Do not set registry-url here: setup-node would write an empty auth token
-# and npm would skip the trusted-publisher login.
+# npmjs.com must list this file as a trusted publisher that is allowed to npm publish.
+# Provenance signing is not registry login. Login needs npm >= 11.5.1.
 
 name: publish
 
@@ -20,10 +19,8 @@ jobs:
 
       - uses: actions/setup-node@v4
         with:
-          node-version: 22
-
-      - name: Install npm with trusted publishing
-        run: npm install -g npm@11
+          node-version: 24
+          registry-url: https://registry.npmjs.org
 
       - name: Check release tag matches package.json
         run: |
@@ -36,4 +33,17 @@ jobs:
 
       - run: npm test
 
-      - run: npm publish --provenance --access public
+      - name: Publish
+        run: |
+          npm install -g npm@^11.5.1
+          hash -r
+          echo "npm $(npm --version) at $(command -v npm)"
+          node -e '
+            const [major, minor, patch] = process.argv[1].split(".").map(Number);
+            const ok = major > 11 || (major === 11 && (minor > 5 || (minor === 5 && patch >= 1)));
+            if (!ok) {
+              console.error("npm " + process.argv[1] + " cannot use trusted publishing; need >= 11.5.1");
+              process.exit(1);
+            }
+          ' "$(npm --version)"
+          npm publish --access public
