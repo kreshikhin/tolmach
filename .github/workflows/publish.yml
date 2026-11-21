@@ -1,5 +1,7 @@
 # Publishes to npm when a GitHub Release is published.
-# The package on npmjs.com needs a trusted publisher for this workflow.
+# npmjs.com must list this workflow as a trusted publisher for tolmach.
+# Do not set registry-url here: setup-node would write an empty auth token
+# and npm would skip the trusted-publisher login.
 
 name: publish
 
@@ -18,8 +20,10 @@ jobs:
 
       - uses: actions/setup-node@v4
         with:
-          node-version: 20
-          registry-url: https://registry.npmjs.org
+          node-version: 22
+
+      - name: Install npm with trusted publishing
+        run: npm install -g npm@11
 
       - name: Check release tag matches package.json
         run: |
